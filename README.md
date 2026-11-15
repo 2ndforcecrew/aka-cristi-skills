@@ -18,6 +18,19 @@ A curated public collection of reusable agent workflows and a safe, local-only S
 
 These are methodology Skills, not third-party licensed packages. Some methods were adapted from user-supplied verification-engineering fieldnotes attributed to Lauren Tan; that attribution was not independently confirmed, and these are **not official third-party Skills**.
 
+## Easy Windows installation (automatic source repair)
+
+For nontechnical Windows users, the new [`install.ps1`](install.ps1) bootstrap obtains a fresh **commit-pinned, complete GitHub ZIP** without requiring Git, validates all required project files, and installs the public CHEF global rules, four Skills and four native Codex roles. An incomplete archive is downloaded again; **existing user projects are not overwritten**.
+
+Review the public script first, then run these commands in Windows PowerShell:
+
+```powershell
+Invoke-WebRequest 'https://raw.githubusercontent.com/2ndforcecrew/aka-cristi-skills/main/install.ps1' -OutFile "$env:TEMP\aka-chef-install.ps1"
+powershell -NoProfile -ExecutionPolicy Bypass -File "$env:TEMP\aka-chef-install.ps1" -Apply -InstallDependencies
+```
+
+The flags explicitly authorize current-user config changes and official prerequisite installs (Python or Codex CLI if missing). An existing unmanaged/edited same-name Skill or role is **not** silently replaced. User login, private credentials and real agent activation remain separate. Review [Chinese instructions](README.zh-CN.md) for the full workflow.
+
 ## Install on Codex (Windows 11, macOS, Linux)
 
 Requirements: [Git](https://git-scm.com/downloads) and Python 3.11+. Open Terminal / PowerShell and run:
