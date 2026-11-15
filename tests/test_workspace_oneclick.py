@@ -180,7 +180,7 @@ class OneClickTests(unittest.TestCase):
         result = self.setup.run(confirmed=True)
         self.assertEqual(result['status'], 'STOPPED')
         self.assertEqual(result['step'], 'repository')
-        self.assertEqual(result['code'], 'REUSE_REQUIRED' if 'REUSE_REQUIRED' in __import__('tools.personal_workspace', fromlist=['SAFE_ERRORS']).SAFE_ERRORS else 'OPERATION_FAILED')
+        self.assertEqual(result['code'], 'REUSE_REQUIRED')
         self.assertEqual(self.client.writes, [])
         # Existing private repositories require separate consent in the manual wizard.
 
