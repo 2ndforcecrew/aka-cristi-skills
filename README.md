@@ -1,5 +1,7 @@
 # AKA.CRISTI Skills
 
+**中文说明：** [功能介绍、安装教程与安全限制（简体中文）](docs/README.zh-CN.md)
+
 **[🇨🇳 中文功能说明 / 安装指南](README.zh-CN.md)** · [English](README.md)
 
 **FROM EXPERIENCE TO CAPABILITY.**
