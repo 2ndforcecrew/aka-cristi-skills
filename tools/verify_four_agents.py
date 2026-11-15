@@ -6,6 +6,7 @@ This code does not simulate or impersonate Codex agents.
 """
 import argparse
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -51,7 +52,10 @@ def find_role_tomls(codex_home):
 
 
 def rooted_sessions(codex_home, thread_id, started):
-    """Read only specifically matching current-session rollout files."""
+    """Read only specifically matching current-session rollout files.
+
+    This requires persisted Codex session logs; do not run --ephemeral.
+    """
     folder = codex_home / "sessions"
     if not folder.exists() or not UUID_RE.fullmatch(thread_id or ""):
         return []
@@ -155,7 +159,8 @@ def evaluate(rollout, codex_home, started, root_thread, exit_code, completed):
 
 
 def run(timeout=600, codex_bin="codex", codex_home=None):
-    base = Path(codex_home or Path.home() / ".codex").expanduser().resolve()
+    base = Path(codex_home or os.environ.get("CODEX_HOME") or
+                Path.home() / ".codex").expanduser().resolve()
     result = {"checked_at": datetime.now(timezone.utc).isoformat(),
               "status": "NOT_RUN", "invoked": False,
               "roles": {x: "NOT_RUN" for x in ROLES}}
@@ -200,7 +205,7 @@ def run(timeout=600, codex_bin="codex", codex_home=None):
             "If native named role selection is unavailable, say BLOCKED "
             "and do not substitute generic agents. No external access.")
         started = time.time()
-        command = [exe, "exec", "--json", "--ephemeral", "--sandbox", "read-only",
+        command = [exe, "exec", "--json", "--sandbox", "read-only",
                    "--skip-git-repo-check", "-C", str(wd),
                    "-c", "features.multi_agent=true",
                    "-c", "features.unified_exec=false", prompt]
