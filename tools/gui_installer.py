@@ -70,6 +70,7 @@ class InstallerWindow:
         self.events = queue.Queue()
         self.cancel_event = threading.Event()
         self.busy = False
+        self._worker = None
         self.workspace_windows = []
         self._workspace_closed_seen: set[int] = set()
         self.plan = None
@@ -266,7 +267,8 @@ class InstallerWindow:
             except Exception as exc:
                 # Do not copy exception messages: they may contain private config or paths.
                 self.events.put(("error", type(exc).__name__))
-        threading.Thread(target=worker, daemon=True).start()
+        self._worker = threading.Thread(target=worker, daemon=True)
+        self._worker.start()
 
     def preview(self):
         if not self.trusted.get():
@@ -359,6 +361,20 @@ class InstallerWindow:
             self.status.set("操作超时：已请求安全取消。请等待磁盘操作结束；不会强制中断配置写入。")
         self.window.after(100, self.poll)
 
+    def _join_worker(self):
+        """Wait (bounded) for the background job thread to exit.
+
+        The worker only posts to a queue, but CPython's cyclic GC may run
+        on it; if it finalizes Tk variables of an already-destroyed window
+        from that thread, Python 3.11 aborts (Tcl_AsyncDelete: async
+        handler deleted by the wrong thread). Joining first keeps all Tk
+        finalization on the main thread.
+        """
+        worker = self._worker
+        self._worker = None
+        if worker is not None and worker is not threading.current_thread() and worker.is_alive():
+            worker.join(timeout=5)
+
     def close(self):
         active = [workspace for workspace in self.workspace_windows
                   if not workspace.closed and workspace.busy]
@@ -370,6 +386,7 @@ class InstallerWindow:
         if self.busy:
             self.cancel()
             return
+        self._join_worker()
         self.window.destroy()
 
 

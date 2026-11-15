@@ -1,4 +1,5 @@
 """GUI smoke uses real Tk widgets only when a display is available."""
+import gc
 import os
 import time
 import types
@@ -49,7 +50,15 @@ class InstallerWorkspaceTests(unittest.TestCase):
 
     def tearDown(self):
         self.app.busy = False
+        self.app._join_worker()
         self.root.destroy()
+        # Drop the app/root references and collect on the main thread:
+        # otherwise the cyclic GC may finalize Tk variables of this
+        # destroyed window from a later test's worker thread, and
+        # Python 3.11 aborts (Tcl_AsyncDelete: async handler deleted by
+        # the wrong thread). Main-thread finalization is safe.
+        del self.app, self.root
+        gc.collect()
         self._modules_patch.stop()
 
     def finish(self):

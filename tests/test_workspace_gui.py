@@ -1,6 +1,7 @@
 """Isolated real Tk adapter tests; no account, network, or user configuration."""
 from __future__ import annotations
 
+import gc
 import os
 from pathlib import Path
 import tempfile
@@ -111,6 +112,13 @@ class WorkspaceGuiTests(unittest.TestCase):
         self.app.busy = False
         self.app.close()
         self.root.destroy()
+        # Drop the app/root references and collect on the main thread:
+        # otherwise the cyclic GC may finalize Tk variables of this
+        # destroyed window from a later test's worker thread, and
+        # Python 3.11 aborts (Tcl_AsyncDelete: async handler deleted by
+        # the wrong thread). Main-thread finalization is safe.
+        del self.app, self.root
+        gc.collect()
         self.assertEqual(list(self.directory.iterdir()), [])
         self.temp.cleanup()
 

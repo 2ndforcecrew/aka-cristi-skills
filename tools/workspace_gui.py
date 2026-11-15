@@ -35,6 +35,7 @@ class WorkspaceWindow:
         self.timeout = 200.0
         self.timed_out = False
         self.closed = False
+        self._worker: threading.Thread | None = None
         self.controls: list[Any] = []
         self.status = tk.StringVar(value="准备就绪；仅手动同步")
         self.account = tk.StringVar(value="GitHub：未连接")
@@ -266,7 +267,8 @@ class WorkspaceWindow:
                 # Only explicitly allowlisted fixed identifiers may cross the boundary.
                 code = getattr(exc, "code", None)
                 self.events.put(("error", code if code == "OAUTH_CLIENT_ID_REQUIRED" else None))
-        threading.Thread(target=worker, daemon=True).start()
+        self._worker = threading.Thread(target=worker, daemon=True)
+        self._worker.start()
 
     def cancel(self) -> None:
         if self.busy and self.job_kind in ("connect", "oneclick"):
@@ -395,10 +397,25 @@ class WorkspaceWindow:
                 self.status.set("操作超出等待时间；此操作无法中途取消，请等待安全结束。")
         self.poll_id = self.window.after(75, self.poll)
 
+    def _join_worker(self) -> None:
+        """Wait (bounded) for the background job thread to exit.
+
+        The worker only posts to a queue, but CPython's cyclic GC may run
+        on it; if it finalizes Tk variables of an already-destroyed window
+        from that thread, Python 3.11 aborts (Tcl_AsyncDelete: async
+        handler deleted by the wrong thread). Joining first keeps all Tk
+        finalization on the main thread.
+        """
+        worker = self._worker
+        self._worker = None
+        if worker is not None and worker is not threading.current_thread() and worker.is_alive():
+            worker.join(timeout=5)
+
     def close(self) -> None:
         if self.busy:
             self.cancel()
             return
+        self._join_worker()
         self.closed = True
         self.window.after_cancel(self.poll_id)
         self.window.destroy()
