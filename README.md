@@ -94,3 +94,17 @@ python -m tools.skill_installer verify chef-orchestrator --target codex
 The global installer **appends an owned section** to `~/.codex/AGENTS.md` or `CODEX_HOME/AGENTS.md`, without replacing existing rules. You can safely uninstall only the managed section using `python -m tools.chef_global_rules uninstall --apply`.
 
 Read [CHEF Global Rules + Multi-Agent Starter](docs/CHEF_GLOBAL_AND_MULTIAGENT.md) for setup, safe rollback, real Agent verification and the distinction between orchestration policy and actual connected worker agents.
+
+## CHEF V0.2: native Codex multi-agent roles
+
+After installing the CHEF global rules and Skill, you can also add four **native Codex custom subagents**: `aka_research`, `aka_coding`, `aka_qa`, and `aka_automation`.
+
+```powershell
+python -m tools.codex_subagents preview
+python -m tools.codex_subagents install --apply
+python -m tools.codex_subagents verify
+```
+
+This operation manages only the installer-owned TOMLs in `~/.codex/agents` (or `$CODEX_HOME/agents`). It never replaces existing unowned agents or changes `config.toml`. **Installation does not prove any subagent was spawned.** Open a fresh Codex session and run a read-only handoff test with evidence of actual subagent threads.
+
+[Installation, safety and real Agent verification instructions](docs/CODEX_NATIVE_SUBAGENTS_V02.md).

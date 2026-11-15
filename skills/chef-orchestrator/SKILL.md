@@ -51,3 +51,13 @@ status: PLANNED
 
 ## Provenance
 An original portable public starter adapted from AKA.CRISTI's verified collaboration principles. No private AGENTS.md or account data is included.
+
+## Codex native Subagents (only where supported and enabled)
+
+If the current Codex session exposes built-in delegation tools, discover the four installed custom roles: `aka_research`, `aka_coding`, `aka_qa`, `aka_automation`. They originate from separate user-scoped TOML definitions installed with `tools/codex_subagents.py`.
+
+For genuinely independent work, ask the host to spawn these configured agents with explicit scope and acceptance checks. Do not invent a tool name or claim a role was spawned unless a tool result or agent thread proves it. Prefer `aka_research` for fact-finding, `aka_coding` for scoped changes, and `aka_qa` for review of the resulting revision. Use `aka_automation` only for reliable, permission-bounded automation work.
+
+To reduce conflicts, **do not assign overlapping file edits to parallel workers**; let CHEF coordinate sequence and ownership. Read-only research can run independently; QA must review the actual final revision, not an intermediate edit. When multi-agent tools or custom roles are missing, fall back to a single agent and mark delegation `NOT_RUN` rather than faking success.
+
+The existence of an installed TOML and a passing local unit test is not a verified agent spawn. Actual runtime acceptance requires an observed spawned thread and evidence for its completed task.
