@@ -34,6 +34,10 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Bootstrap install failed' }
           & .\\install.ps1 -SourceDirectory . -CodexHome $sandbox -SkipCodexCheck -Apply
           if ($LASTEXITCODE -ne 0) { throw 'Bootstrap second install not idempotent' }
+          # Test the actual no-Git self-healing path over GitHub HTTPS.
+          # Preview only: do not modify the user environment.
+          & .\\install.ps1 -SkipCodexCheck
+          if ($LASTEXITCODE -ne 0) { throw 'GitHub ZIP bootstrap fetch/repair preview failed' }
           if (-not (Test-Path (Join-Path $sandbox 'AGENTS.md'))) { throw 'Global rules missing' }
           foreach ($role in @('research', 'coding', 'qa', 'automation')) {
             if (-not (Test-Path (Join-Path $sandbox ("agents/" + $role + ".toml")))) { throw "Missing role: $role" }
