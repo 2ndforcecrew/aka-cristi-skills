@@ -178,9 +178,11 @@ class OneClickTests(unittest.TestCase):
         self.client.create_private_repo('my-agent-workspace', confirmed=True)
         self.client.writes.clear()
         result = self.setup.run(confirmed=True)
-        self.assertEqual(result['status'], 'COMPLETED')
-        self.assertEqual(result['repository'], 'alice/my-agent-workspace')
-        self.assertEqual(self.client.writes, [('initialize', 'my-agent-workspace')])
+        self.assertEqual(result['status'], 'STOPPED')
+        self.assertEqual(result['step'], 'repository')
+        self.assertEqual(result['code'], 'REUSE_REQUIRED' if 'REUSE_REQUIRED' in __import__('tools.personal_workspace', fromlist=['SAFE_ERRORS']).SAFE_ERRORS else 'OPERATION_FAILED')
+        self.assertEqual(self.client.writes, [])
+        # Existing private repositories require separate consent in the manual wizard.
 
     def test_initialize_mismatch_stops_before_sync(self) -> None:
         self.client.fail_initialize_code = 'INITIALIZATION_CONFLICT'
@@ -268,6 +270,18 @@ class OneClickTests(unittest.TestCase):
         self.assertEqual([entry['name'] for entry in plan['steps']], list(OneClickSetup.STEPS))
         self.assertEqual(self.client.writes, [])
         self.assertEqual(self.client.connect_calls, 0)
+
+    def test_cli_one_click_apply_stopped_returns_nonzero(self) -> None:
+        from tools.personal_workspace import main
+        self.client.client_id_missing = True
+        out = io.StringIO()
+        with patch('tools.personal_workspace.WorkspaceController',
+                   return_value=self.controller), contextlib.redirect_stdout(out):
+            exit_code = main(['one-click', '--apply'])
+        self.assertEqual(exit_code, 2)
+        payload = json.loads(out.getvalue())
+        self.assertEqual(payload['status'], 'STOPPED')
+        self.assertEqual(payload['step'], 'connect')
 
     def test_cli_one_click_apply_runs_and_prints_completed(self) -> None:
         from tools.personal_workspace import main
