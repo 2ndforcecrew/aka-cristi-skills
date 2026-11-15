@@ -108,3 +108,15 @@ python -m tools.codex_subagents verify
 This operation manages only the installer-owned TOMLs in `~/.codex/agents` (or `$CODEX_HOME/agents`). It never replaces existing unowned agents or changes `config.toml`. **Installation does not prove any subagent was spawned.** Open a fresh Codex session and run a read-only handoff test with evidence of actual subagent threads.
 
 [Installation, safety and real Agent verification instructions](docs/CODEX_NATIVE_SUBAGENTS_V02.md).
+
+## Actual four-Agent runtime acceptance (Codex)
+
+Configuration and CI unit tests alone do not prove native Subagents were spawned. For a signed-in Codex CLI, use the **strict live probe**:
+
+```powershell
+python -m tools.codex_subagents install --apply
+codex login status
+python -m tools.verify_four_agents --timeout 600 --out four-agent-report.json
+```
+
+The live probe requests `aka_research`, `aka_coding`, `aka_qa`, and `aka_automation` on a synthetic read-only task. It checks **actual** root/child rollout records; it rejects role-label-only simulations. No Codex login on this machine yields `NOT_RUN`, not PASS. See [four-Agent runtime acceptance](docs/FOUR_AGENT_RUNTIME_ACCEPTANCE.md).
