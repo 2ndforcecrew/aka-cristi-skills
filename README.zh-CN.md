@@ -24,7 +24,7 @@ Issues #8–#13 仍需真实验收，**本分支不是已批准的正式版本�
 python -m tools.gui_installer
 ```
 
-Windows 可双击 `start-gui.cmd`。它是 Python 图形界面启动器，**不是已签名独立 EXE**。界面提供差异预览、同意勾选、进度、文件校验及受保护撤销；缺依赖自动安装、干净 Windows 11 与朋友首次安装验收仍为 BLOCKED。安装文件成功始终与真实 Agent 激活分开。
+本地源码可双击 `start-gui.cmd`。另新增 [Windows 独立 EXE 候选构建](.github/workflows/windows-gui-candidate.yml)，仅打包 9 个公开数据文件，并进行真实控件/EXE 启动测试及 GitHub 来源验签；不包含 Authenticode 证书。界面提供差异预览、同意勾选、进度、文件校验及受保护撤销；缺依赖自动安装、干净 Windows 11 与朋友首次安装验收仍为 BLOCKED。安装文件成功始终与真实 Agent 激活分开。
 
 - [Windows GUI 与恢复](docs/WINDOWS_GUI.md)
 - [签名候选、身份固定与验签](docs/RELEASE_VERIFICATION.md)

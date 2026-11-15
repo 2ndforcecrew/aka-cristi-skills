@@ -30,7 +30,7 @@ For development in a reviewed local checkout with Python 3.11+, the real Tk grap
 python -m tools.gui_installer
 ```
 
-Windows also has `start-gui.cmd`. This is a Python GUI launcher, **not a standalone signed EXE**. It shows a diff and explicit consent, backs up changes, verifies files, and supports guarded rollback. Dependency auto-install and clean Windows 11 external UAT remain BLOCKED. [GUI limitations](docs/WINDOWS_GUI.md).
+Windows also has `start-gui.cmd` for source use and a [standalone EXE candidate build](.github/workflows/windows-gui-candidate.yml). The build uses only nine public data files, real widget/EXE smoke tests and GitHub provenance; it has no Authenticode certificate. It shows a diff and explicit consent, backs up changes, verifies files, and supports guarded rollback. Dependency auto-install and clean Windows 11 external UAT remain BLOCKED. [GUI limitations](docs/WINDOWS_GUI.md).
 
 Read [release verification](docs/RELEASE_VERIFICATION.md), [host capability matrix](docs/HOST_CAPABILITY_MATRIX.md), [external UAT](docs/EXTERNAL_UAT.md), and [strict runtime evidence](docs/FOUR_AGENT_EVIDENCE_V03.md). Claude support is currently project-scoped file installation only; Hermes/ChatGPT are BLOCKED. One actual cloud Codex attempt exited 1 without attributable threads; it did **not** pass four-role acceptance.
 
@@ -74,7 +74,7 @@ python -m tools.skill_installer uninstall verified-change-loop --target codex --
 - Package validation rejects symlink entries and invalid frontmatter. This is **not a malware scanner, digital signature, or complete security review**; inspect Skills before installing.
 - Current supported adapter: Codex user-scoped Agent Skills; custom folders are supported for sandbox tests. **Hermes, Claude, ChatGPT Plugins, other agent hosts and fully automatic activation are NOT verified.**
 - Preview before applying, and do not run on untrusted sources.
-- The established installer remains CLI-based; the development Tk GUI is not a standalone packaged installer and has no clean Windows 11 UAT yet.
+- The established installer remains CLI-based; the development Tk GUI has a standalone candidate build pipeline but has no clean Windows 11 external UAT yet.
 
 ## Validation
 

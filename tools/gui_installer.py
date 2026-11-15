@@ -1,8 +1,11 @@
 """Actual Tk graphical installer for a trusted local CHEF checkout.
 
-No remote code or prerequisite installation. This GUI is not a standalone EXE.
+No remote code or prerequisite installation. Can run from source or a candidate frozen EXE.
 """
 import argparse
+import hashlib
+import json
+import re
 import os
 from pathlib import Path
 import queue
@@ -12,6 +15,41 @@ import threading
 import time
 
 from tools import install_transaction as transaction
+from tools.fs_safety import checked_path
+
+
+BUNDLED_PUBLIC_FILES = (
+    "templates/AGENTS.global.md",
+    "agents/research.toml", "agents/coding.toml", "agents/qa.toml", "agents/automation.toml",
+    "skills/chef-orchestrator/SKILL.md", "skills/verified-change-loop/SKILL.md",
+    "skills/feature-journey-map/SKILL.md", "skills/skill-evaluation-gate/SKILL.md",
+)
+
+
+def default_source():
+    """A frozen build uses only explicitly allowlisted public data, never CWD/home."""
+    if not getattr(sys, "frozen", False):
+        return Path(__file__).resolve().parents[1]
+    bundle = checked_path(sys._MEIPASS)
+    manifest_path = checked_path(bundle / "bundled-public-data.json")
+    if not manifest_path.is_file() or manifest_path.stat().st_size > 64 * 1024:
+        raise ValueError("Bundled public manifest missing or oversized")
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if not isinstance(manifest, dict):
+        raise ValueError("Invalid bundled public manifest")
+    if not re.fullmatch(r"[0-9a-f]{40}", manifest.get("source_commit", "")):
+        raise ValueError("Bundled source commit missing")
+    files = manifest.get("files")
+    if not isinstance(files, dict) or set(files) != set(BUNDLED_PUBLIC_FILES):
+        raise ValueError("Unexpected bundled public data paths")
+    source = checked_path(bundle / "public-source")
+    for name in BUNDLED_PUBLIC_FILES:
+        path = checked_path(source / name)
+        if not path.is_file() or path.stat().st_size > 2 * 1024 * 1024:
+            raise ValueError("Bundled public data missing or unsafe")
+        if hashlib.sha256(path.read_bytes()).hexdigest() != files[name]:
+            raise ValueError("Bundled public data digest mismatch")
+    return source
 
 
 def prerequisites():
@@ -34,7 +72,7 @@ class InstallerWindow:
         self.plan = None
         self.last_journal = None
         self.started = 0
-        self.source = tk.StringVar(value=str(Path(__file__).resolve().parents[1]))
+        self.source = tk.StringVar(value=str(default_source()))
         self.home = tk.StringVar(value=os.environ.get("CODEX_HOME") or str(Path.home() / ".codex"))
         self.skills = tk.StringVar(value=str(Path.home() / ".agents" / "skills"))
         self.trusted, self.consent = tk.BooleanVar(value=False), tk.BooleanVar(value=False)
@@ -79,7 +117,7 @@ class InstallerWindow:
         self.progressbar = ttk.Progressbar(outer, mode="indeterminate")
         self.progressbar.pack(fill="x", pady=4)
         ttk.Label(outer, textvariable=self.status, wraplength=880).pack(anchor="w")
-        ttk.Label(outer, text="缺少 Codex：请先按官方说明安装并重开此窗口。依赖自动安装、独立 EXE 与 Windows 11 用户验收仍待完成。",
+        ttk.Label(outer, text="缺少 Codex：请先按官方说明安装并重开此窗口。依赖自动安装与 Windows 11 独立用户验收仍待完成。",
                   wraplength=880).pack(anchor="w", pady=(7, 0))
         window.protocol("WM_DELETE_WINDOW", self.close)
         window.after(100, self.poll)
@@ -216,6 +254,11 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if sys.version_info < (3, 11):
         print("BLOCKED: Python 3.11+ required")
+        return 2
+    try:
+        default_source()
+    except (OSError, ValueError, AttributeError):
+        print("BLOCKED: bundled public data validation failed")
         return 2
     try:
         import tkinter as tk

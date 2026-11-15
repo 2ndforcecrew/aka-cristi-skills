@@ -42,6 +42,13 @@ class GlobalRulesTests(unittest.TestCase):
         self.assertEqual(self.rules.read_text(), original)
         self.assertTrue(Path(x["backup"]).exists())
 
+    def test_append_preserves_existing_bytes_and_trailing_blank_lines(self):
+        self.home.mkdir()
+        for original in (b"private policy\r\nnext\r\n", b"private policy\n\n\n", b"\n\n"):
+            self.rules.write_bytes(original)
+            apply("install", self.template, self.home, confirmed=True)
+            self.assertTrue(self.rules.read_bytes().startswith(original))
+
     def test_idempotent_install(self):
         apply("install", self.template, self.home, confirmed=True)
         self.assertFalse(apply("install", self.template, self.home, confirmed=True)["applied"])

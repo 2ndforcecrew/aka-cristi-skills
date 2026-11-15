@@ -129,7 +129,7 @@ def preview(source, home, skills):
     old = chef_global_rules.read_old(roots["home"] / "AGENTS.md")
     block = chef_global_rules.managed_block(template)
     new = old if global_plan["state"] == "already_installed" else (
-        old.rstrip("\n") + ("\n\n" if old.strip() else "") + block + "\n")
+        chef_global_rules.append_block(old, block))
     diff = "".join(difflib.unified_diff(old.splitlines(True), new.splitlines(True),
                                      fromfile="AGENTS.md before", tofile="AGENTS.md after"))
     return {"source": str(source), "home": str(roots["home"]), "skills": str(roots["skills"]),

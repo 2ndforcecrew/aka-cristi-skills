@@ -38,8 +38,15 @@ def read_old(path):
     if path.is_symlink():
         raise GlobalRulesError("refusing symlink AGENTS.md")
     if path.exists():
-        return path.read_text(encoding="utf-8")
+        with path.open("r", encoding="utf-8", newline="") as handle:
+            return handle.read()
     return ""
+
+
+def append_block(old, block):
+    """Append owned text while preserving every existing UTF-8 byte as a prefix."""
+    separator = ("\n" if old.endswith(("\n", "\r")) else "\n\n") if old else ""
+    return old + separator + block + "\n"
 
 
 def locate(old):
@@ -106,7 +113,7 @@ def apply(action, template, home=None, confirmed=False):
     block = managed_block(template)
     if action == "install":
         # Do not alter a pre-existing project/user policy; append a clearly owned section.
-        new = old.rstrip("\n") + ("\n\n" if old.strip() else "") + block + "\n"
+        new = append_block(old, block)
     else:
         new = old[:span[0]] + old[span[1]:]
         new = new.rstrip("\n") + "\n" if new.strip() else ""
