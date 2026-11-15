@@ -7,7 +7,13 @@ param(
     [switch]$InstallDependencies,
     [switch]$SkipCodexCheck,
     [string]$SourceDirectory = "",
-    [string]$CodexHome = ""
+    [string]$CodexHome = "",
+    [string]$SkillsRoot = "",
+    [string]$ArchivePath = "",
+    [string]$ExpectedCommit = "",
+    [string]$ExpectedSha256 = "",
+    [string]$ExpectedSourceRef = "refs/heads/main",
+    [string]$ProvenanceBundle = ""
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -15,7 +21,7 @@ $ProgressPreference = 'SilentlyContinue'
 $Repo = "2ndforcecrew/aka-cristi-skills"
 $RequiredFiles = @(
     "README.md", "tools/__init__.py", "tools/chef_global_rules.py",
-    "tools/codex_subagents.py", "tools/skill_installer.py",
+    "tools/codex_subagents.py", "tools/skill_installer.py", "tools/fs_safety.py",
     "templates/AGENTS.global.md", "agents/research.toml",
     "agents/coding.toml", "agents/qa.toml", "agents/automation.toml",
     "skills/chef-orchestrator/SKILL.md",
@@ -24,9 +30,24 @@ $RequiredFiles = @(
     "skills/skill-evaluation-gate/SKILL.md"
 )
 function Show-Step([string]$Message) { Write-Host ("[CHEF] " + $Message) -ForegroundColor Cyan }
+function Assert-NoReparseAncestors([string]$Path) {
+    $current = [IO.Path]::GetFullPath($Path)
+    while ($current) {
+        if (Test-Path -LiteralPath $current) {
+            if ((Get-Item -LiteralPath $current -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) {
+                throw 'Refusing symlink/reparse-point path or ancestor.'
+            }
+        }
+        $parent = [IO.Path]::GetDirectoryName($current)
+        if ($parent -eq $current) { break }
+        $current = $parent
+    }
+}
 function Assert-FileTree([string]$Root) {
+    Assert-NoReparseAncestors $Root
     foreach ($entry in $RequiredFiles) {
         $path = Join-Path $Root ($entry -replace '/', '\')
+        Assert-NoReparseAncestors $path
         if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
             throw "Missing required file: $entry"
         }
@@ -81,48 +102,37 @@ function Invoke-OfficialDependency([string]$Label, [string]$PackageId) {
     & winget install --id $PackageId --exact --source winget --accept-source-agreements --accept-package-agreements
     if ($LASTEXITCODE -ne 0) { throw "$Label installation failed (winget exit $LASTEXITCODE)." }
 }
-function Obtain-Source {
+function Obtain-Source([hashtable]$Python) {
     if ($SourceDirectory) {
         $root = (Resolve-Path -LiteralPath $SourceDirectory).Path
         Assert-FileTree $root
-        Show-Step "Validated supplied local source: $root"
+        Show-Step "Reviewed local source selected by user (not a signed release): $root"
         return $root
     }
-    # Always obtain a fresh, complete, commit-pinned GitHub archive.
-    # A damaged or incomplete existing checkout is never overwritten.
-    $api = "https://api.github.com/repos/$Repo/commits/main"
-    Show-Step "Discovering current public release..."
-    $metadata = Invoke-RestMethod -Uri $api -Headers @{ 'User-Agent' = 'aka-cristi-safe-bootstrap'; 'Accept' = 'application/vnd.github+json' } -TimeoutSec 45
-    $sha = [string]$metadata.sha
-    if ($sha -notmatch '^[a-f0-9]{40}$') { throw "GitHub returned an invalid commit SHA" }
-    $rootCache = Join-Path $env:LOCALAPPDATA 'AKA.CRISTI\installer'
-    New-Item -ItemType Directory -Force -Path $rootCache | Out-Null
-    $work = Join-Path $rootCache ("download-" + [guid]::NewGuid().ToString("N"))
-    New-Item -ItemType Directory -Path $work | Out-Null
-    $zip = Join-Path $work 'source.zip'
-    $extract = Join-Path $work 'extracted'
-    $uri = "https://github.com/$Repo/archive/$sha.zip"
-    for ($attempt = 1; $attempt -le 2; $attempt++) {
-        Show-Step "Fetching full source archive from GitHub (attempt $attempt/2)..."
-        try {
-            Invoke-WebRequest -Uri $uri -OutFile $zip -UseBasicParsing -TimeoutSec 120
-            if (Test-Path -LiteralPath $extract) {
-                # This path belongs to this run; preserve any other user files.
-                Remove-Item -LiteralPath $extract -Recurse -Force
-            }
-            Expand-Archive -LiteralPath $zip -DestinationPath $extract -Force
-            $folders = @(Get-ChildItem -LiteralPath $extract -Directory)
-            if ($folders.Count -ne 1) { throw "Unexpected GitHub archive structure" }
-            $root = $folders[0].FullName
-            Assert-FileTree $root
-            Show-Step "Verified all $($RequiredFiles.Count) required project files."
-            return $root
-        } catch {
-            if ($attempt -eq 2) { throw "Source repair failed after two attempts: $($_.Exception.Message)" }
-            Show-Step "Incomplete source detected; downloading the archive again."
-        }
+    # Verification code must be the reviewed copy alongside this script, never
+    # Python imported from the downloaded ZIP. No archive code executes first.
+    $verifier = Join-Path $PSScriptRoot 'tools\verify_release.py'
+    if (-not (Test-Path -LiteralPath $verifier -PathType Leaf)) {
+        throw 'Trusted local tools/verify_release.py is required beside install.ps1. Use a reviewed checkout.'
     }
-    throw "Could not obtain verified source"
+    Assert-NoReparseAncestors $verifier
+    Assert-NoReparseAncestors (Join-Path $PSScriptRoot 'tools\__init__.py')
+    Assert-NoReparseAncestors (Join-Path $PSScriptRoot 'tools\fs_safety.py')
+    if (-not $ArchivePath -or $ExpectedCommit -notmatch '^[a-f0-9]{40}$' -or $ExpectedSha256 -notmatch '^[a-f0-9]{64}$') {
+        throw 'Verified archive requires -ArchivePath, -ExpectedCommit and -ExpectedSha256 from a trusted review.'
+    }
+    $archive = (Resolve-Path -LiteralPath $ArchivePath).Path
+    Assert-NoReparseAncestors $archive
+    $work = Join-Path ([IO.Path]::GetTempPath()) ("aka-chef-verified-" + [guid]::NewGuid().ToString("N"))
+    Assert-NoReparseAncestors ([IO.Path]::GetTempPath())
+    $isolatedLauncher = "import runpy,sys; sys.path.insert(0,sys.argv.pop(1)); runpy.run_module('tools.verify_release',run_name='__main__')"
+    $verifyArgs = @('-I', '-c', $isolatedLauncher, $PSScriptRoot, $archive, '--expected-commit', $ExpectedCommit,
+        '--expected-sha256', $ExpectedSha256, '--source-ref', $ExpectedSourceRef, '--extract-to', $work)
+    if ($ProvenanceBundle) { $verifyArgs += @('--bundle', $ProvenanceBundle) }
+    Invoke-Python $Python $verifyArgs | ForEach-Object { Write-Host $_ }
+    Assert-FileTree $work
+    Show-Step 'Archive integrity and pinned GitHub publisher provenance verified before extraction.'
+    return $work
 }
 function Invoke-Python([hashtable]$Python, [string[]]$Arguments) {
     $callArgs = @($Python.Prefix) + @($Arguments)
@@ -147,12 +157,18 @@ function Assert-SafePlan([hashtable]$Python, [string[]]$Arguments, [string[]]$Di
 try {
     if ([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT) { throw 'This bootstrap is Windows-only.' }
     Show-Step "Mode: $(if ($Apply) { 'INSTALL (current user)' } else { 'PREVIEW ONLY' })"
+    if ($SourceDirectory -and $ArchivePath) { throw 'Choose reviewed local source OR a verified archive.' }
+    if (-not $SourceDirectory -and -not $ArchivePath) {
+        throw 'Remote source bootstrap is BLOCKED until a signed candidate is available. Use -SourceDirectory for reviewed local source, or -ArchivePath with pinned digest/provenance. No download or dependency installer was run.'
+    }
+    if ($SourceDirectory) { Assert-FileTree (Resolve-Path -LiteralPath $SourceDirectory).Path }
     $python = Get-PythonExecutable
     if (-not $python) {
         if (-not $Apply) {
             Show-Step "Python 3.11+ not found. Re-run with -Apply -InstallDependencies to authorize installation."
             exit 2
         }
+        if ($ArchivePath) { throw 'Python 3.11+ must be installed separately before archive provenance verification. No dependency installer was run.' }
         Invoke-OfficialDependency "Python 3.13" "Python.Python.3.13"
         $python = Get-PythonExecutable
         if (-not $python) { throw "Python installed but not on PATH yet; open a fresh PowerShell and rerun." }
@@ -162,18 +178,10 @@ try {
             Show-Step "Codex CLI not found. You can install it using the official instructions at https://github.com/openai/codex"
             if ($Apply) { throw "Codex CLI required. Install it, then rerun." }
         } else {
-            # The official install script is downloaded for inspection/execution rather
-            # than piping an unreviewed remote script directly to iex.
-            $installer = Join-Path $env:TEMP ("codex-official-" + [guid]::NewGuid().ToString("N") + ".ps1")
-            Show-Step "Downloading official Codex CLI installer from chatgpt.com..."
-            Invoke-WebRequest -Uri 'https://chatgpt.com/codex/install.ps1' -OutFile $installer -UseBasicParsing -TimeoutSec 60
-            Show-Step "Running official Codex CLI installer (authorized by -InstallDependencies)."
-            & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $installer
-            if ($LASTEXITCODE -ne 0) { throw "Official Codex CLI installer did not succeed" }
-            Show-Step "If codex is not recognized yet, open a new terminal after installation."
+            throw 'Codex CLI missing. Automatic download/execution is BLOCKED until verified prerequisite provenance is implemented. Install Codex separately using reviewed official instructions, then retry.'
         }
     }
-    $source = Obtain-Source
+    $source = Obtain-Source $python
     Show-Step "Performing conflict checks before touching user configuration..."
     Push-Location $source
     try {
@@ -186,9 +194,11 @@ try {
         Assert-SafePlan $python $global @('conflict_modified','FAIL')
         Assert-SafePlan $python $agents @('CONFLICT_UNMANAGED','CONFLICT_MODIFIED','CONFLICT_MISSING')
         $skills = @('chef-orchestrator','verified-change-loop','feature-journey-map','skill-evaluation-gate')
+        $skillTarget = @('--target','codex')
+        if ($SkillsRoot) { $skillTarget = @('--target','directory','--root',$SkillsRoot) }
         foreach ($name in $skills) {
             # Codex skills target uses the current user's own standard directory.
-            Assert-SafePlan $python @('-m','tools.skill_installer','preview',"skills/$name",'--target','codex') @('conflict_unmanaged','conflict_modified','conflict_missing')
+            Assert-SafePlan $python (@('-m','tools.skill_installer','preview',"skills/$name") + $skillTarget) @('conflict_unmanaged','conflict_modified','conflict_missing')
         }
         if (-not $Apply) {
             Show-Step "Preview complete. Run with -Apply to install. Nothing changed."
@@ -203,7 +213,7 @@ try {
         }
         Invoke-Python $python $applyGlobal
         foreach ($name in $skills) {
-            Invoke-Python $python @('-m','tools.skill_installer','install',"skills/$name",'--target','codex','--apply')
+            Invoke-Python $python (@('-m','tools.skill_installer','install',"skills/$name",'--apply') + $skillTarget)
         }
         Invoke-Python $python $applyAgents
         Show-Step "Verifying installed files..."
@@ -215,7 +225,7 @@ try {
         }
         Invoke-Python $python $verifyGlobal
         foreach ($name in $skills) {
-            Invoke-Python $python @('-m','tools.skill_installer','verify',$name,'--target','codex')
+            Invoke-Python $python (@('-m','tools.skill_installer','verify',$name) + $skillTarget)
         }
         Invoke-Python $python $verifyAgents
         Show-Step "FILE INSTALLATION COMPLETE. Agent runtime activation: NOT_RUN."

@@ -1,0 +1,123 @@
+name: Windows GUI candidate (no release publication)
+on:
+  push:
+    branches: [feat/chef-six-gates-20261115]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows-gui:
+    # No pull_request/untrusted ref obtains a provenance signing identity.
+    if: github.repository == '2ndforcecrew/aka-cristi-skills' && github.ref == 'refs/heads/feat/chef-six-gates-20261115'
+    runs-on: windows-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.11'
+          architecture: x64
+      - name: Test real Tk controls and isolated transaction backend
+        run: |
+          python -m unittest discover -s tests -p 'test_gui*.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'GUI tests failed' }
+          python -m unittest discover -s tests -p test_install_transaction.py -v
+          if ($LASTEXITCODE -ne 0) { throw 'Transaction tests failed' }
+          python -m tools.gui_installer --smoke-test
+          if ($LASTEXITCODE -ne 0) { throw 'Actual Tk source smoke failed' }
+      - name: Build one-file windowed candidate with public-only data allowlist
+        env:
+          CHEF_SOURCE_COMMIT: ${{ github.sha }}
+        run: |
+          $env:CHEF_BUILD_METADATA_DIR = Join-Path $env:RUNNER_TEMP 'chef-gui-metadata'
+          python -m venv (Join-Path $env:RUNNER_TEMP 'chef-gui-venv')
+          if ($LASTEXITCODE -ne 0) { throw 'Build virtualenv creation failed' }
+          $buildPython = Join-Path $env:RUNNER_TEMP 'chef-gui-venv/Scripts/python.exe'
+          & $buildPython -m pip install --disable-pip-version-check --index-url https://pypi.org/simple 'PyInstaller==6.22.3'
+          if ($LASTEXITCODE -ne 0) { throw 'Pinned PyInstaller installation failed' }
+          & $buildPython -m PyInstaller --clean --noconfirm chef-gui.spec
+          if ($LASTEXITCODE -ne 0) { throw 'Standalone candidate build failed' }
+          Copy-Item (Join-Path $env:CHEF_BUILD_METADATA_DIR 'bundled-public-data.json') 'dist/bundled-public-data.json'
+      - name: Launch real standalone EXE in an empty profile without configuration writes
+        run: |
+          $sandbox = Join-Path $env:RUNNER_TEMP ('chef-exe-smoke-' + [guid]::NewGuid().ToString('N'))
+          $profile = Join-Path $sandbox 'profile'
+          $codex = Join-Path $sandbox 'codex'
+          $start = New-Object System.Diagnostics.ProcessStartInfo
+          $start.FileName = (Resolve-Path 'dist/AKA-CRISTI-CHEF-Setup.exe').Path
+          $start.Arguments = '--smoke-test'
+          $start.UseShellExecute = $false
+          $start.EnvironmentVariables['USERPROFILE'] = $profile
+          $start.EnvironmentVariables['HOME'] = $profile
+          $start.EnvironmentVariables['CODEX_HOME'] = $codex
+          $process = [System.Diagnostics.Process]::Start($start)
+          if (-not $process.WaitForExit(60000)) {
+            $process.Kill()
+            throw 'Standalone GUI smoke timed out'
+          }
+          if ($process.ExitCode -ne 0) { throw ('Standalone GUI smoke failed: ' + $process.ExitCode) }
+          if ((Test-Path $profile) -or (Test-Path $codex)) { throw 'Smoke wrote user configuration' }
+          'PASS: standalone Tk window/control defaults; no user config writes. Independent Windows 11 UAT NOT_RUN.' | Set-Content 'dist/exe-smoke-evidence.txt' -Encoding utf8
+      - name: Write SHA-256 candidate manifest
+        run: |
+          @'
+          import hashlib, json, os, platform, sys
+          from pathlib import Path
+          files = {}
+          for name in ('AKA-CRISTI-CHEF-Setup.exe', 'bundled-public-data.json', 'exe-smoke-evidence.txt'):
+              files[name] = hashlib.sha256((Path('dist') / name).read_bytes()).hexdigest()
+          manifest = {'schema_version': 1, 'source_commit': os.environ['GITHUB_SHA'], 'source_ref': os.environ['GITHUB_REF'], 'repository': os.environ['GITHUB_REPOSITORY'], 'workflow': '.github/workflows/windows-gui-candidate.yml', 'pyinstaller': '6.22.3', 'python': sys.version.split()[0], 'os': platform.platform(), 'architecture': platform.machine(), 'files': files, 'authenticode': 'NOT_SIGNED', 'independent_windows_11_uat': 'NOT_RUN', 'agent_activation': 'NOT_RUN'}
+          Path('dist/gui-candidate-manifest.json').write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding='utf-8')
+          '@ | python -
+          if ($LASTEXITCODE -ne 0) { throw 'Candidate manifest creation failed' }
+      - name: Attest candidate EXE and manifest using GitHub OIDC provenance
+        id: provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
+        with:
+          create-storage-record: false
+          subject-path: |
+            dist/AKA-CRISTI-CHEF-Setup.exe
+            dist/gui-candidate-manifest.json
+            dist/bundled-public-data.json
+            dist/exe-smoke-evidence.txt
+      - name: Preserve provenance bundle
+        env:
+          BUNDLE_PATH: ${{ steps.provenance.outputs.bundle-path }}
+        run: Copy-Item -LiteralPath $env:BUNDLE_PATH -Destination 'dist/gui-provenance.sigstore.json'
+      - name: Verify exact GitHub publisher workflow, source commit and reference
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Drain all native stdout; Select-Object -First can break gh's pipe on Windows.
+          $versionLines = & gh --version
+          $versionExit = $LASTEXITCODE
+          $version = $versionLines -join [Environment]::NewLine
+          if ($versionExit -ne 0 -or $version -notmatch 'gh version (\d+)\.(\d+)\.(\d+)') { throw 'GitHub CLI version unavailable' }
+          if ([version]::new([int]$Matches[1], [int]$Matches[2], [int]$Matches[3]) -lt [version]'2.102.0') { throw 'GitHub CLI 2.102.0+ required' }
+          $manifest = Get-Content 'dist/gui-candidate-manifest.json' -Raw | ConvertFrom-Json
+          foreach ($name in @('AKA-CRISTI-CHEF-Setup.exe', 'bundled-public-data.json', 'exe-smoke-evidence.txt')) {
+            $expected = $manifest.files.PSObject.Properties[$name].Value
+            if ((Get-FileHash -LiteralPath (Join-Path 'dist' $name) -Algorithm SHA256).Hash.ToLowerInvariant() -ne $expected) { throw 'Candidate SHA-256 mismatch' }
+          }
+          foreach ($name in @('AKA-CRISTI-CHEF-Setup.exe', 'gui-candidate-manifest.json', 'bundled-public-data.json', 'exe-smoke-evidence.txt')) {
+            & gh attestation verify (Join-Path 'dist' $name) --bundle 'dist/gui-provenance.sigstore.json' --repo '2ndforcecrew/aka-cristi-skills' --signer-workflow '2ndforcecrew/aka-cristi-skills/.github/workflows/windows-gui-candidate.yml' --signer-digest $env:GITHUB_SHA --source-digest $env:GITHUB_SHA --source-ref $env:GITHUB_REF --predicate-type 'https://slsa.dev/provenance/v1'
+            if ($LASTEXITCODE -ne 0) { throw 'Exact-identity candidate provenance verification failed' }
+          }
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: windows-gui-candidate-${{ github.sha }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Record candidate scope
+        run: |
+          'Built/smoke-tested Windows EXE with GitHub OIDC provenance. No Authenticode certificate, no published release, no production deployment. Independent clean Windows 11 user acceptance and actual host activation remain NOT_RUN.' >> $env:GITHUB_STEP_SUMMARY

@@ -13,11 +13,25 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.11'
-      - run: python -m unittest discover -s tests -v
+      - name: Python regression suite (synthetic machinery, not live host acceptance)
+        shell: bash
+        run: |
+          set -o pipefail
+          python -m unittest discover -s tests -v 2>&1 | tee test-results.txt
+      - name: Compile Python modules
+        run: python -m compileall -q tools tests
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: regression-${{ matrix.os }}
+          path: test-results.txt
+          retention-days: 30
 
       - name: Windows friend bootstrap parse, preview and sandbox install
         if: matrix.os == 'windows-latest'
@@ -28,17 +42,26 @@ jobs:
           [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path '.\\install.ps1').Path, [ref]$tokens, [ref]$syntaxErrors) | Out-Null
           if ($syntaxErrors.Count -gt 0) { $syntaxErrors | Out-String | Write-Error; exit 1 }
           $sandbox = Join-Path $env:RUNNER_TEMP 'aka-chef-test-codex'
-          & .\\install.ps1 -SourceDirectory . -CodexHome $sandbox -SkipCodexCheck
-          if ($LASTEXITCODE -ne 0 -or (Test-Path $sandbox)) { throw 'Bootstrap preview changed files or failed' }
-          & .\\install.ps1 -SourceDirectory . -CodexHome $sandbox -SkipCodexCheck -Apply
+          $skillsRoot = Join-Path $env:RUNNER_TEMP 'aka-chef-test-skills'
+          & .\\install.ps1 -SourceDirectory . -CodexHome $sandbox -SkillsRoot $skillsRoot -SkipCodexCheck
+          if ($LASTEXITCODE -ne 0 -or (Test-Path $sandbox) -or (Test-Path $skillsRoot)) { throw 'Bootstrap preview changed files or failed' }
+          & .\\install.ps1 -SourceDirectory . -CodexHome $sandbox -SkillsRoot $skillsRoot -SkipCodexCheck -Apply
           if ($LASTEXITCODE -ne 0) { throw 'Bootstrap install failed' }
-          & .\\install.ps1 -SourceDirectory . -CodexHome $sandbox -SkipCodexCheck -Apply
+          & .\\install.ps1 -SourceDirectory . -CodexHome $sandbox -SkillsRoot $skillsRoot -SkipCodexCheck -Apply
           if ($LASTEXITCODE -ne 0) { throw 'Bootstrap second install not idempotent' }
-          # Test the actual no-Git self-healing path over GitHub HTTPS.
-          # Preview only: do not modify the user environment.
+          # Unauthenticated remote code must fail closed, even in preview mode.
           & .\\install.ps1 -SkipCodexCheck
-          if ($LASTEXITCODE -ne 0) { throw 'GitHub ZIP bootstrap fetch/repair preview failed' }
+          if ($LASTEXITCODE -eq 0) { throw 'Missing provenance unexpectedly allowed remote source' }
+          # The rejection above is expected; pwsh propagates the last native exit code.
+          $global:LASTEXITCODE = 0
           if (-not (Test-Path (Join-Path $sandbox 'AGENTS.md'))) { throw 'Global rules missing' }
           foreach ($role in @('research', 'coding', 'qa', 'automation')) {
             if (-not (Test-Path (Join-Path $sandbox ("agents/" + $role + ".toml")))) { throw "Missing role: $role" }
           }
+
+      - name: Real Tk widget smoke on Linux virtual display
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y xvfb python3-tk
+          xvfb-run -a python -m unittest discover -s tests -p 'test_gui*.py' -v

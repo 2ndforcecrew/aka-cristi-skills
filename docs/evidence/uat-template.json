@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "source_sha": null,
+  "description": "Empty evidence index. Replace null only with the exact tested source commit. Add reviewed sanitized attachments with their SHA-256; do not claim these placeholders are test results.",
+  "gates": {
+    "8": {"evidence_kind": "NOT_RUN", "path": null, "sha256": null, "blocker": "Original scanner report, version, mode and all 24 finding reviews unavailable"},
+    "9": {"evidence_kind": "NOT_RUN", "path": null, "sha256": null, "blocker": "Real release candidate provenance and installer verification acceptance missing"},
+    "10": {"evidence_kind": "NOT_RUN", "path": null, "sha256": null, "blocker": "Clean Windows 11 standard-user GUI acceptance missing"},
+    "11": {"evidence_kind": "NOT_RUN", "path": null, "sha256": null, "blocker": "Real non-Codex host invocation evidence missing"},
+    "12": {"evidence_kind": "NOT_RUN", "path": null, "sha256": null, "blocker": "Independent external tester per supported platform missing"},
+    "13": {"evidence_kind": "NOT_RUN", "path": null, "sha256": null, "blocker": "Four named Codex role parent/child completion evidence missing"}
+  }
+}

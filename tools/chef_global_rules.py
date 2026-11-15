@@ -7,6 +7,7 @@ import shutil
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
+from tools.fs_safety import checked_path
 
 START = "<!-- AKA.CRISTI CHEF GLOBAL START v1 -->"
 END = "<!-- AKA.CRISTI CHEF GLOBAL END v1 -->"
@@ -19,15 +20,13 @@ class GlobalRulesError(ValueError):
 def destination(home=None):
     if home is None:
         home = os.environ.get("CODEX_HOME") or str(Path.home() / ".codex")
-    folder = Path(home).expanduser().absolute()
+    folder = checked_path(home, GlobalRulesError)
     dest = folder / "AGENTS.md"
-    if dest.is_symlink():
-        raise GlobalRulesError("refusing symlink AGENTS.md")
-    return dest
+    return checked_path(dest, GlobalRulesError)
 
 
 def managed_block(template):
-    raw = Path(template).read_text(encoding="utf-8")
+    raw = checked_path(template, GlobalRulesError).read_text(encoding="utf-8")
     if not raw.strip() or START in raw or END in raw:
         raise GlobalRulesError("invalid template")
     return START + "\n" + raw.rstrip() + "\n" + END
@@ -39,8 +38,20 @@ def read_old(path):
     if path.is_symlink():
         raise GlobalRulesError("refusing symlink AGENTS.md")
     if path.exists():
-        return path.read_text(encoding="utf-8")
+        with path.open("r", encoding="utf-8", newline="") as handle:
+            return handle.read()
     return ""
+
+
+def append_block(old, block):
+    """Append owned text while preserving every existing UTF-8 byte as a prefix."""
+    separator = ("\n" if old.endswith(("\n", "\r")) else "\n\n") if old else ""
+    return old + separator + block + "\n"
+
+
+def same_block(existing, expected):
+    # Match the old universal-newline comparison without rewriting user bytes.
+    return existing.replace("\r\n", "\n") == expected.replace("\r\n", "\n")
 
 
 def locate(old):
@@ -63,15 +74,15 @@ def plan(action, template, home=None):
     if action == "install":
         if span:
             existing = old[span[0]:span[1]]
-            state = "already_installed" if existing == block else "conflict_modified"
+            state = "already_installed" if same_block(existing, block) else "conflict_modified"
         else:
             state = "append" if old else "create"
     elif action == "verify":
-        state = ("PASS" if span and old[span[0]:span[1]] == block else
+        state = ("PASS" if span and same_block(old[span[0]:span[1]], block) else
                  "FAIL" if span else "NOT_INSTALLED")
     elif action == "uninstall":
         state = "NOT_INSTALLED" if not span else (
-            "remove_managed_block" if old[span[0]:span[1]] == block
+            "remove_managed_block" if same_block(old[span[0]:span[1]], block)
             else "conflict_modified")
     else:
         raise GlobalRulesError("unsupported action")
@@ -81,6 +92,7 @@ def plan(action, template, home=None):
 
 
 def write_atomic(path, text):
+    checked_path(path, GlobalRulesError)
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp = tempfile.mkstemp(prefix=".aka-chef-", dir=path.parent)
     try:
@@ -106,13 +118,13 @@ def apply(action, template, home=None, confirmed=False):
     block = managed_block(template)
     if action == "install":
         # Do not alter a pre-existing project/user policy; append a clearly owned section.
-        new = old.rstrip("\n") + ("\n\n" if old.strip() else "") + block + "\n"
+        new = append_block(old, block)
     else:
         new = old[:span[0]] + old[span[1]:]
         new = new.rstrip("\n") + "\n" if new.strip() else ""
     backup = None
     if path.exists():
-        backup_folder = path.parent / ".aka-chef-backups"
+        backup_folder = checked_path(path.parent / ".aka-chef-backups", GlobalRulesError)
         backup_folder.mkdir(exist_ok=True)
         stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
         backup = backup_folder / ("AGENTS-" + stamp + "-" + os.urandom(4).hex() + ".md")

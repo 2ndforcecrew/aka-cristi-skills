@@ -12,24 +12,27 @@ AKA.CRISTI Skills 是一套公开、可审查、可在本地安装的 **AI Agent
 
 本仓库是公开发行版，与 AKA.CRISTI 的私有开发仓库分离；不会发布私有工作规则、账号信息、客户数据、私有历史记录。
 
-## Windows 朋友安装：自动补齐缺失文件（推荐）
+## 六项开发候选：尚未通过发布门禁
 
-不用先下载 Git，也不需要自己查找 `tools` 文件夹。新版 `install.ps1` 会从本仓库获取**完整、固定 Git commit 的 ZIP 源码包**，逐一检查 CHEF 规则、4 个 Skills、4 个 Agent TOML 和工具脚本是否齐全。若 ZIP 不完整，自动重试下载一次；不会覆盖电脑里已有的旧项目或私人文件。
+Issues #8–#13 仍需真实验收，**本分支不是已批准的正式版本，也不是安全安装建议**。原始“67 分、24 项”扫描报告缺失；本次固定基线重新执行 SkillSpector 2.12.0 `--no-llm`，得到 **56 分、23 项、DO_NOT_INSTALL**，两者不能混为一次扫描。详见[安全复核](docs/SECURITY_REVIEW_2026-11-15.md)。
 
-从 [GitHub 公开仓库](https://github.com/2ndforcecrew/aka-cristi-skills) 阅读 `install.ps1` 后，在**普通 Windows PowerShell** 中逐行执行：
+旧版自动获取 main ZIP 的 bootstrap 已改为默认阻塞。固定 commit 的下载不等于验签；远程来源必须先用独立确认的 commit、SHA256、工作流身份与 provenance 验证。不会自动执行未验签的 Codex 安装脚本。前置依赖和来源审查仍需完成。
+
+已有 Python 3.11+、审查过完整本地源码后，可在候选分支测试真实图形窗口：
 
 ```powershell
-Invoke-WebRequest 'https://raw.githubusercontent.com/2ndforcecrew/aka-cristi-skills/main/install.ps1' -OutFile "$env:TEMP\aka-chef-install.ps1"
-powershell -NoProfile -ExecutionPolicy Bypass -File "$env:TEMP\aka-chef-install.ps1" -Apply -InstallDependencies
+python -m tools.gui_installer
 ```
 
-`-Apply` 表示用户允许安装到自己的用户级 Codex 配置目录；`-InstallDependencies` 表示用户同意在缺少 Python 或 Codex CLI 时从官方安装源安装依赖。**系统应用安装可能弹出 Windows 权限提示**，Codex 登录仍须用户自行完成。第一次安装前也可去掉两个选项先预览（需要已有 Python 才能完整预览）。
+本地源码可双击 `start-gui.cmd`。另新增 [Windows 独立 EXE 候选构建](.github/workflows/windows-gui-candidate.yml)，仅打包 9 个公开数据文件，并进行真实控件/EXE 启动测试及 GitHub 来源验签；不包含 Authenticode 证书。界面提供差异预览、同意勾选、进度、文件校验及受保护撤销；缺依赖自动安装、干净 Windows 11 与朋友首次安装验收仍为 BLOCKED。安装文件成功始终与真实 Agent 激活分开。
 
-安装后工具会验证全局 `AGENTS.md`、4 个 Skills、4 个 Subagents 的文件完整性，并将 Agent 实际启动记录为 `NOT_RUN`，而非虚报运行通过。遇到私人已修改文件或非安装器托管的同名文件会安全停止，而不是悄悄覆盖。损坏的下载副本重新获取，失败会提示原因；不是无条件修改任意用户项目。
+- [Windows GUI 与恢复](docs/WINDOWS_GUI.md)
+- [签名候选、身份固定与验签](docs/RELEASE_VERIFICATION.md)
+- [Codex / Claude / Hermes / ChatGPT 能力矩阵](docs/HOST_CAPABILITY_MATRIX.md)
+- [独立外部用户验收计划](docs/EXTERNAL_UAT.md)
+- [严格四角色线程关联](docs/FOUR_AGENT_EVIDENCE_V03.md)
 
-**适用范围：** Windows 11 PowerShell，一键安装的是本机公开 CHEF 规则和 Skills，不包含私有记忆、账号授权或未经验证的跨厂商 Agent API。真实四 Agent 协作仍需另行验收。
-
----
+Claude 目前只实现项目级 Skill 文件适配，真实调用 NOT_RUN；Hermes/ChatGPT BLOCKED。云端实际尝试过一次 Codex 调用，退出码 1，未取得可归属线程，不能宣布四角色通过。
 
 ## 一、核心功能
 
@@ -92,7 +95,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$env:TEMP\aka-chef-install.
 - 拒绝覆盖不归安装器管理或已被外部改动的 Skill。
 - 不从网络自行下载代码、不执行 Skill 内部脚本、不主动上传密钥。
 - 卸载时保留归档；回滚依赖此前确实存在的备份。
-- 这不是病毒扫描器或数字签名校验，也**不是一键 GUI 安装程序**。
+- 这不是病毒扫描器或数字签名校验，现有 CLI 不等于一键 GUI；候选图形界面仍需真实环境验收。
 
 ## 二、朋友如何安装（Windows 11 / macOS / Linux）
 

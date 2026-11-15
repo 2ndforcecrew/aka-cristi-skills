@@ -8,7 +8,7 @@ import json
 import os
 from pathlib import Path
 
-from tools.verify_four_agents import ROLES, json_lines, rooted_sessions, parse_spawn_calls
+from tools.verify_four_agents import ROLES, json_lines, rooted_sessions, parse_spawn_calls, evaluate
 
 def classify_call(item):
     if item.get("type") != "function_call":
@@ -69,6 +69,11 @@ def diagnostic(home, root_thread):
                         argument_shapes[key] += 1
     result["agent_tool_calls"] = dict(counters)
     result["spawn_role_argument_fields"] = dict(argument_shapes)
+    assessment = evaluate([], home, 0, root_thread, 0, True)
+    result["role_stages"] = assessment["role_stages"]
+    # This is offline evidence classification, not a newly invoked live test.
+    result["evidence_class"] = "OFFLINE_LOCAL_ROLLOUT"
+    result["parent_child_status"] = assessment["status"]
     verified_candidates = parse_spawn_calls(records)
     result["named_role_spawn_outputs"] = sorted(verified_candidates)
     # Inspect only whether recent child rollouts exist and their sanitized metadata structure.
