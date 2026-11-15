@@ -100,8 +100,8 @@ class FourAgentEvidenceTests(unittest.TestCase):
     def test_utf8_jsonl_bytes_and_invalid_ansi_data_do_not_crash(self):
         event = {"type": "thread.started", "thread_id": str(uuid.uuid4()),
                  "note": "中文UTF-8"}
-        payload = (json.dumps(event, ensure_ascii=False) + "\\n").encode("utf-8")
-        records = json_lines(payload + b"invalid:\\xff\\n")
+        payload = (json.dumps(event, ensure_ascii=False) + "\n").encode("utf-8")
+        records = json_lines(payload + b"invalid:\xff\n")
         self.assertEqual(records, [event])
         self.assertIn("中文UTF-8", decode_output(payload))
         self.assertEqual(json_lines(None), [])
@@ -117,14 +117,14 @@ class FourAgentEvidenceTests(unittest.TestCase):
                 (agents / (role + ".toml")).write_bytes(
                     (root / "agents" / (role + ".toml")).read_bytes())
             events = (json.dumps({"type": "thread.started",
-                                  "thread_id": str(uuid.uuid4())}) + "\\n" +
-                      json.dumps({"type": "turn.completed"}) + "\\n").encode("utf-8")
+                                  "thread_id": str(uuid.uuid4())}) + "\n" +
+                      json.dumps({"type": "turn.completed"}) + "\n").encode("utf-8")
             calls = [
                 SimpleNamespace(returncode=0, stdout=b"", stderr=b""),
-                SimpleNamespace(returncode=0, stdout=events + b"\\xff",
-                                stderr=b"\\xff"),
+                SimpleNamespace(returncode=0, stdout=events + b"\xff",
+                                stderr=b"\xff"),
             ]
-            with patch("tools.verify_four_agents.shutil.which", return_value="codex.exe"), \\
+            with patch("tools.verify_four_agents.shutil.which", return_value="codex.exe"), \
                  patch("tools.verify_four_agents.subprocess.run", side_effect=calls):
                 result = run(codex_home=home)
             self.assertEqual(result["status"], "INCONCLUSIVE")
