@@ -67,3 +67,14 @@ Tests cover preview, installation, upgrade, rollback, uninstall, conflicts and s
 ## Roadmap
 
 Cross-platform host adapters, UX-friendly installation, package signing, reproducible releases, external user acceptance tests, and security review are planned, not delivered.
+
+## Verify actual Codex Agent activation
+
+Installing a Skill only verifies files were copied. To **prove one real Agent call**, run the isolated, read-only Codex activation test on a machine where Codex CLI is installed and signed in:
+
+```powershell
+codex login status
+python -m tools.verify_codex_activation --skill verified-change-loop --out agent-activation-report.json
+```
+
+See [Real Agent Activation Verification](docs/AGENT_ACTIVATION_VERIFICATION.md) for the evaluation contract, other Skill names, and limitations. GitHub Actions only tests the verification machinery with synthetic traces; **it cannot verify a real Codex call without authorized Codex runtime access**. Live activation is NOT_RUN until separately observed.
