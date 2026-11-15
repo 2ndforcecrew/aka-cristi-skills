@@ -1,5 +1,11 @@
 # AKA.CRISTI Skills
 
+## Personal AI Workspace — development branch
+
+New functional candidate: first-run GitHub device authorization, own private repository setup, manual Codex pull with preview/backups/conflict protection, and a real Tk Sync Center. GitHub operations are tested with mocks only; no real repository was created. ChatGPT connection remains independent and unverified. Requires a registered public OAuth client ID and native keyring; no plaintext fallback.
+
+[Setup and limitations](docs/PERSONAL_AI_WORKSPACE.md) · [Roadmap](ROADMAP.md) · [Growth progress draft](docs/GROWTH_PERSONAL_WORKSPACE_2026-11-16.md). No merge, Release or production deployment is authorized by this feature branch.
+
 🌐 **Language / 语言：** [English](README.md) · [简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Français](README.fr.md)
 
 **FROM EXPERIENCE TO CAPABILITY.**

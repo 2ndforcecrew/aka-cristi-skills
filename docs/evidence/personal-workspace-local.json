@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "feature": "Personal AI Workspace",
+  "source_base": "757eab9f677c2072a097d40f36f1e702e6c22c72",
+  "branch": "feat/personal-ai-workspace-20261116",
+  "checked_at": "2026-11-15T19:15:33.689382+00:00",
+  "environment": {
+    "os": "Linux",
+    "python": "3.12.14",
+    "display_available": false
+  },
+  "unittest": {
+    "run": 212,
+    "passed": 196,
+    "failed": [],
+    "errors": [],
+    "skipped": [
+      {
+        "test": "test_filesystem_security.WindowsJunctionTests.test_skill_package_refuses_nested_junction",
+        "reason": "Actual Windows junction filesystem test"
+      },
+      {
+        "test": "test_gui_installer.GuiTests.test_real_window_preview_and_consent_controls",
+        "reason": "No graphical display"
+      },
+      {
+        "test": "test_release.ReleaseTests.test_actual_windows_junction_refused_for_all_release_paths",
+        "reason": "Actual Windows junction test"
+      },
+      {
+        "test": "test_workspace_gui.WorkspaceGuiTests.test_cancel_enabled_only_for_authorization",
+        "reason": "No graphical display"
+      },
+      {
+        "test": "test_workspace_gui.WorkspaceGuiTests.test_challenge_stays_busy_and_is_not_logged",
+        "reason": "No graphical display"
+      },
+      {
+        "test": "test_workspace_gui.WorkspaceGuiTests.test_close_while_busy_requests_cancel",
+        "reason": "No graphical display"
+      },
+      {
+        "test": "test_workspace_gui.WorkspaceGuiTests.test_disconnect_button_requires_confirmation_and_refreshes_account",
+        "reason": "No graphical display"
+      },
+      {
+        "test": "test_workspace_gui.WorkspaceGuiTests.test_failed_sync_reports_recovery_status",
+        "reason": "No graphical display"
+      },
+      {
+        "test": "test_workspace_gui.WorkspaceGuiTests.test_installer_close_waits_for_workspace",
+        "reason": "No graphical display"
+      },
+      {
+        "test": "test_workspace_gui.WorkspaceGuiTests.test_installer_constructor_readonly_and_explicit_first_run",
+        "reason": "No graphical display"
+      },
+      {
+        "test": "test_workspace_gui.WorkspaceGuiTests.test_preview_and_backup_restore",
+        "reason": "No graphical display"
+      },
+      {
+        "test": "test_workspace_gui.WorkspaceGuiTests.test_public_oauth_configuration_and_input_snapshot",
+        "reason": "No graphical display"
+      },
+      {
+        "test": "test_workspace_gui.WorkspaceGuiTests.test_repository_collision_requires_explicit_reuse",
+        "reason": "No graphical display"
+      },
+      {
+        "test": "test_workspace_gui.WorkspaceGuiTests.test_widgets_and_github_never_claim_chatgpt_connected",
+        "reason": "No graphical display"
+      },
+      {
+        "test": "test_workspace_gui.WorkspaceGuiTests.test_worker_disables_controls_and_redacts_exceptions",
+        "reason": "No graphical display"
+      },
+      {
+        "test": "test_workspace_gui.WorkspaceGuiTests.test_write_confirmations_and_snapshot",
+        "reason": "No graphical display"
+      }
+    ]
+  },
+  "evidence_scope": {
+    "github_auth": "MOCK_ONLY",
+    "github_repository_creation": "MOCK_ONLY_NO_REAL_REPOSITORIES_CREATED",
+    "codex_sync": "REAL_TEMPORARY_FILESYSTEM_WITH_MOCK_REMOTE",
+    "chatgpt_connection": "NOT_CONNECTED_OR_PENDING_NO_TRUSTED_CALLBACK",
+    "windows_11_standard_user": "BLOCKED_NOT_RUN",
+    "oauth_app_registration": "NOT_PERFORMED_PUBLIC_CLIENT_ID_REQUIRED",
+    "production_deployment": "NOT_PERFORMED",
+    "merge_main": "NOT_PERFORMED"
+  },
+  "review_fixes": [
+    "HTTPS adapter integration",
+    "revoked credential reauthorization and CLI code display",
+    "advisory lock crash recovery",
+    "stale settings write rejection",
+    "shared destination locks across profiles",
+    "immutable receipt and recoverable commit failure",
+    "bounded receipt retention",
+    "explicit checkpoint restore after interruption",
+    "no private central repo access"
+  ],
+  "checks": {
+    "ruff": "Run separately on workspace code/tests and modified installer",
+    "mypy": "--check-untyped-defs on six workspace source files",
+    "compileall": "tools tests",
+    "ci": "Pending feature Draft PR; links recorded in PR body"
+  }
+}

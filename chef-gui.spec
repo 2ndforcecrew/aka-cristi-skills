@@ -35,7 +35,9 @@ datas.append((str(manifest), '.'))
 a = Analysis(
     [str(root / 'tools' / 'gui_installer.py')],
     pathex=[str(root)], binaries=[], datas=datas,
-    hiddenimports=['tkinter', 'tkinter.ttk', 'tkinter.filedialog', 'tkinter.messagebox'],
+    hiddenimports=['tkinter', 'tkinter.ttk', 'tkinter.filedialog', 'tkinter.messagebox',
+                   'keyring', 'keyring.backends.Windows' if sys.platform == 'win32' else
+                   'keyring.backends.macOS' if sys.platform == 'darwin' else 'keyring.backends.SecretService'],
     hookspath=[], hooksconfig={}, runtime_hooks=[], excludes=[], noarchive=False,
 )
 pyz = PYZ(a.pure)

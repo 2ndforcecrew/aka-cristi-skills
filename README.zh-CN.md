@@ -1,5 +1,11 @@
 # AKA.CRISTI Skills — 中文功能说明
 
+## Personal AI Workspace｜开发候选功能
+
+新增真实 GitHub 设置向导、自己的私人仓库、Codex 手动拉取与 Sync Center，提供预览、备份、冲突拒绝及恢复。默认 `my-agent-workspace / private / manual`，不自动 Push。仓库创建仅经过 Mock 测试，本轮没有创建真实仓库。需要维护者提供已注册 OAuth 公开 Client ID 与本机系统凭据库；ChatGPT 授权独立且仍待真实验证。
+
+[安装与能力边界](docs/PERSONAL_AI_WORKSPACE.md) · [开发路线](ROADMAP.md) · [成长记录草稿](docs/GROWTH_PERSONAL_WORKSPACE_2026-11-16.md)。本分支不合并 main、不发布 Release、不部署成长网站。
+
 🌐 **Language / 语言：** [English](README.md) · [简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Français](README.fr.md)
 
 **FROM EXPERIENCE TO CAPABILITY｜将协作经验变成可复用能力**

@@ -8,3 +8,10 @@ __pycache__/
 four-agent-report.json
 agent-activation-report.json
 .codex/
+
+# Local workspace state/backups and build/lint caches never belong in Git.
+.aka-personal-workspace/
+.mypy_cache/
+.ruff_cache/
+build/
+dist/

@@ -1,0 +1,2 @@
+# Optional Personal AI Workspace runtime; native backend only, no plaintext fallback.
+keyring==25.7.0
