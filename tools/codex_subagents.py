@@ -12,6 +12,7 @@ import shutil
 import tempfile
 import uuid
 from pathlib import Path
+from tools.fs_safety import checked_path
 
 ROLE_NAMES = ("research", "coding", "qa", "automation")
 STATE = ".aka-chef-subagents"
@@ -27,9 +28,7 @@ def home_path(home=None):
 
 
 def safe(path):
-    p = Path(path)
-    if p.is_symlink():
-        raise AgentInstallError("symlink is forbidden: " + p.name)
+    p = checked_path(path, AgentInstallError)
     if p.exists() and not p.is_file() and not p.is_dir():
         raise AgentInstallError("unsupported filesystem entry")
     return p

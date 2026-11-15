@@ -18,18 +18,21 @@ A curated public collection of reusable agent workflows and a safe, local-only S
 
 These are methodology Skills, not third-party licensed packages. Some methods were adapted from user-supplied verification-engineering fieldnotes attributed to Lauren Tan; that attribution was not independently confirmed, and these are **not official third-party Skills**.
 
-## Easy Windows installation (automatic source repair)
+## Development candidate: six gates remain blocked
 
-For nontechnical Windows users, the new [`install.ps1`](install.ps1) bootstrap obtains a fresh **commit-pinned, complete GitHub ZIP** without requiring Git, validates all required project files, and installs the public CHEF global rules, four Skills and four native Codex roles. An incomplete archive is downloaded again; **existing user projects are not overwritten**.
+This branch advances Issues #8–#13. **It is not an approved release or an installation recommendation.** The original external 24-finding report is missing. A new exact-baseline SkillSpector 2.12.0 `--no-llm` scan returned **56 / DO_NOT_INSTALL / 23 findings**; these are separate observations. [Security review](docs/SECURITY_REVIEW_2026-11-15.md).
 
-Review the public script first, then run these commands in Windows PowerShell:
+Default unauthenticated remote bootstrap is now blocked. A commit-pinned GitHub ZIP is not a verified signature. The PowerShell alternative accepts reviewed local source or an archive with independently pinned digest/commit and verified GitHub provenance. Unverified Codex installer scripts are never automatically executed.
 
-```powershell
-Invoke-WebRequest 'https://raw.githubusercontent.com/2ndforcecrew/aka-cristi-skills/main/install.ps1' -OutFile "$env:TEMP\aka-chef-install.ps1"
-powershell -NoProfile -ExecutionPolicy Bypass -File "$env:TEMP\aka-chef-install.ps1" -Apply -InstallDependencies
+For development in a reviewed local checkout with Python 3.11+, the real Tk graphical window can be opened with:
+
+```sh
+python -m tools.gui_installer
 ```
 
-The flags explicitly authorize current-user config changes and official prerequisite installs (Python or Codex CLI if missing). An existing unmanaged/edited same-name Skill or role is **not** silently replaced. User login, private credentials and real agent activation remain separate. Review [Chinese instructions](README.zh-CN.md) for the full workflow.
+Windows also has `start-gui.cmd`. This is a Python GUI launcher, **not a standalone signed EXE**. It shows a diff and explicit consent, backs up changes, verifies files, and supports guarded rollback. Dependency auto-install and clean Windows 11 external UAT remain BLOCKED. [GUI limitations](docs/WINDOWS_GUI.md).
+
+Read [release verification](docs/RELEASE_VERIFICATION.md), [host capability matrix](docs/HOST_CAPABILITY_MATRIX.md), [external UAT](docs/EXTERNAL_UAT.md), and [strict runtime evidence](docs/FOUR_AGENT_EVIDENCE_V03.md). Claude support is currently project-scoped file installation only; Hermes/ChatGPT are BLOCKED. One actual cloud Codex attempt exited 1 without attributable threads; it did **not** pass four-role acceptance.
 
 ## Install on Codex (Windows 11, macOS, Linux)
 
@@ -71,7 +74,7 @@ python -m tools.skill_installer uninstall verified-change-loop --target codex --
 - Package validation rejects symlink entries and invalid frontmatter. This is **not a malware scanner, digital signature, or complete security review**; inspect Skills before installing.
 - Current supported adapter: Codex user-scoped Agent Skills; custom folders are supported for sandbox tests. **Hermes, Claude, ChatGPT Plugins, other agent hosts and fully automatic activation are NOT verified.**
 - Preview before applying, and do not run on untrusted sources.
-- This initial release is CLI-based, **not a one-click graphical installer**.
+- The established installer remains CLI-based; the development Tk GUI is not a standalone packaged installer and has no clean Windows 11 UAT yet.
 
 ## Validation
 

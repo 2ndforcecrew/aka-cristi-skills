@@ -37,5 +37,24 @@ class FourAgentDiagnosticTests(unittest.TestCase):
         self.assertNotIn(secret, json.dumps(result))
         self.assertEqual(result["named_role_spawn_outputs"], [])
 
+    def test_stage_diagnostic_exposes_no_raw_argument_or_output(self):
+        root = str(uuid.uuid4())
+        child = str(uuid.uuid4())
+        with tempfile.TemporaryDirectory() as d:
+            home = Path(d)
+            folder = home / "sessions"
+            folder.mkdir()
+            secret = "PRIVATE_REPORT_SENTINEL"
+            records = [
+                {"type": "session_meta", "payload": {"id": root}},
+                {"type": "response_item", "payload": {"type": "function_call", "name": "spawn_agent", "call_id": "x", "arguments": json.dumps({"agent_type": "aka_research", "message": secret})}},
+                {"type": "response_item", "payload": {"type": "function_call_output", "call_id": "x", "output": json.dumps({"agent_id": child, "nickname": secret})}},
+            ]
+            (folder / ("rollout-" + root + ".jsonl")).write_text("\n".join(json.dumps(x) for x in records), encoding="utf-8")
+            result = diagnostic(home, root)
+        self.assertTrue(result["role_stages"]["aka_research"]["SPAWN_SUCCESS"])
+        self.assertFalse(result["role_stages"]["aka_research"]["ROLE_PASS"])
+        self.assertNotIn(secret, json.dumps(result))
+
 if __name__ == "__main__":
     unittest.main()

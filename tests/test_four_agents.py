@@ -1,6 +1,7 @@
 """Contract tests: synthetic traces are NOT counted as real Codex invocations."""
 import json
 import tempfile
+import time
 import unittest
 import uuid
 from pathlib import Path
@@ -120,6 +121,7 @@ class FourAgentEvidenceTests(unittest.TestCase):
                                   "thread_id": str(uuid.uuid4())}) + "\n" +
                       json.dumps({"type": "turn.completed"}) + "\n").encode("utf-8")
             calls = [
+                SimpleNamespace(returncode=0, stdout=b"codex-cli 0.167.0-alpha.4", stderr=b""),
                 SimpleNamespace(returncode=0, stdout=b"", stderr=b""),
                 SimpleNamespace(returncode=0, stdout=events + b"\xff",
                                 stderr=b"\xff"),
@@ -131,6 +133,156 @@ class FourAgentEvidenceTests(unittest.TestCase):
             self.assertTrue(result["invoked"])
             self.assertTrue(result["agent_completion_observed"])
 
+
+
+class StrictCorrelationTests(unittest.TestCase):
+    """All sessions in this class are SYNTHETIC protocol fixtures."""
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.home = Path(self.temp.name)
+        (self.home / 'sessions').mkdir()
+        self.root = str(uuid.uuid4())
+        self.children = {role: str(uuid.uuid4()) for role in ROLES}
+
+    def write(self, tid, records):
+        p = self.home / 'sessions' / ('rollout-' + tid + '.jsonl')
+        p.write_text('\n'.join(json.dumps(x) for x in records), encoding='utf-8')
+        return p
+
+    def root_records(self):
+        result = [{'type': 'session_meta', 'payload': {'id': self.root}}]
+        for i, role in enumerate(ROLES):
+            result += [
+                {'type': 'response_item', 'payload': {'type': 'function_call',
+                 'name': 'spawn_agent', 'call_id': str(i),
+                 'arguments': json.dumps({'agent_type': role})}},
+                {'type': 'response_item', 'payload': {'type': 'function_call_output',
+                 'call_id': str(i), 'output': json.dumps({'agent_id': self.children[role]})}}]
+        return result
+
+    def child_records(self, role):
+        return [
+            {'type': 'session_meta', 'payload': {'id': self.children[role],
+             'timestamp': '2026-11-15T12:00:00Z',
+             'source': {'subagent': {'thread_spawn': {
+                 'parent_thread_id': self.root, 'agent_role': role, 'depth': 1}}}}},
+            {'type': 'response_item', 'payload': {'type': 'message',
+             'role': 'assistant', 'content': [{'type': 'output_text', 'text': 'Synthetic reply'}]}},
+            {'type': 'event_msg', 'payload': {'type': 'task_complete',
+             'turn_id': 'synthetic-turn', 'last_agent_message': 'Synthetic reply'}}]
+
+    def assess(self, mutate=None, root_mutate=None):
+        roots = self.root_records()
+        if root_mutate:
+            root_mutate(roots)
+        self.write(self.root, roots)
+        for role in ROLES:
+            records = self.child_records(role)
+            if mutate and role == ROLES[0]:
+                mutate(records)
+            self.write(self.children[role], records)
+        return evaluate([], self.home, 0, self.root, 0, True)
+
+    def test_complete_structured_correlation_passes_synthetic_contract(self):
+        result = self.assess()
+        self.assertEqual(result['status'], 'PASS')
+        self.assertEqual(result['role_stages'][ROLES[0]]['ROLE_PASS'], True)
+
+    def test_unrelated_parent_never_passes(self):
+        result = self.assess(lambda r: r[0]['payload']['source']['subagent']['thread_spawn'].update(parent_thread_id=str(uuid.uuid4())))
+        self.assertEqual(result['roles'][ROLES[0]], 'NOT_VERIFIED')
+
+    def test_wrong_child_metadata_id_never_passes(self):
+        result = self.assess(lambda r: r[0]['payload'].update(id=str(uuid.uuid4())))
+        self.assertNotEqual(result['status'], 'PASS')
+
+    def test_substring_role_never_passes(self):
+        result = self.assess(lambda r: r[0]['payload']['source']['subagent']['thread_spawn'].update(agent_role='prefix_aka_research'))
+        self.assertNotEqual(result['status'], 'PASS')
+
+    def test_intermediate_reply_without_completion_never_passes(self):
+        result = self.assess(lambda r: r.pop())
+        self.assertNotEqual(result['status'], 'PASS')
+
+    def test_failed_completion_never_passes(self):
+        result = self.assess(lambda r: r[-1]['payload'].update(error={'message': 'synthetic failure'}))
+        self.assertNotEqual(result['status'], 'PASS')
+
+    def test_conflicting_metadata_roles_never_pass(self):
+        result = self.assess(lambda r: r[0]['payload'].update(agent_role='aka_coding'))
+        self.assertNotEqual(result['status'], 'PASS')
+
+    def test_duplicate_child_for_multiple_roles_never_passes(self):
+        self.children[ROLES[1]] = self.children[ROLES[0]]
+        self.assertNotEqual(self.assess()['status'], 'PASS')
+
+    def test_wrong_root_metadata_id_never_passes(self):
+        result = self.assess(root_mutate=lambda r: r[0]['payload'].update(id=str(uuid.uuid4())))
+        self.assertNotEqual(result['status'], 'PASS')
+
+    def test_prose_uuid_output_is_not_spawn_success(self):
+        records = self.root_records()
+        records[2]['payload']['output'] = 'reference ' + self.children[ROLES[0]]
+        self.assertNotIn(ROLES[0], parse_spawn_calls(records))
+
+    def test_structured_error_with_uuid_is_not_spawn_success(self):
+        records = self.root_records()
+        records[2]['payload']['output'] = json.dumps({'error': 'denied', 'agent_id': self.children[ROLES[0]]})
+        self.assertNotIn(ROLES[0], parse_spawn_calls(records))
+
+    def test_unknown_output_schema_is_not_spawn_success(self):
+        records = self.root_records()
+        records[2]['payload']['output'] = json.dumps({'message': self.children[ROLES[0]]})
+        self.assertNotIn(ROLES[0], parse_spawn_calls(records))
+
+    def test_old_child_session_touched_recently_never_passes(self):
+        self.assess()
+        # mtime is fresh, but the recorded child creation predates this run.
+        result = evaluate([], self.home, time.time(), self.root, 0, True)
+        self.assertNotEqual(result['status'], 'PASS')
+
+
+class IsolatedRoleSourceTests(unittest.TestCase):
+    def test_public_roles_can_be_staged_without_global_host_install(self):
+        public = Path(__file__).resolve().parents[1] / 'agents'
+        with tempfile.TemporaryDirectory() as temp:
+            home = Path(temp) / 'codex'
+            calls = []
+            def cli(command, **kwargs):
+                calls.append(command)
+                if '--version' in command:
+                    return SimpleNamespace(returncode=0, stdout=b'codex-cli 0.167.0-alpha.4', stderr=b'')
+                if 'login' in command:
+                    return SimpleNamespace(returncode=0, stdout=b'', stderr=b'')
+                for role in ROLES:
+                    override = next(x for x in command if x.startswith('agents.' + role + '.config_file='))
+                    path = Path(json.loads(override.split('=', 1)[1]))
+                    self.assertTrue(path.is_file())
+                return SimpleNamespace(returncode=0, stdout=b'', stderr=b'')
+            with patch('tools.verify_four_agents.shutil.which', return_value='codex'), \
+                 patch('tools.verify_four_agents.subprocess.run', side_effect=cli):
+                result = run(codex_home=home, role_source=public)
+            self.assertTrue(result['invoked'])
+            self.assertFalse(home.exists())
+            self.assertEqual(result['role_configuration'], 'TEMPORARY_PER_PROCESS_OVERRIDES')
+
+
+class CliFailureTests(unittest.TestCase):
+    def test_nonzero_cli_returns_sanitized_failure_without_raw_stderr(self):
+        public = Path(__file__).resolve().parents[1] / 'agents'
+        calls = [
+            SimpleNamespace(returncode=0, stdout=b'codex-cli 0.167.0-alpha.4', stderr=b''),
+            SimpleNamespace(returncode=0, stdout=b'', stderr=b''),
+            SimpleNamespace(returncode=1, stdout=b'', stderr=b'error: unexpected argument --json SECRET_SENTINEL'),
+        ]
+        with tempfile.TemporaryDirectory() as temp, \
+             patch('tools.verify_four_agents.shutil.which', return_value='codex'), \
+             patch('tools.verify_four_agents.subprocess.run', side_effect=calls):
+            result = run(codex_home=Path(temp), role_source=public)
+        self.assertEqual(result['status'], 'FAIL')
+        self.assertEqual(result['failure_category'], 'CLI_OPTION_REJECTED')
+        self.assertNotIn('SECRET_SENTINEL', json.dumps(result))
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,1564 @@
+{
+  "skill": {
+    "name": "unknown",
+    "source": "/workspace/scratch/61ad19c42644/scan-baseline",
+    "scanned_at": "2026-11-15T13:39:58.088388+00:00"
+  },
+  "risk_assessment": {
+    "score": 56,
+    "severity": "HIGH",
+    "recommendation": "DO_NOT_INSTALL",
+    "max_issue_severity": "MEDIUM"
+  },
+  "components": [
+    {
+      "path": ".github/workflows/tests.yml",
+      "type": "yaml",
+      "lines": 44,
+      "executable": false,
+      "size_bytes": 2083,
+      "source_url": null,
+      "source_identity": null,
+      "source_digest": null
+    },
+    {
+      "path": ".gitignore",
+      "type": "other",
+      "lines": 10,
+      "executable": false,
+      "size_bytes": 137,
+      "source_url": null,
+      "source_identity": null,
+      "source_digest": null
+    },
+    {
+      "path": "README.md",
+      "type": "markdown",
+      "lines": 139,
+      "executable": false,
+      "size_bytes": 8668,
+      "source_url": null,
+      "source_identity": null,
+      "source_digest": null
+    },
+    {
+      "path": "README.zh-CN.md",
+      "type": "markdown",
+      "lines": 179,
+      "executable": false,
+      "size_bytes": 10525,
+      "source_url": null,
+      "source_identity": null,
+      "source_digest": null
+    },
+    {
+      "path": "agents/automation.toml",
+      "type": "toml",
+      "lines": 3,
+      "executable": false,
+      "size_bytes": 516,
+      "source_url": null,
+      "source_identity": null,
+      "source_digest": null
+    },
+    {
+      "path": "agents/coding.toml",
+      "type": "toml",
+      "lines": 3,
+      "executable": false,
+      "size_bytes": 507,
+      "source_url": null,
+      "source_identity": null,
+      "source_digest": null
+    },
+    {
+      "path": "agents/qa.toml",
+      "type": "toml",
+      "lines": 3,
+      "executable": false,
+      "size_bytes": 498,
+      "source_url": null,
+      "source_identity": null,
+      "source_digest": null
+    },
+    {
+      "path": "agents/research.toml",
+      "type": "toml",
+      "lines": 3,
+      "executable": false,
+      "size_bytes": 470,
+      "source_url": null,
+      "source_identity": null,
+      "source_digest": null
+    },
+    {
+      "path": "docs/AGENT_ACTIVATION_VERIFICATION.md",
+      "type": "markdown",
+      "lines": 50,
+      "executable": false,
+      "size_bytes": 3324,
+      "source_url": null,
+      "source_identity": null,
+      "source_digest": null
+    },
+    {
+      "path": "docs/CHEF_GLOBAL_AND_MULTIAGENT.md",
+      "type": "markdown",
+      "lines": 84,
+      "executable": false,
+      "size_bytes": 5178,
+      "source_url": null,
+      "source_identity": null,
+      "source_digest": null
+    },
+    {
+      "path": "docs/CODEX_NATIVE_SUBAGENTS_V02.md",
+      "type": "markdown",
+      "lines": 73,
+      "executable": false,
+      "size_bytes": 4341,
+      "source_url": null,
+      "source_identity": null,
+      "source_digest": null
+    },
+    {
+      "path": "docs/FOUR_AGENT_INCONCLUSIVE_DIAGNOSTICS.md",
+      "type": "markdown",
+      "lines": 23,
+      "executable": false,
+      "size_bytes": 1939,
+      "source_url": null,
+      "source_identity": null,
+      "source_digest": null
+    },
+    {
+      "path": "docs/FOUR_AGENT_RUNTIME_ACCEPTANCE.md",
+      "type": "markdown",
+      "lines": 54,
+      "executable": false,
+      "size_bytes": 3780,
+      "source_url": null,
+      "source_identity": null,
+      "source_digest": null
+    },
+    {
+      "path": "docs/README.zh-CN.md",
+      "type": "markdown",
+      "lines": 143,
+      "executable": false,
+      "size_bytes": 7893,
+      "source_url": null,
+      "source_identity": null,
+      "source_digest": null
+    },
+    {
+      "path": "install.ps1",
+      "type": "other",
+      "lines": 229,
+      "executable": true,
+      "size_bytes": 11566,
+      "source_url": null,
+      "source_identity": null,
+      "source_digest": null
+    },
+    {
+      "path": "skills/chef-orchestrator/SKILL.md",
+      "type": "markdown",
+      "lines": 63,
+      "executable": false,
+      "size_bytes": 4706,
+      "source_url": null,
+      "source_identity": null,
+      "source_digest": null
+    },
+    {
+      "path": "skills/feature-journey-map/SKILL.md",
+      "type": "markdown",
+      "lines": 44,
+      "executable": false,
+      "size_bytes": 2214,
+      "source_url": null,
+      "source_identity": null,
+      "source_digest": null
+    },
+    {
+      "path": "skills/skill-evaluation-gate/SKILL.md",
+      "type": "markdown",
+      "lines": 37,
+      "executable": false,
+      "size_bytes": 2825,
+      "source_url": null,
+      "source_identity": null,
+      "source_digest": null
+    },
+    {
+      "path": "skills/verified-change-loop/SKILL.md",
+      "type": "markdown",
+      "lines": 40,
+      "executable": false,
+      "size_bytes": 3244,
+      "source_url": null,
+      "source_identity": null,
+      "source_digest": null
+    },
+    {
+      "path": "templates/AGENTS.global.md",
+      "type": "markdown",
+      "lines": 49,
+      "executable": false,
+      "size_bytes": 3425,
+      "source_url": null,
+      "source_identity": null,
+      "source_digest": null
+    },
+    {
+      "path": "tests/test_chef_global_rules.py",
+      "type": "python",
+      "lines": 93,
+      "executable": true,
+      "size_bytes": 4306,
+      "source_url": null,
+      "source_identity": null,
+      "source_digest": null
+    },
+    {
+      "path": "tests/test_codex_activation.py",
+      "type": "python",
+      "lines": 77,
+      "executable": true,
+      "size_bytes": 2862,
+      "source_url": null,
+      "source_identity": null,
+      "source_digest": null
+    },
+    {
+      "path": "tests/test_codex_subagents.py",
+      "type": "python",
+      "lines": 83,
+      "executable": true,
+      "size_bytes": 3693,
+      "source_url": null,
+      "source_identity": null,
+      "source_digest": null
+    },
+    {
+      "path": "tests/test_four_agent_diagnostics.py",
+      "type": "python",
+      "lines": 41,
+      "executable": true,
+      "size_bytes": 1756,
+      "source_url": null,
+      "source_identity": null,
+      "source_digest": null
+    },
+    {
+      "path": "tests/test_four_agents.py",
+      "type": "python",
+      "lines": 136,
+      "executable": true,
+      "size_bytes": 6664,
+      "source_url": null,
+      "source_identity": null,
+      "source_digest": null
+    },
+    {
+      "path": "tests/test_skill_installer.py",
+      "type": "python",
+      "lines": 122,
+      "executable": true,
+      "size_bytes": 5560,
+      "source_url": null,
+      "source_identity": null,
+      "source_digest": null
+    },
+    {
+      "path": "tools/__init__.py",
+      "type": "python",
+      "lines": 1,
+      "executable": true,
+      "size_bytes": 43,
+      "source_url": null,
+      "source_identity": null,
+      "source_digest": null
+    },
+    {
+      "path": "tools/chef_global_rules.py",
+      "type": "python",
+      "lines": 153,
+      "executable": true,
+      "size_bytes": 5511,
+      "source_url": null,
+      "source_identity": null,
+      "source_digest": null
+    },
+    {
+      "path": "tools/codex_subagents.py",
+      "type": "python",
+      "lines": 219,
+      "executable": true,
+      "size_bytes": 8205,
+      "source_url": null,
+      "source_identity": null,
+      "source_digest": null
+    },
+    {
+      "path": "tools/diagnose_four_agents.py",
+      "type": "python",
+      "lines": 131,
+      "executable": true,
+      "size_bytes": 5702,
+      "source_url": null,
+      "source_identity": null,
+      "source_digest": null
+    },
+    {
+      "path": "tools/skill_evidence.py",
+      "type": "python",
+      "lines": 91,
+      "executable": true,
+      "size_bytes": 4012,
+      "source_url": null,
+      "source_identity": null,
+      "source_digest": null
+    },
+    {
+      "path": "tools/skill_installer.py",
+      "type": "python",
+      "lines": 274,
+      "executable": true,
+      "size_bytes": 10283,
+      "source_url": null,
+      "source_identity": null,
+      "source_digest": null
+    },
+    {
+      "path": "tools/verify_codex_activation.py",
+      "type": "python",
+      "lines": 141,
+      "executable": true,
+      "size_bytes": 6382,
+      "source_url": null,
+      "source_identity": null,
+      "source_digest": null
+    },
+    {
+      "path": "tools/verify_four_agents.py",
+      "type": "python",
+      "lines": 261,
+      "executable": true,
+      "size_bytes": 11469,
+      "source_url": null,
+      "source_identity": null,
+      "source_digest": null
+    }
+  ],
+  "structured_summaries": [],
+  "issues": [
+    {
+      "id": "AS3",
+      "finding_id": "finding-9c41ee3efcb046678ae71fa27e5fdc57",
+      "category": "Agent Snooping",
+      "pattern": "Skill Enumeration",
+      "severity": "MEDIUM",
+      "confidence": 0.8,
+      "location": {
+        "file": "README.md",
+        "start_line": 15,
+        "end_line": null,
+        "start_column": 25
+      },
+      "finding": "skills/verified-change-loop/SKILL.md",
+      "explanation": "Skill enumerates or reads other installed skills. Access to other skills' SKILL.md files or the skills directory reveals prompt instructions, capabilities, and secrets that should be invisible to peer skills.",
+      "remediation": "Remove all code or instructions that list or read other skills' files or directories. Skills should operate independently; cross-skill access is a privilege escalation.",
+      "code_snippet": "\n| Skill | Purpose |\n| --- | --- |\n| [Verified Change Loop](skills/verified-change-loop/SKILL.md) | Reproduce \u2192 diagnose \u2192 minimum fix \u2192 replay \u2192 compare \u2192 handoff |\n| [Feature Journey Map](skills/feature-journey-map/SKILL.md) | Map real entry, setup, user action, success and failure paths |\n| [Skill Evaluation Gate](skills/skill-evaluation-gate/SKILL.md) | Evidence, independently reviewed results and approval boundaries |\n",
+      "intent": null,
+      "tags": [
+        "Agent Snooping"
+      ],
+      "evidence": {},
+      "match_fingerprint": "9ca7da0d301cfb9af8dc8375f8f15132ec33de68efe06ae8454c03b1316ce20d",
+      "occurrences": [
+        {
+          "file": "README.md",
+          "start_line": 15,
+          "end_line": null,
+          "start_column": 25
+        }
+      ],
+      "surface": "docs"
+    },
+    {
+      "id": "AS3",
+      "finding_id": "finding-e6bedbfaaa8f4aa9b04dc6e59395bead",
+      "category": "Agent Snooping",
+      "pattern": "Skill Enumeration",
+      "severity": "MEDIUM",
+      "confidence": 0.8,
+      "location": {
+        "file": "README.zh-CN.md",
+        "start_line": 51,
+        "end_line": null,
+        "start_column": 35
+      },
+      "finding": "skills/verified-change-loop/SKILL.md",
+      "explanation": "Skill enumerates or reads other installed skills. Access to other skills' SKILL.md files or the skills directory reveals prompt instructions, capabilities, and secrets that should be invisible to peer skills.",
+      "remediation": "Remove all code or instructions that list or read other skills' files or directories. Skills should operate independently; cross-skill access is a privilege escalation.",
+      "code_snippet": "\n### 2. Verified Change Loop\uff1a\u95ee\u9898\u8bca\u65ad\u4e0e\u4fee\u590d\u95ed\u73af\n\n\u6587\u4ef6\uff1a[verified-change-loop/SKILL.md](skills/verified-change-loop/SKILL.md)\n\n\u590d\u73b0\u95ee\u9898 \u2192 \u68c0\u67e5\u8bc1\u636e \u2192 \u6700\u5c0f\u53ef\u9006\u4fee\u6539 \u2192 \u91cd\u8dd1\u76f8\u540c\u573a\u666f \u2192 \u5bf9\u6bd4\u7ed3\u679c \u2192 \u56de\u5f52\u6d4b\u8bd5 \u2192 \u4ea4\u4ed8\u9a8c\u6536\u3002\u9002\u5408\u4ee3\u7801 Bug\u3001CI \u6545\u969c\u3001\u7f51\u9875\u529f\u80fd\u5f02\u5e38\u53ca\u590d\u6742\u6d41\u7a0b\u4fee\u590d\u3002\n",
+      "intent": null,
+      "tags": [
+        "Agent Snooping"
+      ],
+      "evidence": {},
+      "match_fingerprint": "9ca7da0d301cfb9af8dc8375f8f15132ec33de68efe06ae8454c03b1316ce20d",
+      "occurrences": [
+        {
+          "file": "README.zh-CN.md",
+          "start_line": 51,
+          "end_line": null,
+          "start_column": 35
+        }
+      ],
+      "surface": "docs"
+    },
+    {
+      "id": "AS3",
+      "finding_id": "finding-5ec759c534db4b51929f4eba95ad2c25",
+      "category": "Agent Snooping",
+      "pattern": "Skill Enumeration",
+      "severity": "MEDIUM",
+      "confidence": 0.8,
+      "location": {
+        "file": "docs/README.zh-CN.md",
+        "start_line": 16,
+        "end_line": null,
+        "start_column": 17
+      },
+      "finding": "skills/verified-change-loop/SKILL.md",
+      "explanation": "Skill enumerates or reads other installed skills. Access to other skills' SKILL.md files or the skills directory reveals prompt instructions, capabilities, and secrets that should be invisible to peer skills.",
+      "remediation": "Remove all code or instructions that list or read other skills' files or directories. Skills should operate independently; cross-skill access is a privilege escalation.",
+      "code_snippet": "## \u91cd\u70b9\u4ecb\u7ecd\uff1a3 \u4e2a\u57fa\u7840\u65b9\u6cd5\u8bba Skills\n\n### 1. Verified Change Loop\uff5c\u53ef\u9a8c\u8bc1\u7684\u4fee\u6539\u95ed\u73af\n[\u67e5\u770b Skill \u539f\u6587](../skills/verified-change-loop/SKILL.md)\n\n\u9002\u7528\u4e8e\u7a0b\u5e8f\u62a5\u9519\u3001\u529f\u80fd\u6545\u969c\u3001CI \u5931\u8d25\u548c\u9700\u8981\u9a8c\u6536\u7684\u4ee3\u7801\u4fee\u6539\u3002\n",
+      "intent": null,
+      "tags": [
+        "Agent Snooping"
+      ],
+      "evidence": {},
+      "match_fingerprint": "9ca7da0d301cfb9af8dc8375f8f15132ec33de68efe06ae8454c03b1316ce20d",
+      "occurrences": [
+        {
+          "file": "docs/README.zh-CN.md",
+          "start_line": 16,
+          "end_line": null,
+          "start_column": 17
+        }
+      ],
+      "surface": "docs"
+    },
+    {
+      "id": "AS3",
+      "finding_id": "finding-a88512c11f5c41b3b18af94c6a96d2b4",
+      "category": "Agent Snooping",
+      "pattern": "Skill Enumeration",
+      "severity": "MEDIUM",
+      "confidence": 0.8,
+      "location": {
+        "file": "install.ps1",
+        "start_line": 22,
+        "end_line": null,
+        "start_column": 5
+      },
+      "finding": "skills/verified-change-loop/SKILL.md",
+      "explanation": "Skill enumerates or reads other installed skills. Access to other skills' SKILL.md files or the skills directory reveals prompt instructions, capabilities, and secrets that should be invisible to peer skills.",
+      "remediation": "Remove all code or instructions that list or read other skills' files or directories. Skills should operate independently; cross-skill access is a privilege escalation.",
+      "code_snippet": "    \"templates/AGENTS.global.md\", \"agents/research.toml\",\n    \"agents/coding.toml\", \"agents/qa.toml\", \"agents/automation.toml\",\n    \"skills/chef-orchestrator/SKILL.md\",\n    \"skills/verified-change-loop/SKILL.md\",\n    \"skills/feature-journey-map/SKILL.md\",\n    \"skills/skill-evaluation-gate/SKILL.md\"\n)",
+      "intent": null,
+      "tags": [
+        "Agent Snooping"
+      ],
+      "evidence": {},
+      "match_fingerprint": "9ca7da0d301cfb9af8dc8375f8f15132ec33de68efe06ae8454c03b1316ce20d",
+      "occurrences": [
+        {
+          "file": "install.ps1",
+          "start_line": 22,
+          "end_line": null,
+          "start_column": 5
+        }
+      ],
+      "surface": "code"
+    },
+    {
+      "id": "AS3",
+      "finding_id": "finding-1dbcc0cfd692493caeaed90204d0ab61",
+      "category": "Agent Snooping",
+      "pattern": "Skill Enumeration",
+      "severity": "MEDIUM",
+      "confidence": 0.8,
+      "location": {
+        "file": "README.md",
+        "start_line": 16,
+        "end_line": null,
+        "start_column": 24
+      },
+      "finding": "skills/feature-journey-map/SKILL.md",
+      "explanation": "Skill enumerates or reads other installed skills. Access to other skills' SKILL.md files or the skills directory reveals prompt instructions, capabilities, and secrets that should be invisible to peer skills.",
+      "remediation": "Remove all code or instructions that list or read other skills' files or directories. Skills should operate independently; cross-skill access is a privilege escalation.",
+      "code_snippet": "| Skill | Purpose |\n| --- | --- |\n| [Verified Change Loop](skills/verified-change-loop/SKILL.md) | Reproduce \u2192 diagnose \u2192 minimum fix \u2192 replay \u2192 compare \u2192 handoff |\n| [Feature Journey Map](skills/feature-journey-map/SKILL.md) | Map real entry, setup, user action, success and failure paths |\n| [Skill Evaluation Gate](skills/skill-evaluation-gate/SKILL.md) | Evidence, independently reviewed results and approval boundaries |\n\nThese are methodology Skills, not third-party licensed packages. Some methods were adapted from user-supplied verification-engineering fieldnotes attributed to Lauren Tan; that attribution was not independently confirmed, and these are **not official third-party Skills**.",
+      "intent": null,
+      "tags": [
+        "Agent Snooping"
+      ],
+      "evidence": {},
+      "match_fingerprint": "01ebb05492c8507dc974e43d57fda00a5b57cabaeed3340594cbcf1399f63f0f",
+      "occurrences": [
+        {
+          "file": "README.md",
+          "start_line": 16,
+          "end_line": null,
+          "start_column": 24
+        }
+      ],
+      "surface": "docs"
+    },
+    {
+      "id": "AS3",
+      "finding_id": "finding-618a21a002844a208ed31d8def09aa5f",
+      "category": "Agent Snooping",
+      "pattern": "Skill Enumeration",
+      "severity": "MEDIUM",
+      "confidence": 0.8,
+      "location": {
+        "file": "README.zh-CN.md",
+        "start_line": 57,
+        "end_line": null,
+        "start_column": 34
+      },
+      "finding": "skills/feature-journey-map/SKILL.md",
+      "explanation": "Skill enumerates or reads other installed skills. Access to other skills' SKILL.md files or the skills directory reveals prompt instructions, capabilities, and secrets that should be invisible to peer skills.",
+      "remediation": "Remove all code or instructions that list or read other skills' files or directories. Skills should operate independently; cross-skill access is a privilege escalation.",
+      "code_snippet": "\n### 3. Feature Journey Map\uff1a\u771f\u5b9e\u7528\u6237\u64cd\u4f5c\u8def\u5f84\n\n\u6587\u4ef6\uff1a[feature-journey-map/SKILL.md](skills/feature-journey-map/SKILL.md)\n\n\u8bb0\u5f55\u7528\u6237\u4ece\u5165\u53e3\u3001\u521d\u59cb\u5316\u3001\u64cd\u4f5c\u5230\u53ef\u89c1\u7ed3\u679c\u7684\u5b8c\u6574\u6d41\u7a0b\uff0c\u5e76\u8986\u76d6\u7a7a\u72b6\u6001\u3001\u6743\u9650\u4e0d\u8db3\u3001\u9519\u8bef\u8f93\u5165\u3001\u6162\u7f51\u7edc\u7b49\u5f02\u5e38\u8def\u5f84\u3002\u907f\u514d\u53ea\u51ed\u5355\u5143\u6d4b\u8bd5\u901a\u8fc7\u5c31\u5ba3\u79f0\u4ea7\u54c1\u53ef\u7528\u3002\n",
+      "intent": null,
+      "tags": [
+        "Agent Snooping"
+      ],
+      "evidence": {},
+      "match_fingerprint": "01ebb05492c8507dc974e43d57fda00a5b57cabaeed3340594cbcf1399f63f0f",
+      "occurrences": [
+        {
+          "file": "README.zh-CN.md",
+          "start_line": 57,
+          "end_line": null,
+          "start_column": 34
+        }
+      ],
+      "surface": "docs"
+    },
+    {
+      "id": "AS3",
+      "finding_id": "finding-5d88372a336d4053b9afcc279758f6f3",
+      "category": "Agent Snooping",
+      "pattern": "Skill Enumeration",
+      "severity": "MEDIUM",
+      "confidence": 0.8,
+      "location": {
+        "file": "docs/README.zh-CN.md",
+        "start_line": 32,
+        "end_line": null,
+        "start_column": 17
+      },
+      "finding": "skills/feature-journey-map/SKILL.md",
+      "explanation": "Skill enumerates or reads other installed skills. Access to other skills' SKILL.md files or the skills directory reveals prompt instructions, capabilities, and secrets that should be invisible to peer skills.",
+      "remediation": "Remove all code or instructions that list or read other skills' files or directories. Skills should operate independently; cross-skill access is a privilege escalation.",
+      "code_snippet": "**\u9650\u5236\uff1a** \u672c Skill \u89c4\u5b9a\u64cd\u4f5c\u65b9\u6cd5\uff0c\u4e0d\u4f1a\u81ea\u884c\u83b7\u5f97\u9879\u76ee\u6743\u9650\u3001\u90e8\u7f72\u6b63\u5f0f\u73af\u5883\u6216\u4fdd\u8bc1\u6bcf\u6b21\u4fee\u590d\u90fd\u6210\u529f\u3002\n\n### 2. Feature Journey Map\uff5c\u4ea7\u54c1\u529f\u80fd\u65c5\u7a0b\u5730\u56fe\n[\u67e5\u770b Skill \u539f\u6587](../skills/feature-journey-map/SKILL.md)\n\n\u9002\u7528\u4e8e\u7f51\u7ad9\u3001App\u3001\u540e\u53f0\u7cfb\u7edf\u3001\u7535\u5546\u529f\u80fd\u7b49\u771f\u5b9e\u7528\u6237\u6d41\u7a0b\u7684\u5f00\u53d1\u4e0e\u6d4b\u8bd5\u3002\n",
+      "intent": null,
+      "tags": [
+        "Agent Snooping"
+      ],
+      "evidence": {},
+      "match_fingerprint": "01ebb05492c8507dc974e43d57fda00a5b57cabaeed3340594cbcf1399f63f0f",
+      "occurrences": [
+        {
+          "file": "docs/README.zh-CN.md",
+          "start_line": 32,
+          "end_line": null,
+          "start_column": 17
+        }
+      ],
+      "surface": "docs"
+    },
+    {
+      "id": "AS3",
+      "finding_id": "finding-e0945973b7f14b5da91934c2a39e3f60",
+      "category": "Agent Snooping",
+      "pattern": "Skill Enumeration",
+      "severity": "MEDIUM",
+      "confidence": 0.8,
+      "location": {
+        "file": "install.ps1",
+        "start_line": 23,
+        "end_line": null,
+        "start_column": 5
+      },
+      "finding": "skills/feature-journey-map/SKILL.md",
+      "explanation": "Skill enumerates or reads other installed skills. Access to other skills' SKILL.md files or the skills directory reveals prompt instructions, capabilities, and secrets that should be invisible to peer skills.",
+      "remediation": "Remove all code or instructions that list or read other skills' files or directories. Skills should operate independently; cross-skill access is a privilege escalation.",
+      "code_snippet": "    \"agents/coding.toml\", \"agents/qa.toml\", \"agents/automation.toml\",\n    \"skills/chef-orchestrator/SKILL.md\",\n    \"skills/verified-change-loop/SKILL.md\",\n    \"skills/feature-journey-map/SKILL.md\",\n    \"skills/skill-evaluation-gate/SKILL.md\"\n)\nfunction Show-Step([string]$Message) { Write-Host (\"[CHEF] \" + $Message) -ForegroundColor Cyan }",
+      "intent": null,
+      "tags": [
+        "Agent Snooping"
+      ],
+      "evidence": {},
+      "match_fingerprint": "01ebb05492c8507dc974e43d57fda00a5b57cabaeed3340594cbcf1399f63f0f",
+      "occurrences": [
+        {
+          "file": "install.ps1",
+          "start_line": 23,
+          "end_line": null,
+          "start_column": 5
+        }
+      ],
+      "surface": "code"
+    },
+    {
+      "id": "AS3",
+      "finding_id": "finding-95c01d8a315942918096d17808dac1a3",
+      "category": "Agent Snooping",
+      "pattern": "Skill Enumeration",
+      "severity": "MEDIUM",
+      "confidence": 0.8,
+      "location": {
+        "file": "README.md",
+        "start_line": 17,
+        "end_line": null,
+        "start_column": 26
+      },
+      "finding": "skills/skill-evaluation-gate/SKILL.md",
+      "explanation": "Skill enumerates or reads other installed skills. Access to other skills' SKILL.md files or the skills directory reveals prompt instructions, capabilities, and secrets that should be invisible to peer skills.",
+      "remediation": "Remove all code or instructions that list or read other skills' files or directories. Skills should operate independently; cross-skill access is a privilege escalation.",
+      "code_snippet": "| --- | --- |\n| [Verified Change Loop](skills/verified-change-loop/SKILL.md) | Reproduce \u2192 diagnose \u2192 minimum fix \u2192 replay \u2192 compare \u2192 handoff |\n| [Feature Journey Map](skills/feature-journey-map/SKILL.md) | Map real entry, setup, user action, success and failure paths |\n| [Skill Evaluation Gate](skills/skill-evaluation-gate/SKILL.md) | Evidence, independently reviewed results and approval boundaries |\n\nThese are methodology Skills, not third-party licensed packages. Some methods were adapted from user-supplied verification-engineering fieldnotes attributed to Lauren Tan; that attribution was not independently confirmed, and these are **not official third-party Skills**.\n",
+      "intent": null,
+      "tags": [
+        "Agent Snooping"
+      ],
+      "evidence": {},
+      "match_fingerprint": "4f99bd152977746e2c1179be7374e38ff772865e2fc551598fc97489323975c0",
+      "occurrences": [
+        {
+          "file": "README.md",
+          "start_line": 17,
+          "end_line": null,
+          "start_column": 26
+        }
+      ],
+      "surface": "docs"
+    },
+    {
+      "id": "AS3",
+      "finding_id": "finding-777905d7d6934976ba1c47d0cafe2051",
+      "category": "Agent Snooping",
+      "pattern": "Skill Enumeration",
+      "severity": "MEDIUM",
+      "confidence": 0.8,
+      "location": {
+        "file": "README.zh-CN.md",
+        "start_line": 63,
+        "end_line": null,
+        "start_column": 36
+      },
+      "finding": "skills/skill-evaluation-gate/SKILL.md",
+      "explanation": "Skill enumerates or reads other installed skills. Access to other skills' SKILL.md files or the skills directory reveals prompt instructions, capabilities, and secrets that should be invisible to peer skills.",
+      "remediation": "Remove all code or instructions that list or read other skills' files or directories. Skills should operate independently; cross-skill access is a privilege escalation.",
+      "code_snippet": "\n### 4. Skill Evaluation Gate\uff1a\u6280\u80fd\u8d28\u91cf\u5ba1\u6838\n\n\u6587\u4ef6\uff1a[skill-evaluation-gate/SKILL.md](skills/skill-evaluation-gate/SKILL.md)\n\n\u901a\u8fc7\u5b9e\u9645\u573a\u666f\u3001\u6d4b\u8bd5\u8bc1\u636e\u3001\u72ec\u7acb\u590d\u6838\u548c\u53d1\u5e03\u6388\u6743\u5224\u65ad Skill \u662f\u5426\u53ef\u8fdb\u5165\u4e0b\u4e00\u4e2a\u9636\u6bb5\uff1b\u533a\u5206 Candidate\u3001Tested\u3001Reviewed\u3001Approved / Released\uff0c\u4e0d\u5c06\u5b89\u88c5\u6210\u529f\u7b49\u540c\u4e8e\u8fd0\u884c\u6210\u529f\u3002\n",
+      "intent": null,
+      "tags": [
+        "Agent Snooping"
+      ],
+      "evidence": {},
+      "match_fingerprint": "4f99bd152977746e2c1179be7374e38ff772865e2fc551598fc97489323975c0",
+      "occurrences": [
+        {
+          "file": "README.zh-CN.md",
+          "start_line": 63,
+          "end_line": null,
+          "start_column": 36
+        }
+      ],
+      "surface": "docs"
+    },
+    {
+      "id": "AS3",
+      "finding_id": "finding-43f107ce6e2d46859e9de21567fa3fdb",
+      "category": "Agent Snooping",
+      "pattern": "Skill Enumeration",
+      "severity": "MEDIUM",
+      "confidence": 0.8,
+      "location": {
+        "file": "docs/README.zh-CN.md",
+        "start_line": 48,
+        "end_line": null,
+        "start_column": 17
+      },
+      "finding": "skills/skill-evaluation-gate/SKILL.md",
+      "explanation": "Skill enumerates or reads other installed skills. Access to other skills' SKILL.md files or the skills directory reveals prompt instructions, capabilities, and secrets that should be invisible to peer skills.",
+      "remediation": "Remove all code or instructions that list or read other skills' files or directories. Skills should operate independently; cross-skill access is a privilege escalation.",
+      "code_snippet": "**\u9650\u5236\uff1a** \u6d4b\u8bd5\u573a\u666f\u5fc5\u987b\u57fa\u4e8e\u771f\u5b9e\u9875\u9762\u4e0e\u6388\u6743\u73af\u5883\uff0c\u4e0d\u80fd\u628a\u793a\u4f8b\u6d41\u7a0b\u5f53\u4f5c\u5df2\u6267\u884c\u7ed3\u679c\u3002\n\n### 3. Skill Evaluation Gate\uff5cSkill \u8bc4\u4f30\u4e0e\u53d1\u5e03\u5173\u5361\n[\u67e5\u770b Skill \u539f\u6587](../skills/skill-evaluation-gate/SKILL.md)\n\n\u9002\u7528\u4e8e\u5c06\u6210\u529f\u7ecf\u9a8c\u6c89\u6dc0\u4e3a\u65b0 Skill\uff0c\u6216\u8bc4\u4f30\u5df2\u6709 Skill \u7684\u5347\u7ea7\u3001\u7ef4\u62a4\u548c\u6dd8\u6c70\u3002\n",
+      "intent": null,
+      "tags": [
+        "Agent Snooping"
+      ],
+      "evidence": {},
+      "match_fingerprint": "4f99bd152977746e2c1179be7374e38ff772865e2fc551598fc97489323975c0",
+      "occurrences": [
+        {
+          "file": "docs/README.zh-CN.md",
+          "start_line": 48,
+          "end_line": null,
+          "start_column": 17
+        }
+      ],
+      "surface": "docs"
+    },
+    {
+      "id": "AS3",
+      "finding_id": "finding-27429772f27c4b1fac8a72d2c37f59ec",
+      "category": "Agent Snooping",
+      "pattern": "Skill Enumeration",
+      "severity": "MEDIUM",
+      "confidence": 0.8,
+      "location": {
+        "file": "install.ps1",
+        "start_line": 24,
+        "end_line": null,
+        "start_column": 5
+      },
+      "finding": "skills/skill-evaluation-gate/SKILL.md",
+      "explanation": "Skill enumerates or reads other installed skills. Access to other skills' SKILL.md files or the skills directory reveals prompt instructions, capabilities, and secrets that should be invisible to peer skills.",
+      "remediation": "Remove all code or instructions that list or read other skills' files or directories. Skills should operate independently; cross-skill access is a privilege escalation.",
+      "code_snippet": "    \"skills/chef-orchestrator/SKILL.md\",\n    \"skills/verified-change-loop/SKILL.md\",\n    \"skills/feature-journey-map/SKILL.md\",\n    \"skills/skill-evaluation-gate/SKILL.md\"\n)\nfunction Show-Step([string]$Message) { Write-Host (\"[CHEF] \" + $Message) -ForegroundColor Cyan }\nfunction Assert-FileTree([string]$Root) {",
+      "intent": null,
+      "tags": [
+        "Agent Snooping"
+      ],
+      "evidence": {},
+      "match_fingerprint": "4f99bd152977746e2c1179be7374e38ff772865e2fc551598fc97489323975c0",
+      "occurrences": [
+        {
+          "file": "install.ps1",
+          "start_line": 24,
+          "end_line": null,
+          "start_column": 5
+        }
+      ],
+      "surface": "code"
+    },
+    {
+      "id": "AS3",
+      "finding_id": "finding-d83ad617bf274d3d8cd7604939bfc728",
+      "category": "Agent Snooping",
+      "pattern": "Skill Enumeration",
+      "severity": "MEDIUM",
+      "confidence": 0.8,
+      "location": {
+        "file": "README.zh-CN.md",
+        "start_line": 38,
+        "end_line": null,
+        "start_column": 32
+      },
+      "finding": "skills/chef-orchestrator/SKILL.md",
+      "explanation": "Skill enumerates or reads other installed skills. Access to other skills' SKILL.md files or the skills directory reveals prompt instructions, capabilities, and secrets that should be invisible to peer skills.",
+      "remediation": "Remove all code or instructions that list or read other skills' files or directories. Skills should operate independently; cross-skill access is a privilege escalation.",
+      "code_snippet": "\n### 1. CHEF Orchestrator\uff1aAI \u4efb\u52a1\u603b\u6307\u6325\n\n\u6587\u4ef6\uff1a[chef-orchestrator/SKILL.md](skills/chef-orchestrator/SKILL.md)\n\n- **\u76ee\u6807\u4e0e\u9a8c\u6536\uff1a** \u5c06\u7528\u6237\u9700\u6c42\u8f6c\u6210\u53ef\u89c2\u5bdf\u7684\u5b8c\u6210\u6761\u4ef6\u3001\u6388\u6743\u8fb9\u754c\u4e0e\u505c\u6b62\u6761\u4ef6\u3002\n- **Inspect\uff1a** \u5148\u8bfb\u53d6\u9879\u76ee\u89c4\u5219\u3001\u73b0\u6709\u914d\u7f6e\u3001Git \u72b6\u6001\u53ca\u53ef\u7528\u5de5\u5177\uff0c\u907f\u514d\u76f4\u63a5\u8986\u76d6\u5de5\u4f5c\u6210\u679c\u3002",
+      "intent": null,
+      "tags": [
+        "Agent Snooping"
+      ],
+      "evidence": {},
+      "match_fingerprint": "81a41904dadfe1612ad6c78189aefcfb7f87ced24f13d68dd6cb05c0029d8845",
+      "occurrences": [
+        {
+          "file": "README.zh-CN.md",
+          "start_line": 38,
+          "end_line": null,
+          "start_column": 32
+        }
+      ],
+      "surface": "docs"
+    },
+    {
+      "id": "AS3",
+      "finding_id": "finding-f12247a00aad42f389ec6ccc92920ee5",
+      "category": "Agent Snooping",
+      "pattern": "Skill Enumeration",
+      "severity": "MEDIUM",
+      "confidence": 0.8,
+      "location": {
+        "file": "docs/CHEF_GLOBAL_AND_MULTIAGENT.md",
+        "start_line": 10,
+        "end_line": null,
+        "start_column": 42
+      },
+      "finding": "skills/chef-orchestrator/SKILL.md",
+      "explanation": "Skill enumerates or reads other installed skills. Access to other skills' SKILL.md files or the skills directory reveals prompt instructions, capabilities, and secrets that should be invisible to peer skills.",
+      "remediation": "Remove all code or instructions that list or read other skills' files or directories. Skills should operate independently; cross-skill access is a privilege escalation.",
+      "code_snippet": "| Layer | Installed artifact | What it genuinely does |\n| --- | --- | --- |\n| Global operating policy | `~/.codex/AGENTS.md` | Gives Codex durable, scoped instructions for work across projects |\n| CHEF coordination workflow | `~/.agents/skills/chef-orchestrator/SKILL.md` | Teaches the Agent to own planning, tool discovery, handoffs, review and bounded recovery |\n| Verification Skills | `~/.agents/skills/{verified-change-loop,feature-journey-map,skill-evaluation-gate}` | Separate reproducible QA workflows |\n| Agent runtime connections | Actual installed / authorized agent CLIs, APIs or MCP connectors | Are necessary to actually delegate tasks to different agents; **not included** |\n",
+      "intent": null,
+      "tags": [
+        "Agent Snooping"
+      ],
+      "evidence": {},
+      "match_fingerprint": "81a41904dadfe1612ad6c78189aefcfb7f87ced24f13d68dd6cb05c0029d8845",
+      "occurrences": [
+        {
+          "file": "docs/CHEF_GLOBAL_AND_MULTIAGENT.md",
+          "start_line": 10,
+          "end_line": null,
+          "start_column": 42
+        }
+      ],
+      "surface": "docs"
+    },
+    {
+      "id": "AS3",
+      "finding_id": "finding-c4acaa9468ce4899b47e72304d950122",
+      "category": "Agent Snooping",
+      "pattern": "Skill Enumeration",
+      "severity": "MEDIUM",
+      "confidence": 0.8,
+      "location": {
+        "file": "install.ps1",
+        "start_line": 21,
+        "end_line": null,
+        "start_column": 5
+      },
+      "finding": "skills/chef-orchestrator/SKILL.md",
+      "explanation": "Skill enumerates or reads other installed skills. Access to other skills' SKILL.md files or the skills directory reveals prompt instructions, capabilities, and secrets that should be invisible to peer skills.",
+      "remediation": "Remove all code or instructions that list or read other skills' files or directories. Skills should operate independently; cross-skill access is a privilege escalation.",
+      "code_snippet": "    \"tools/codex_subagents.py\", \"tools/skill_installer.py\",\n    \"templates/AGENTS.global.md\", \"agents/research.toml\",\n    \"agents/coding.toml\", \"agents/qa.toml\", \"agents/automation.toml\",\n    \"skills/chef-orchestrator/SKILL.md\",\n    \"skills/verified-change-loop/SKILL.md\",\n    \"skills/feature-journey-map/SKILL.md\",\n    \"skills/skill-evaluation-gate/SKILL.md\"",
+      "intent": null,
+      "tags": [
+        "Agent Snooping"
+      ],
+      "evidence": {},
+      "match_fingerprint": "81a41904dadfe1612ad6c78189aefcfb7f87ced24f13d68dd6cb05c0029d8845",
+      "occurrences": [
+        {
+          "file": "install.ps1",
+          "start_line": 21,
+          "end_line": null,
+          "start_column": 5
+        }
+      ],
+      "surface": "code"
+    },
+    {
+      "id": "EA2",
+      "finding_id": "finding-929d5871f3964bedb75c678b101d4abe",
+      "category": "Excessive Agency",
+      "pattern": "Autonomous Decision Making",
+      "severity": "MEDIUM",
+      "confidence": 0.75,
+      "location": {
+        "file": "agents/automation.toml",
+        "start_line": 3,
+        "end_line": null,
+        "start_column": 199
+      },
+      "finding": "without approval",
+      "explanation": "Skill enables autonomous high-impact decisions without human-in-the-loop verification. Critical operations (destructive commands, financial transactions, data deletion) should require explicit user confirmation.",
+      "remediation": "Add human-in-the-loop confirmation for destructive, irreversible, or high-impact operations. Never auto-execute commands that modify files, send data, or alter system state.",
+      "code_snippet": "name = \"aka_automation\"\ndescription = \"Design reliable automation workflows with bounded retries, idempotency and operational observability.\"\ndeveloper_instructions = \"\"\"Investigate approved automation options; prioritize APIs and supported MCP integrations. Do not execute paid, destructive, publishing or external-data-transfer operations without approval. Define timeouts, retry limits, failure logging, recovery and rollback. Return an implementable plan and measured evidence for any work actually executed.\"\"\"",
+      "intent": null,
+      "tags": [
+        "Excessive Agency"
+      ],
+      "evidence": {},
+      "match_fingerprint": "7868080a35a6878aa292c53196ddb331f19d628c33953fb70850fdaf54c4191c",
+      "occurrences": [
+        {
+          "file": "agents/automation.toml",
+          "start_line": 3,
+          "end_line": null,
+          "start_column": 199
+        }
+      ],
+      "surface": "config"
+    },
+    {
+      "id": "E1",
+      "finding_id": "finding-59d18c018f404b10bd8ec075427bd13a",
+      "category": "Data Exfiltration",
+      "pattern": "External Transmission",
+      "severity": "MEDIUM",
+      "confidence": 0.5,
+      "location": {
+        "file": "install.ps1",
+        "start_line": 93,
+        "end_line": null,
+        "start_column": 12
+      },
+      "finding": "https://api.github.com/",
+      "explanation": "Data is being sent to an external URL. This could be legitimate telemetry or data exfiltration. Manual review is recommended.",
+      "remediation": "Verify the destination URL is trusted and necessary. Remove or replace with documented APIs. Ensure no secrets, tokens, or PII are transmitted.",
+      "code_snippet": "    }\n    # Always obtain a fresh, complete, commit-pinned GitHub archive.\n    # A damaged or incomplete existing checkout is never overwritten.\n    $api = \"https://api.github.com/repos/$Repo/commits/main\"\n    Show-Step \"Discovering current public release...\"\n    $metadata = Invoke-RestMethod -Uri $api -Headers @{ 'User-Agent' = 'aka-cristi-safe-bootstrap'; 'Accept' = 'application/vnd.github+json' } -TimeoutSec 45\n    $sha = [string]$metadata.sha",
+      "intent": null,
+      "tags": [
+        "Data Exfiltration"
+      ],
+      "evidence": {},
+      "match_fingerprint": "061abab0022b7a79cdf98b2721e4ad6d47cd4ad12584ecf052130ef51f05d966",
+      "occurrences": [
+        {
+          "file": "install.ps1",
+          "start_line": 93,
+          "end_line": null,
+          "start_column": 12
+        }
+      ],
+      "surface": "code"
+    },
+    {
+      "id": "TT2",
+      "finding_id": "finding-85bf23599fe64e689c0aa1b7fdb34d0d",
+      "category": "Data Flow",
+      "pattern": "Tainted flow: 'path' from os.environ.get (line 103, credential/environment) \u2192 shutil.copy2 (file write)",
+      "severity": "MEDIUM",
+      "confidence": 0.65,
+      "location": {
+        "file": "tools/chef_global_rules.py",
+        "start_line": 119,
+        "end_line": 119,
+        "start_column": 8,
+        "end_column": 34
+      },
+      "finding": "shutil.copy2(path, backup)",
+      "explanation": "Data from a source is assigned to a variable that is later passed to a sink, creating a variable-mediated taint flow.",
+      "remediation": "Validate tainted variables before passing them to sinks. Use allowlists, type checks, or sanitization functions on data from external sources.",
+      "code_snippet": "        backup_folder.mkdir(exist_ok=True)\n        stamp = datetime.now(timezone.utc).strftime(\"%Y%m%dT%H%M%S\")\n        backup = backup_folder / (\"AGENTS-\" + stamp + \"-\" + os.urandom(4).hex() + \".md\")\n        shutil.copy2(path, backup)\n    try:\n        write_atomic(path, new)\n    except Exception:",
+      "intent": null,
+      "tags": [
+        "Data Flow"
+      ],
+      "evidence": {},
+      "match_fingerprint": "7b1f3a40e3584771676a8493c66a940aeeea0bde077db0a4a8ef18bc44fafd0b",
+      "occurrences": [
+        {
+          "file": "tools/chef_global_rules.py",
+          "start_line": 119,
+          "end_line": 119,
+          "start_column": 8,
+          "end_column": 34
+        }
+      ],
+      "surface": "code"
+    },
+    {
+      "id": "TT2",
+      "finding_id": "finding-d6029c4d10b0432f9123095c3dc7a2e9",
+      "category": "Data Flow",
+      "pattern": "Tainted flow: 'backup' from os.environ.get (line 118, credential/environment) \u2192 shutil.copy2 (file write)",
+      "severity": "MEDIUM",
+      "confidence": 0.65,
+      "location": {
+        "file": "tools/chef_global_rules.py",
+        "start_line": 124,
+        "end_line": 124,
+        "start_column": 12,
+        "end_column": 38
+      },
+      "finding": "shutil.copy2(backup, path)",
+      "explanation": "Data from a source is assigned to a variable that is later passed to a sink, creating a variable-mediated taint flow.",
+      "remediation": "Validate tainted variables before passing them to sinks. Use allowlists, type checks, or sanitization functions on data from external sources.",
+      "code_snippet": "        write_atomic(path, new)\n    except Exception:\n        if backup is not None and backup.exists():\n            shutil.copy2(backup, path)\n        raise\n    return {**info, \"applied\": True,\n            \"backup\": str(backup) if backup else None,",
+      "intent": null,
+      "tags": [
+        "Data Flow"
+      ],
+      "evidence": {},
+      "match_fingerprint": "4c3810b06f5b56935e7af2d85339da145b885ba8b65d189516b33045d4ff0515",
+      "occurrences": [
+        {
+          "file": "tools/chef_global_rules.py",
+          "start_line": 124,
+          "end_line": 124,
+          "start_column": 12,
+          "end_column": 38
+        }
+      ],
+      "surface": "code"
+    },
+    {
+      "id": "AST4",
+      "finding_id": "finding-5eb44e8dd19644768988c3f0482670c9",
+      "category": "Dangerous Code Execution",
+      "pattern": "subprocess module call",
+      "severity": "MEDIUM",
+      "confidence": 0.7,
+      "location": {
+        "file": "tools/verify_codex_activation.py",
+        "start_line": 73,
+        "end_line": 74,
+        "start_column": 16,
+        "end_column": 55
+      },
+      "finding": "subprocess.run([exe, \"login\", \"status\"], capture_output=True,\n                               timeout=15, check=False)",
+      "explanation": "subprocess module calls execute external commands. Without careful input validation, this enables command injection.",
+      "remediation": "Use subprocess.run() with shell=False and an explicit argument list. Validate all inputs and avoid passing user-controlled data to commands.",
+      "code_snippet": "        result[\"reason\"] = \"Codex CLI not installed in executing environment\"\n        return result\n    try:\n        login = subprocess.run([exe, \"login\", \"status\"], capture_output=True,\n                               timeout=15, check=False)\n    except (OSError, subprocess.TimeoutExpired):\n        result[\"reason\"] = \"Could not check Codex CLI authentication\"",
+      "intent": null,
+      "tags": [
+        "Dangerous Code Execution"
+      ],
+      "evidence": {},
+      "match_fingerprint": "bf911e69f2dda2662b91af0cbb37b1fb9dd58b54d3da5daadb6ed1fa2dc7ac18",
+      "occurrences": [
+        {
+          "file": "tools/verify_codex_activation.py",
+          "start_line": 73,
+          "end_line": 74,
+          "start_column": 16,
+          "end_column": 55
+        }
+      ],
+      "surface": "code"
+    },
+    {
+      "id": "AST4",
+      "finding_id": "finding-96a33593597841a388e1c47f3ae00be3",
+      "category": "Dangerous Code Execution",
+      "pattern": "subprocess module call",
+      "severity": "MEDIUM",
+      "confidence": 0.7,
+      "location": {
+        "file": "tools/verify_codex_activation.py",
+        "start_line": 104,
+        "end_line": 105,
+        "start_column": 19,
+        "end_column": 74
+      },
+      "finding": "subprocess.run(args, cwd=workspace, capture_output=True,\n                                  text=True, timeout=timeout, check=False)",
+      "explanation": "subprocess module calls execute external commands. Without careful input validation, this enables command injection.",
+      "remediation": "Use subprocess.run() with shell=False and an explicit argument list. Validate all inputs and avoid passing user-controlled data to commands.",
+      "code_snippet": "                \"--cd\", str(workspace), prompt]\n        result[\"invoked\"] = True\n        try:\n            proc = subprocess.run(args, cwd=workspace, capture_output=True,\n                                  text=True, timeout=timeout, check=False)\n        except subprocess.TimeoutExpired:\n            return {**result, \"status\": \"FAIL\", \"reason\": \"Agent timed out\"}",
+      "intent": null,
+      "tags": [
+        "Dangerous Code Execution"
+      ],
+      "evidence": {},
+      "match_fingerprint": "da8cf6a0d026670f3a893087b94b85f2ddd691f40e9e365eb0f39bb07ca4693d",
+      "occurrences": [
+        {
+          "file": "tools/verify_codex_activation.py",
+          "start_line": 104,
+          "end_line": 105,
+          "start_column": 19,
+          "end_column": 74
+        }
+      ],
+      "surface": "code"
+    },
+    {
+      "id": "AST4",
+      "finding_id": "finding-fd9b7b76cc014ea591fa1a6f640234ac",
+      "category": "Dangerous Code Execution",
+      "pattern": "subprocess module call",
+      "severity": "MEDIUM",
+      "confidence": 0.7,
+      "location": {
+        "file": "tools/verify_four_agents.py",
+        "start_line": 186,
+        "end_line": 187,
+        "start_column": 15,
+        "end_column": 54
+      },
+      "finding": "subprocess.run([exe, \"login\", \"status\"], capture_output=True,\n                              timeout=20, check=False)",
+      "explanation": "subprocess module calls execute external commands. Without careful input validation, this enables command injection.",
+      "remediation": "Use subprocess.run() with shell=False and an explicit argument list. Validate all inputs and avoid passing user-controlled data to commands.",
+      "code_snippet": "        result[\"reason\"] = \"Install all 4 validated native role definitions first\"\n        return result\n    try:\n        auth = subprocess.run([exe, \"login\", \"status\"], capture_output=True,\n                              timeout=20, check=False)\n    except (OSError, subprocess.TimeoutExpired):\n        result[\"reason\"] = \"Cannot inspect Codex CLI authentication\"",
+      "intent": null,
+      "tags": [
+        "Dangerous Code Execution"
+      ],
+      "evidence": {},
+      "match_fingerprint": "2c475b57dbd71845978d9a7c0da93f1e6d913e51fb24994a08f3ea24b8af78d0",
+      "occurrences": [
+        {
+          "file": "tools/verify_four_agents.py",
+          "start_line": 186,
+          "end_line": 187,
+          "start_column": 15,
+          "end_column": 54
+        }
+      ],
+      "surface": "code"
+    },
+    {
+      "id": "AST4",
+      "finding_id": "finding-afb521f0321a41d280d327943b930345",
+      "category": "Dangerous Code Execution",
+      "pattern": "subprocess module call",
+      "severity": "MEDIUM",
+      "confidence": 0.7,
+      "location": {
+        "file": "tools/verify_four_agents.py",
+        "start_line": 223,
+        "end_line": 224,
+        "start_column": 19,
+        "end_column": 63
+      },
+      "finding": "subprocess.run(command, cwd=wd, capture_output=True,\n                                  timeout=timeout, check=False)",
+      "explanation": "subprocess module calls execute external commands. Without careful input validation, this enables command injection.",
+      "remediation": "Use subprocess.run() with shell=False and an explicit argument list. Validate all inputs and avoid passing user-controlled data to commands.",
+      "code_snippet": "                   \"-c\", \"features.unified_exec=false\", prompt]\n        result[\"invoked\"] = True\n        try:\n            proc = subprocess.run(command, cwd=wd, capture_output=True,\n                                  timeout=timeout, check=False)\n        except subprocess.TimeoutExpired:\n            return {**result, \"status\": \"FAIL\", \"reason\": \"Codex session timed out\"}",
+      "intent": null,
+      "tags": [
+        "Dangerous Code Execution"
+      ],
+      "evidence": {},
+      "match_fingerprint": "1877ca90eac3f413871cb4ef997823f37aced67fa2876ad9edcffb23414dc4b9",
+      "occurrences": [
+        {
+          "file": "tools/verify_four_agents.py",
+          "start_line": 223,
+          "end_line": 224,
+          "start_column": 19,
+          "end_column": 63
+        }
+      ],
+      "surface": "code"
+    }
+  ],
+  "suppressed_count": 0,
+  "suppressed": [],
+  "metadata": {
+    "has_executable_scripts": true,
+    "skillspector_version": "2.12.0",
+    "llm_requested": false,
+    "llm_available": false,
+    "meta_analysis_applied": false,
+    "inference_usage": [],
+    "llm_provenance": {
+      "schema_version": 1,
+      "provider": {
+        "configured_adapter": "unknown",
+        "resolved_adapter": "unknown",
+        "effective_adapter": "not_applicable",
+        "effective_adapters": [],
+        "service": "unknown",
+        "routing": {
+          "deployment_override": null,
+          "deployment_source": "unknown",
+          "api_version": null,
+          "api_version_source": "unknown"
+        }
+      },
+      "analyzers": [
+        {
+          "analyzer_id": "mcp_tool_poisoning",
+          "model": "z-ai/glm-5.3-flash",
+          "model_source": "resolved_configuration",
+          "analyzer_revision": {
+            "value": "2.12.0",
+            "source": "skillspector_package",
+            "source_revision": {
+              "value": "unknown",
+              "source": "unknown"
+            }
+          }
+        },
+        {
+          "analyzer_id": "semantic_developer_intent",
+          "model": "z-ai/glm-5.3-flash",
+          "model_source": "resolved_configuration",
+          "analyzer_revision": {
+            "value": "2.12.0",
+            "source": "skillspector_package",
+            "source_revision": {
+              "value": "unknown",
+              "source": "unknown"
+            }
+          }
+        },
+        {
+          "analyzer_id": "semantic_quality_policy",
+          "model": "z-ai/glm-5.3-flash",
+          "model_source": "resolved_configuration",
+          "analyzer_revision": {
+            "value": "2.12.0",
+            "source": "skillspector_package",
+            "source_revision": {
+              "value": "unknown",
+              "source": "unknown"
+            }
+          }
+        },
+        {
+          "analyzer_id": "semantic_security_discovery",
+          "model": "z-ai/glm-5.3-flash",
+          "model_source": "resolved_configuration",
+          "analyzer_revision": {
+            "value": "2.12.0",
+            "source": "skillspector_package",
+            "source_revision": {
+              "value": "unknown",
+              "source": "unknown"
+            }
+          }
+        },
+        {
+          "analyzer_id": "meta_analyzer",
+          "model": "z-ai/glm-5.3-flash",
+          "model_source": "resolved_configuration",
+          "analyzer_revision": {
+            "value": "2.12.0",
+            "source": "skillspector_package",
+            "source_revision": {
+              "value": "unknown",
+              "source": "unknown"
+            }
+          }
+        }
+      ],
+      "sampling": {
+        "temperature": {
+          "requested": null,
+          "source": "provider_default",
+          "forwarded_to_client": null,
+          "adapter_support": false,
+          "provider_support": "unknown"
+        },
+        "seed": {
+          "requested": null,
+          "source": "unset",
+          "forwarded_to_client": null,
+          "adapter_support": false,
+          "provider_support": "unknown"
+        },
+        "reasoning_effort": {
+          "requested": null,
+          "source": "provider_default",
+          "forwarded_to_client": null,
+          "adapter_support": false,
+          "provider_support": "unknown"
+        }
+      },
+      "determinism": {
+        "classification": "not_applicable",
+        "control_status": "not_applied",
+        "provider_guarantee": false,
+        "reason": "LLM analysis was not executed for this scan."
+      }
+    },
+    "filtering_mode": "heuristic"
+  },
+  "execution_successful": true,
+  "analysis_completeness": {
+    "total_components": 34,
+    "scanned_components": 34,
+    "coverage_percent": 100.0,
+    "is_complete": true,
+    "status": "complete",
+    "execution_successful": true,
+    "fully_inspected_files": 34,
+    "partially_inspected_files": 0,
+    "entirely_uninspected_files": 0,
+    "ledger_exceptions": [],
+    "scope_exclusions": [],
+    "analyzer_statuses": [
+      {
+        "analyzer_id": "artifact_integrity",
+        "status": "completed",
+        "planned_work": 34,
+        "completed": 34,
+        "partial": 0,
+        "skipped": 0,
+        "failed": 0,
+        "unaccounted": 0
+      },
+      {
+        "analyzer_id": "behavioral_ast",
+        "status": "completed",
+        "planned_work": 14,
+        "completed": 14,
+        "partial": 0,
+        "skipped": 0,
+        "failed": 0,
+        "unaccounted": 0
+      },
+      {
+        "analyzer_id": "behavioral_taint_tracking",
+        "status": "completed",
+        "planned_work": 14,
+        "completed": 14,
+        "partial": 0,
+        "skipped": 0,
+        "failed": 0,
+        "unaccounted": 0
+      },
+      {
+        "analyzer_id": "bundled_execution_surface",
+        "status": "not_applicable",
+        "planned_work": 0,
+        "completed": 0,
+        "partial": 0,
+        "skipped": 0,
+        "failed": 0,
+        "unaccounted": 0,
+        "reason_code": "no_applicable_files",
+        "message": "No files matched this analyzer's applicability contract."
+      },
+      {
+        "analyzer_id": "mcp_least_privilege",
+        "status": "not_applicable",
+        "planned_work": 0,
+        "completed": 0,
+        "partial": 0,
+        "skipped": 0,
+        "failed": 0,
+        "unaccounted": 0,
+        "reason_code": "manifest_absent",
+        "message": "No compatible manifest was present for this analyzer."
+      },
+      {
+        "analyzer_id": "mcp_rug_pull",
+        "status": "completed",
+        "planned_work": 34,
+        "completed": 34,
+        "partial": 0,
+        "skipped": 0,
+        "failed": 0,
+        "unaccounted": 0
+      },
+      {
+        "analyzer_id": "mcp_tool_poisoning",
+        "status": "not_applicable",
+        "planned_work": 0,
+        "completed": 0,
+        "partial": 0,
+        "skipped": 0,
+        "failed": 0,
+        "unaccounted": 0,
+        "reason_code": "manifest_absent",
+        "message": "No compatible manifest was present for this analyzer."
+      },
+      {
+        "analyzer_id": "meta_analyzer",
+        "status": "disabled",
+        "planned_work": 0,
+        "completed": 0,
+        "partial": 0,
+        "skipped": 0,
+        "failed": 0,
+        "unaccounted": 0,
+        "reason_code": "disabled_by_configuration",
+        "message": "Analyzer was disabled by the requested configuration."
+      },
+      {
+        "analyzer_id": "semantic_developer_intent",
+        "status": "disabled",
+        "planned_work": 0,
+        "completed": 0,
+        "partial": 0,
+        "skipped": 0,
+        "failed": 0,
+        "unaccounted": 0,
+        "reason_code": "disabled_by_configuration",
+        "message": "Analyzer was disabled by the requested configuration."
+      },
+      {
+        "analyzer_id": "semantic_quality_policy",
+        "status": "disabled",
+        "planned_work": 0,
+        "completed": 0,
+        "partial": 0,
+        "skipped": 0,
+        "failed": 0,
+        "unaccounted": 0,
+        "reason_code": "disabled_by_configuration",
+        "message": "Analyzer was disabled by the requested configuration."
+      },
+      {
+        "analyzer_id": "semantic_security_discovery",
+        "status": "disabled",
+        "planned_work": 0,
+        "completed": 0,
+        "partial": 0,
+        "skipped": 0,
+        "failed": 0,
+        "unaccounted": 0,
+        "reason_code": "disabled_by_configuration",
+        "message": "Analyzer was disabled by the requested configuration."
+      },
+      {
+        "analyzer_id": "static_patterns_agent_snooping",
+        "status": "completed",
+        "planned_work": 34,
+        "completed": 34,
+        "partial": 0,
+        "skipped": 0,
+        "failed": 0,
+        "unaccounted": 0
+      },
+      {
+        "analyzer_id": "static_patterns_anti_refusal",
+        "status": "completed",
+        "planned_work": 34,
+        "completed": 34,
+        "partial": 0,
+        "skipped": 0,
+        "failed": 0,
+        "unaccounted": 0
+      },
+      {
+        "analyzer_id": "static_patterns_data_exfiltration",
+        "status": "completed",
+        "planned_work": 34,
+        "completed": 34,
+        "partial": 0,
+        "skipped": 0,
+        "failed": 0,
+        "unaccounted": 0
+      },
+      {
+        "analyzer_id": "static_patterns_deserialization",
+        "status": "completed",
+        "planned_work": 34,
+        "completed": 34,
+        "partial": 0,
+        "skipped": 0,
+        "failed": 0,
+        "unaccounted": 0
+      },
+      {
+        "analyzer_id": "static_patterns_excessive_agency",
+        "status": "completed",
+        "planned_work": 34,
+        "completed": 34,
+        "partial": 0,
+        "skipped": 0,
+        "failed": 0,
+        "unaccounted": 0
+      },
+      {
+        "analyzer_id": "static_patterns_harmful_content",
+        "status": "completed",
+        "planned_work": 34,
+        "completed": 34,
+        "partial": 0,
+        "skipped": 0,
+        "failed": 0,
+        "unaccounted": 0
+      },
+      {
+        "analyzer_id": "static_patterns_memory_poisoning",
+        "status": "completed",
+        "planned_work": 34,
+        "completed": 34,
+        "partial": 0,
+        "skipped": 0,
+        "failed": 0,
+        "unaccounted": 0
+      },
+      {
+        "analyzer_id": "static_patterns_output_handling",
+        "status": "completed",
+        "planned_work": 34,
+        "completed": 34,
+        "partial": 0,
+        "skipped": 0,
+        "failed": 0,
+        "unaccounted": 0
+      },
+      {
+        "analyzer_id": "static_patterns_privilege_escalation",
+        "status": "completed",
+        "planned_work": 34,
+        "completed": 34,
+        "partial": 0,
+        "skipped": 0,
+        "failed": 0,
+        "unaccounted": 0
+      },
+      {
+        "analyzer_id": "static_patterns_prompt_injection",
+        "status": "completed",
+        "planned_work": 34,
+        "completed": 34,
+        "partial": 0,
+        "skipped": 0,
+        "failed": 0,
+        "unaccounted": 0
+      },
+      {
+        "analyzer_id": "static_patterns_rogue_agent",
+        "status": "completed",
+        "planned_work": 34,
+        "completed": 34,
+        "partial": 0,
+        "skipped": 0,
+        "failed": 0,
+        "unaccounted": 0
+      },
+      {
+        "analyzer_id": "static_patterns_ssrf",
+        "status": "completed",
+        "planned_work": 34,
+        "completed": 34,
+        "partial": 0,
+        "skipped": 0,
+        "failed": 0,
+        "unaccounted": 0
+      },
+      {
+        "analyzer_id": "static_patterns_supply_chain",
+        "status": "completed",
+        "planned_work": 34,
+        "completed": 34,
+        "partial": 0,
+        "skipped": 0,
+        "failed": 0,
+        "unaccounted": 0
+      },
+      {
+        "analyzer_id": "static_patterns_system_prompt_leakage",
+        "status": "completed",
+        "planned_work": 34,
+        "completed": 34,
+        "partial": 0,
+        "skipped": 0,
+        "failed": 0,
+        "unaccounted": 0
+      },
+      {
+        "analyzer_id": "static_patterns_tool_misuse",
+        "status": "completed",
+        "planned_work": 34,
+        "completed": 34,
+        "partial": 0,
+        "skipped": 0,
+        "failed": 0,
+        "unaccounted": 0
+      },
+      {
+        "analyzer_id": "static_yara",
+        "status": "completed",
+        "planned_work": 34,
+        "completed": 34,
+        "partial": 0,
+        "skipped": 0,
+        "failed": 0,
+        "unaccounted": 0
+      }
+    ],
+    "references": [],
+    "limitations": [],
+    "findings_before_filtering": 23,
+    "findings_after_filtering": 23,
+    "dependency_inspection": {
+      "enabled": false,
+      "status": "not_requested",
+      "mode": "static_local",
+      "locked_entries": 0,
+      "inspected_artifacts": 0,
+      "artifacts": []
+    }
+  }
+}

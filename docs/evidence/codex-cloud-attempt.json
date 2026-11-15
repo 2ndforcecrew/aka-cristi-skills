@@ -1,0 +1,77 @@
+{
+  "checked_at": "2026-11-15T13:40:54.408975+00:00",
+  "status": "BLOCKED",
+  "invoked": true,
+  "roles": {
+    "aka_research": "NOT_VERIFIED",
+    "aka_coding": "NOT_VERIFIED",
+    "aka_qa": "NOT_VERIFIED",
+    "aka_automation": "NOT_VERIFIED"
+  },
+  "codex_cli_version": "codex-cli 0.167.0-alpha.4",
+  "installed_roles": {
+    "aka_research": "PASS",
+    "aka_coding": "PASS",
+    "aka_qa": "PASS",
+    "aka_automation": "PASS"
+  },
+  "role_configuration": "TEMPORARY_PER_PROCESS_OVERRIDES",
+  "role_stages": {
+    "aka_research": {
+      "SPAWN_ATTEMPT": false,
+      "SPAWN_SUCCESS": false,
+      "ROLE_SELECTED": false,
+      "CHILD_COMPLETED": false,
+      "ROLE_PASS": false
+    },
+    "aka_coding": {
+      "SPAWN_ATTEMPT": false,
+      "SPAWN_SUCCESS": false,
+      "ROLE_SELECTED": false,
+      "CHILD_COMPLETED": false,
+      "ROLE_PASS": false
+    },
+    "aka_qa": {
+      "SPAWN_ATTEMPT": false,
+      "SPAWN_SUCCESS": false,
+      "ROLE_SELECTED": false,
+      "CHILD_COMPLETED": false,
+      "ROLE_PASS": false
+    },
+    "aka_automation": {
+      "SPAWN_ATTEMPT": false,
+      "SPAWN_SUCCESS": false,
+      "ROLE_SELECTED": false,
+      "CHILD_COMPLETED": false,
+      "ROLE_PASS": false
+    }
+  },
+  "confirmed_child_threads": {},
+  "reason": "One real cloud CLI attempt exited 1 with no root thread or completion; stderr was not retained, so no detailed cause can be asserted.",
+  "root_thread_id": null,
+  "exit_code": 1,
+  "agent_completion_observed": false,
+  "privacy": "No raw rollout or authentication contents copied into report",
+  "verifier_status_at_attempt": "INCONCLUSIVE",
+  "execution_status": "FAIL",
+  "failure_category": "CLI_NONZERO_UNKNOWN_STDERR_NOT_RETAINED",
+  "evidence_class": "OBSERVED_CLOUD_CLI_ATTEMPT_NOT_FOUR_ROLE_PASS",
+  "source_revision": "Uncommitted feat/chef-six-gates-20261115 working tree based on 63c4339d462136d746e06121f50acf884c4b1e3c",
+  "patch_commit": null,
+  "isolation": {
+    "role_source": "public agents/*.toml staged in temporary workspace",
+    "configuration": "per-process agents.<role>.config_file overrides",
+    "authentication": "existing CLI session reused in place; credentials not read or copied",
+    "global_configuration_modified": false,
+    "retries": 0,
+    "timeout_seconds": 180
+  },
+  "followup": "Verifier now categorizes nonzero CLI failures using fixed safe categories; this improvement has only synthetic regression tests, and the real run was not repeated.",
+  "non_model_configuration_probe": {
+    "command": "codex -c agents.<role>.config_file=<temporary-public-TOML> features list",
+    "exit_code": 0,
+    "category": "CLI_CONFIGURATION_ACCEPTED",
+    "model_invoked": false,
+    "interpretation": "Per-process config syntax accepted; does not diagnose earlier exec failure or establish live role loading."
+  }
+}

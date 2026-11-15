@@ -1,0 +1,63 @@
+name: Signed candidate (no release publication)
+on:
+  push:
+    branches: [feat/chef-six-gates-20261115]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Candidate version, e.g. 0.3.0-rc.1
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  candidate:
+    # No pull_request trigger or arbitrary ref obtains signing privileges.
+    if: github.repository == '2ndforcecrew/aka-cristi-skills' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feat/chef-six-gates-20261115')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.11'
+      - name: Test packaging and negative verification machinery
+        run: python -m unittest discover -s tests -v
+      - name: Build deterministic source snapshot twice
+        env:
+          CANDIDATE_VERSION: ${{ inputs.version || '0.3.0-rc.1' }}
+        run: |
+          python -m tools.release_package --commit "$GITHUB_SHA" --version "$CANDIDATE_VERSION" --out candidate
+          python -m tools.release_package --commit "$GITHUB_SHA" --version "$CANDIDATE_VERSION" --out comparison
+          python -c "from pathlib import Path; a=next(Path('candidate').glob('*.zip')); b=Path('comparison')/a.name; assert a.read_bytes()==b.read_bytes(), 'Non-deterministic archives'"
+      - name: Attest archive and manifest with GitHub OIDC identity
+        id: provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
+        with:
+          create-storage-record: false
+          subject-path: |
+            candidate/*.zip
+            candidate/release-manifest.json
+      - name: Preserve bundle with candidate
+        env:
+          BUNDLE_PATH: ${{ steps.provenance.outputs.bundle-path }}
+        run: python -c "import os,shutil; shutil.copyfile(os.environ['BUNDLE_PATH'],'candidate/provenance.sigstore.json')"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: signed-candidate-${{ github.sha }}
+          path: candidate/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Verify exact publisher, workflow, source digest and reference
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python -c "import json, subprocess; from pathlib import Path; m=json.loads(Path('candidate/release-manifest.json').read_text()); subprocess.run(['python','-m','tools.verify_release',str(Path('candidate')/m['archive']),'--expected-commit',m['source_commit'],'--expected-sha256',m['sha256'],'--source-ref',__import__('os').environ['GITHUB_REF']],check=True)"
+      - name: Explain candidate scope
+        run: echo 'Candidate provenance only; security review, Windows GUI, external UAT and real host activation remain separate gates. No release was published.' >> "$GITHUB_STEP_SUMMARY"

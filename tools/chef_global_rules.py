@@ -7,6 +7,7 @@ import shutil
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
+from tools.fs_safety import checked_path
 
 START = "<!-- AKA.CRISTI CHEF GLOBAL START v1 -->"
 END = "<!-- AKA.CRISTI CHEF GLOBAL END v1 -->"
@@ -19,15 +20,13 @@ class GlobalRulesError(ValueError):
 def destination(home=None):
     if home is None:
         home = os.environ.get("CODEX_HOME") or str(Path.home() / ".codex")
-    folder = Path(home).expanduser().absolute()
+    folder = checked_path(home, GlobalRulesError)
     dest = folder / "AGENTS.md"
-    if dest.is_symlink():
-        raise GlobalRulesError("refusing symlink AGENTS.md")
-    return dest
+    return checked_path(dest, GlobalRulesError)
 
 
 def managed_block(template):
-    raw = Path(template).read_text(encoding="utf-8")
+    raw = checked_path(template, GlobalRulesError).read_text(encoding="utf-8")
     if not raw.strip() or START in raw or END in raw:
         raise GlobalRulesError("invalid template")
     return START + "\n" + raw.rstrip() + "\n" + END
@@ -81,6 +80,7 @@ def plan(action, template, home=None):
 
 
 def write_atomic(path, text):
+    checked_path(path, GlobalRulesError)
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp = tempfile.mkstemp(prefix=".aka-chef-", dir=path.parent)
     try:
@@ -112,7 +112,7 @@ def apply(action, template, home=None, confirmed=False):
         new = new.rstrip("\n") + "\n" if new.strip() else ""
     backup = None
     if path.exists():
-        backup_folder = path.parent / ".aka-chef-backups"
+        backup_folder = checked_path(path.parent / ".aka-chef-backups", GlobalRulesError)
         backup_folder.mkdir(exist_ok=True)
         stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
         backup = backup_folder / ("AGENTS-" + stamp + "-" + os.urandom(4).hex() + ".md")

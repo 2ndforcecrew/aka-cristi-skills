@@ -12,6 +12,7 @@ import shutil
 import tempfile
 import uuid
 from pathlib import Path
+from tools.fs_safety import checked_path
 
 NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 STATE = ".aka-skill-installer"
@@ -23,22 +24,17 @@ class InstallError(ValueError):
 
 
 def checked(path):
-    p = Path(os.path.abspath(os.path.expanduser(str(path))))
-    ancestor = p
-    while True:
-        if ancestor.is_symlink():
-            raise InstallError("symlink destination/source forbidden")
-        if ancestor.parent == ancestor:
-            break
-        ancestor = ancestor.parent
-    return p
+    return checked_path(path, InstallError)
 
 
 def package(source, expected_name=None):
     src = checked(source)
     if not src.is_dir() or not (src / "SKILL.md").is_file():
         raise InstallError("expected local directory with SKILL.md")
-    data = (src / "SKILL.md").read_text(encoding="utf-8")
+    metadata_file = checked(src / "SKILL.md")
+    if metadata_file.stat().st_size > 2 * 1024 * 1024:
+        raise InstallError("oversized SKILL.md")
+    data = metadata_file.read_text(encoding="utf-8")
     if not data.startswith("---\n") or "\n---\n" not in data[4:]:
         raise InstallError("invalid SKILL.md frontmatter")
     header = data[4:].split("\n---\n", 1)[0]
@@ -61,12 +57,13 @@ def package(source, expected_name=None):
     size = 0
     count = 0
     for folder, dirs, files in os.walk(src, followlinks=False):
+        dirs.sort()
         for dirname in dirs:
-            p = Path(folder) / dirname
+            p = checked(Path(folder) / dirname)
             if p.is_symlink() or dirname in (".git", "__pycache__", STATE):
                 raise InstallError("unsafe directory in package")
-        for filename in files:
-            p = Path(folder) / filename
+        for filename in sorted(files):
+            p = checked(Path(folder) / filename)
             if p.is_symlink() or not p.is_file() or any(ord(c)<32 for c in filename):
                 raise InstallError("unsafe file in package")
             count += 1
