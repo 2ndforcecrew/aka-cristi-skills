@@ -18,3 +18,23 @@ jobs:
         with:
           python-version: '3.11'
       - run: python -m unittest discover -s tests -v
+
+      - name: Windows friend bootstrap parse, preview and sandbox install
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $syntaxErrors = $null
+          $tokens = $null
+          [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path '.\\install.ps1').Path, [ref]$tokens, [ref]$syntaxErrors) | Out-Null
+          if ($syntaxErrors.Count -gt 0) { $syntaxErrors | Out-String | Write-Error; exit 1 }
+          $sandbox = Join-Path $env:RUNNER_TEMP 'aka-chef-test-codex'
+          & .\\install.ps1 -SourceDirectory . -CodexHome $sandbox -SkipCodexCheck
+          if ($LASTEXITCODE -ne 0 -or (Test-Path $sandbox)) { throw 'Bootstrap preview changed files or failed' }
+          & .\\install.ps1 -SourceDirectory . -CodexHome $sandbox -SkipCodexCheck -Apply
+          if ($LASTEXITCODE -ne 0) { throw 'Bootstrap install failed' }
+          & .\\install.ps1 -SourceDirectory . -CodexHome $sandbox -SkipCodexCheck -Apply
+          if ($LASTEXITCODE -ne 0) { throw 'Bootstrap second install not idempotent' }
+          if (-not (Test-Path (Join-Path $sandbox 'AGENTS.md'))) { throw 'Global rules missing' }
+          foreach ($role in @('research', 'coding', 'qa', 'automation')) {
+            if (-not (Test-Path (Join-Path $sandbox ("agents/" + $role + ".toml")))) { throw "Missing role: $role" }
+          }
