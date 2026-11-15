@@ -1,5 +1,7 @@
 # AKA.CRISTI Skills
 
+**[🇨🇳 中文功能说明 / 安装指南](README.zh-CN.md)** · [English](README.md)
+
 **FROM EXPERIENCE TO CAPABILITY.**
 
 A curated public collection of reusable agent workflows and a safe, local-only Skill installer. This is separate from the **private** development repository; no internal rules, credentials, customer data, or private history are distributed here.
