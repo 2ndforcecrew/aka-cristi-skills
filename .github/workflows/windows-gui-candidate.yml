@@ -97,8 +97,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $version = (& gh --version | Select-Object -First 1)
-          if ($LASTEXITCODE -ne 0 -or $version -notmatch 'gh version (\d+)\.(\d+)\.(\d+)') { throw 'GitHub CLI version unavailable' }
+          # Drain all native stdout; Select-Object -First can break gh's pipe on Windows.
+          $versionLines = & gh --version
+          $versionExit = $LASTEXITCODE
+          $version = $versionLines -join [Environment]::NewLine
+          if ($versionExit -ne 0 -or $version -notmatch 'gh version (\d+)\.(\d+)\.(\d+)') { throw 'GitHub CLI version unavailable' }
           if ([version]::new([int]$Matches[1], [int]$Matches[2], [int]$Matches[3]) -lt [version]'2.102.0') { throw 'GitHub CLI 2.102.0+ required' }
           $manifest = Get-Content 'dist/gui-candidate-manifest.json' -Raw | ConvertFrom-Json
           foreach ($name in @('AKA-CRISTI-CHEF-Setup.exe', 'bundled-public-data.json', 'exe-smoke-evidence.txt')) {

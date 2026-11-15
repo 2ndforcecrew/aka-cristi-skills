@@ -49,6 +49,11 @@ def append_block(old, block):
     return old + separator + block + "\n"
 
 
+def same_block(existing, expected):
+    # Match the old universal-newline comparison without rewriting user bytes.
+    return existing.replace("\r\n", "\n") == expected.replace("\r\n", "\n")
+
+
 def locate(old):
     if old.count(START) != old.count(END) or old.count(START) > 1:
         raise GlobalRulesError("ambiguous or corrupted managed markers")
@@ -69,15 +74,15 @@ def plan(action, template, home=None):
     if action == "install":
         if span:
             existing = old[span[0]:span[1]]
-            state = "already_installed" if existing == block else "conflict_modified"
+            state = "already_installed" if same_block(existing, block) else "conflict_modified"
         else:
             state = "append" if old else "create"
     elif action == "verify":
-        state = ("PASS" if span and old[span[0]:span[1]] == block else
+        state = ("PASS" if span and same_block(old[span[0]:span[1]], block) else
                  "FAIL" if span else "NOT_INSTALLED")
     elif action == "uninstall":
         state = "NOT_INSTALLED" if not span else (
-            "remove_managed_block" if old[span[0]:span[1]] == block
+            "remove_managed_block" if same_block(old[span[0]:span[1]], block)
             else "conflict_modified")
     else:
         raise GlobalRulesError("unsupported action")
