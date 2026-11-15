@@ -4,10 +4,11 @@ import tempfile
 import unittest
 import uuid
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from tools.verify_four_agents import (
-    ROLES, evaluate, find_role_tomls, json_lines, parse_spawn_calls, run,
+    ROLES, decode_output, evaluate, find_role_tomls, json_lines, parse_spawn_calls, run,
 )
 
 
@@ -94,6 +95,41 @@ class FourAgentEvidenceTests(unittest.TestCase):
             checked = find_role_tomls(home)
         self.assertEqual(set(checked), set(ROLES))
         self.assertTrue(all(v == "PASS" for v in checked.values()))
+
+
+    def test_utf8_jsonl_bytes_and_invalid_ansi_data_do_not_crash(self):
+        event = {"type": "thread.started", "thread_id": str(uuid.uuid4()),
+                 "note": "中文UTF-8"}
+        payload = (json.dumps(event, ensure_ascii=False) + "\n").encode("utf-8")
+        records = json_lines(payload + b"invalid:\xff\n")
+        self.assertEqual(records, [event])
+        self.assertIn("中文UTF-8", decode_output(payload))
+        self.assertEqual(json_lines(None), [])
+        self.assertEqual(json_lines(b""), [])
+
+    def test_windows_subprocess_output_in_bytes_is_handled(self):
+        root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory() as temp:
+            home = Path(temp) / "codex"
+            agents = home / "agents"
+            agents.mkdir(parents=True)
+            for role in ("research", "coding", "qa", "automation"):
+                (agents / (role + ".toml")).write_bytes(
+                    (root / "agents" / (role + ".toml")).read_bytes())
+            events = (json.dumps({"type": "thread.started",
+                                  "thread_id": str(uuid.uuid4())}) + "\n" +
+                      json.dumps({"type": "turn.completed"}) + "\n").encode("utf-8")
+            calls = [
+                SimpleNamespace(returncode=0, stdout=b"", stderr=b""),
+                SimpleNamespace(returncode=0, stdout=events + b"\xff",
+                                stderr=b"\xff"),
+            ]
+            with patch("tools.verify_four_agents.shutil.which", return_value="codex.exe"), \
+                 patch("tools.verify_four_agents.subprocess.run", side_effect=calls):
+                result = run(codex_home=home)
+            self.assertEqual(result["status"], "INCONCLUSIVE")
+            self.assertTrue(result["invoked"])
+            self.assertTrue(result["agent_completion_observed"])
 
 
 if __name__ == "__main__":

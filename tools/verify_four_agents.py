@@ -22,9 +22,18 @@ ROLE_FILES = ("research", "coding", "qa", "automation")
 UUID_RE = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", re.I)
 
 
+def decode_output(raw):
+    """Codex JSONL is UTF-8, not the Windows console ANSI code page."""
+    if raw is None:
+        return ""
+    if isinstance(raw, bytes):
+        return raw.decode("utf-8", errors="replace")
+    return raw
+
+
 def json_lines(raw):
     records = []
-    for line in raw.splitlines():
+    for line in decode_output(raw).splitlines():
         try:
             x = json.loads(line)
             if isinstance(x, dict):
@@ -175,7 +184,7 @@ def run(timeout=600, codex_bin="codex", codex_home=None):
         return result
     try:
         auth = subprocess.run([exe, "login", "status"], capture_output=True,
-                              text=True, timeout=20, check=False)
+                              timeout=20, check=False)
     except (OSError, subprocess.TimeoutExpired):
         result["reason"] = "Cannot inspect Codex CLI authentication"
         return result
@@ -212,7 +221,7 @@ def run(timeout=600, codex_bin="codex", codex_home=None):
         result["invoked"] = True
         try:
             proc = subprocess.run(command, cwd=wd, capture_output=True,
-                                  text=True, timeout=timeout, check=False)
+                                  timeout=timeout, check=False)
         except subprocess.TimeoutExpired:
             return {**result, "status": "FAIL", "reason": "Codex session timed out"}
         except OSError:
