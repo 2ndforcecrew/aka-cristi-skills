@@ -106,7 +106,7 @@ class PublishedSkillSmokeTests(unittest.TestCase):
                 source = published / name
                 plan = inspect(source, root=root)
                 self.assertEqual(plan["action"], "install")
-                self.assertFalse(root.exists())
+                self.assertFalse((root / name).exists())
                 installed = install(source, root=root, apply=True)
                 self.assertTrue(installed["applied"])
                 result = verify(name, root=root)
