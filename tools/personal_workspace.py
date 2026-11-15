@@ -37,7 +37,7 @@ NAME = re.compile(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,99}\Z')
 SAFE_ERRORS = frozenset({
     'OAUTH_CLIENT_ID_REQUIRED', 'OAUTH_CLIENT_ID_INVALID', 'NOT_CONNECTED',
     'AUTH_CANCELLED', 'AUTH_TIMEOUT', 'AUTH_DENIED', 'AUTH_EXPIRED', 'AUTH_FAILED',
-    'SECURE_STORAGE_REQUIRED', 'NETWORK_ERROR', 'REPO_NOT_FOUND', 'REPO_NOT_PRIVATE',
+    'SECURE_STORAGE_REQUIRED', 'NETWORK_ERROR', 'REPO_NOT_FOUND', 'REUSE_REQUIRED', 'REPO_NOT_PRIVATE',
     'OWNER_MISMATCH', 'PERMISSION_DENIED', 'ACCOUNT_CHANGED', 'API_CONFLICT',
     'MANIFEST_INVALID', 'HASH_MISMATCH', 'CONFLICT', 'PREVIEW_REQUIRED',
     'STALE_REMOTE_PREVIEW', 'STALE_PREVIEW', 'SOURCE_INVALID', 'SETTINGS_INVALID',
@@ -447,6 +447,9 @@ def main(argv: list[str] | None = None) -> int:
         }
         result = commands[args.action]()
         print(json.dumps(result, ensure_ascii=False, indent=2))
+        # A one-click partial failure must not look successful to CI or agents.
+        if args.action == "one-click" and isinstance(result, dict) and result.get("status") == "STOPPED":
+            return 2
         return 0
     except Exception as exc:
         code = getattr(exc, 'code', 'OPERATION_FAILED')

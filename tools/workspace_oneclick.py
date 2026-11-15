@@ -63,8 +63,10 @@ class OneClickSetup:
             step = "repository"
             self._emit(step, "started")
             selected = self.controller.select_repository(confirmed=True)
+            # Never silently consent to reuse an existing private repository.
+            # The manual wizard must obtain a separate explicit reuse approval.
             if selected.get("status") == "REUSE_REQUIRED":
-                selected = self.controller.select_repository(confirmed=True, reuse=True)
+                raise WorkspaceError("REUSE_REQUIRED")
             if selected.get("status") != "SELECTED":
                 raise WorkspaceError("OPERATION_FAILED")
             completed.append(step)
