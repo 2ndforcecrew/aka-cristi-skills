@@ -1,12 +1,29 @@
 # AKA.CRISTI Skills
 
-**中文说明：** [功能介绍、安装教程与安全限制（简体中文）](docs/README.zh-CN.md)
-
-**[🇨🇳 中文功能说明 / 安装指南](README.zh-CN.md)** · [English](README.md)
+🌐 **Language / 语言：** [English](README.md) · [简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md)
 
 **FROM EXPERIENCE TO CAPABILITY.**
 
 A curated public collection of reusable agent workflows and a safe, local-only Skill installer. This is separate from the **private** development repository; no internal rules, credentials, customer data, or private history are distributed here.
+
+## 中文介绍
+
+AKA.CRISTI Skills 是一套公开、可审查、可在本地安装的 AI Agent 工作流程技能包，配套安全安装器与 Codex 的 CHEF 协作配置。目标是让 AI 在执行复杂任务时，不只输出建议，而是遵循「明确目标 → 检查环境 → 分工执行 → 验证结果 → 错误恢复 → 记录可复用经验」的工作方法。
+
+包含 4 个 Skills：
+
+| Skill | 用途 |
+| --- | --- |
+| [CHEF Orchestrator](skills/chef-orchestrator/SKILL.md) | 统筹复杂任务：发现可用能力、规划分工交接、独立验证结果、有边界地恢复失败 |
+| [Verified Change Loop](skills/verified-change-loop/SKILL.md) | 复现 → 诊断 → 最小修复 → 重跑验证 → 对比交付 |
+| [Feature Journey Map](skills/feature-journey-map/SKILL.md) | 记录真实用户操作路径与异常场景 |
+| [Skill Evaluation Gate](skills/skill-evaluation-gate/SKILL.md) | 以实际证据、独立复核与授权判断 Skill 是否可发布 |
+
+安装器只操作本地目录：先 `preview` 预览，明确加 `--apply` 才写入；支持校验、升级、回滚与卸载，不从网络下载代码、不执行 Skill 脚本、不上传密钥。**安装文件成功不等于 Agent 已真正调用 Skill。**
+
+当前状态：六项发布门禁整体仍为 **BLOCKED**，不是已批准的正式版本，也不是安全安装建议，详见[六项验收状态](docs/SIX_GATE_STATUS.md)。
+
+完整中文说明：[简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md)
 
 ## Included Skills
 
