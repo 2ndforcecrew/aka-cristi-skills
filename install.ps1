@@ -142,7 +142,7 @@ function Assert-SafePlan([hashtable]$Python, [string[]]$Arguments, [string[]]$Di
     }
 }
 try {
-    if (-not $IsWindows -and $PSVersionTable.PSEdition -eq 'Core') { throw 'This bootstrap is Windows-only.' }
+    if ([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT) { throw 'This bootstrap is Windows-only.' }
     Show-Step "Mode: $(if ($Apply) { 'INSTALL (current user)' } else { 'PREVIEW ONLY' })"
     $python = Get-PythonExecutable
     if (-not $python) {
