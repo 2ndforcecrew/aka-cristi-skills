@@ -56,7 +56,7 @@ class CodexSubagentsTests(unittest.TestCase):
     def test_modified_source_upgrades_and_keeps_backup(self):
         source = Path(__file__).resolve().parents[1] / "agents"
         with tempfile.TemporaryDirectory() as td:
-            custom = Path(td)
+            custom = Path(td).resolve()
             for role in ROLE_NAMES:
                 (custom / (role + ".toml")).write_bytes((source / (role + ".toml")).read_bytes())
             install("research", self.home, custom, apply=True)

@@ -1,0 +1,34 @@
+{
+  "scanner": "NVIDIA/skillspector",
+  "scanner_version": "2.12.0",
+  "scanner_commit": "c81615007d40e86051a302a3cf897f8a05264928",
+  "mode": "--no-llm",
+  "llm_requested": false,
+  "environment": "isolated Python 3.13 venv; scan environment cleared of API keys and tracing settings",
+  "baseline": {
+    "source_commit": "63c4339d462136d746e06121f50acf884c4b1e3c",
+    "scope": "all 34 committed repository files exported using git archive",
+    "report": "skillspector-baseline-report.json",
+    "report_sha256": "3350567216764e629afea71dceff2350cad9e770f55bf254daf1b0c54552f348",
+    "score": 56,
+    "findings": 23,
+    "recommendation": "DO_NOT_INSTALL",
+    "coverage_complete": true,
+    "exit_code": 1
+  },
+  "fixed_snapshot": {
+    "source_commit": "bd1edff9707d4f048c1a48f350e3287ed812c0d1",
+    "scope": "all committed repository files, including prior scan evidence; no exclusions or suppressions",
+    "report": "skillspector-fixed-bd1edff.json.gz",
+    "uncompressed_report_sha256": "f6050a1138ecd55a92882b1c8c89a77222976ac66b83e3a01fb06b2f6522687e",
+    "score": 100,
+    "findings": 160,
+    "recommendation": "DO_NOT_INSTALL",
+    "coverage_complete": false,
+    "exit_code": 1,
+    "limitation": "Scanner includes its prior report and triage as new input. 115 of 160 findings point into those two evidence documents; static coverage partial due obfuscated_instruction_text reported in previous report JSON. This is an actual failed/incomplete scan, not a clean result or reproduction of original 67/24 report."
+  },
+  "command_template": "env -i PATH=/usr/bin:/bin HOME=<empty-scan-home> <isolated-venv>/bin/skillspector scan <git-archive-export> --no-llm --format json --output <out> --fail-on-incomplete",
+  "original_external_report": "MISSING; original 24 findings not cleared",
+  "release_gate": "BLOCKED"
+}

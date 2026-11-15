@@ -9,7 +9,7 @@ from tools import host_adapters as adapters
 class AdapterTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
-        self.root = Path(self.temp.name)
+        self.root = Path(self.temp.name).resolve()
         self.project = self.root / 'project'
         self.project.mkdir()
         self.source = Path(__file__).resolve().parents[1] / 'skills/verified-change-loop'

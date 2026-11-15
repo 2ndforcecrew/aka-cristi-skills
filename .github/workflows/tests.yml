@@ -52,6 +52,8 @@ jobs:
           # Unauthenticated remote code must fail closed, even in preview mode.
           & .\\install.ps1 -SkipCodexCheck
           if ($LASTEXITCODE -eq 0) { throw 'Missing provenance unexpectedly allowed remote source' }
+          # The rejection above is expected; pwsh propagates the last native exit code.
+          $global:LASTEXITCODE = 0
           if (-not (Test-Path (Join-Path $sandbox 'AGENTS.md'))) { throw 'Global rules missing' }
           foreach ($role in @('research', 'coding', 'qa', 'automation')) {
             if (-not (Test-Path (Join-Path $sandbox ("agents/" + $role + ".toml")))) { throw "Missing role: $role" }

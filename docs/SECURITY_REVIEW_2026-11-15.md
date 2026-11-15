@@ -42,3 +42,13 @@ python -m unittest discover -s tests -v
 ```
 
 额外静态扫描的实际命令、固定版本、范围与结果另存 evidence；若依赖安装或扫描失败，应记录失败，不能报告扫描 PASS。Issue #8 的原始报告复核完成前六项总门禁仍为 BLOCKED。
+
+## 本次实际扫描（不覆盖外部 24 项报告）
+
+固定 NVIDIA scanner commit `c81615007d40e86051a302a3cf897f8a05264928` / version 2.12.0，隔离虚拟环境，`--no-llm --format json --fail-on-incomplete`。扫描进程清空 API key/追踪环境设置，不读取私人配置。
+
+- 基线 `63c4339`：34 个文件，56 分，23 项，DO_NOT_INSTALL；静态模式覆盖完整，退出 1。逐项独立复核见 [triage](evidence/skillspector-baseline-triage.json)，无 suppression。
+- 修正快照 `bd1edff`：62 个组件，100 分，160 项，DO_NOT_INSTALL，覆盖不完整，退出 1。该完整仓库扫描包含前一轮 report/triage，115 项来自这两个证据文档；scanner 对之前 JSON 报告标记 obfuscated_instruction_text，造成静态分析降级。不能将这个结果改写成安全通过，也不能拿两个不同文件集合的总分证明风险升降。
+- [运行元数据与原始报告摘要](evidence/skillspector-runs.json)；第二轮原报告以 gzip 原样保存（无内容改写），解压后 SHA256 可复核。原 24 项报告、LLM 模式和独立来源仍缺失。
+
+后续应分别定义可执行安装包扫描范围与历史报告数据范围，并保留全量扫描失败证据；不得为了得分删改安全告警。
