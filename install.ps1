@@ -57,7 +57,8 @@ function Get-PythonExecutable {
     }
     foreach ($candidate in $candidates) {
         try {
-            $versionText = (& $candidate.Exe @($candidate.Prefix) --version 2>&1 | Out-String).Trim()
+            $versionArgs = @($candidate.Prefix) + @("--version")
+            $versionText = (& $candidate.Exe @versionArgs 2>&1 | Out-String).Trim()
             if ($LASTEXITCODE -eq 0 -and $versionText -match 'Python (\d+)\.(\d+)') {
                 $major = [int]$matches[1]
                 $minor = [int]$matches[2]
@@ -124,13 +125,15 @@ function Obtain-Source {
     throw "Could not obtain verified source"
 }
 function Invoke-Python([hashtable]$Python, [string[]]$Arguments) {
-    & $Python.Exe @($Python.Prefix) @Arguments
+    $callArgs = @($Python.Prefix) + @($Arguments)
+    & $Python.Exe @callArgs
     if ($LASTEXITCODE -ne 0) {
         throw "Python setup step failed: $($Arguments -join ' ') (exit $LASTEXITCODE)"
     }
 }
 function Assert-SafePlan([hashtable]$Python, [string[]]$Arguments, [string[]]$Disallowed) {
-    $result = & $Python.Exe @($Python.Prefix) @Arguments 2>&1 | Out-String
+    $callArgs = @($Python.Prefix) + @($Arguments)
+    $result = & $Python.Exe @callArgs 2>&1 | Out-String
     if ($LASTEXITCODE -ne 0) { throw "Preview failed ($($Arguments -join ' ')): $result" }
     Write-Host $result.Trim()
     $parsed = $result | ConvertFrom-Json
