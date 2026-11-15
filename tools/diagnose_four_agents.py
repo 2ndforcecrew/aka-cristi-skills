@@ -29,7 +29,7 @@ def diagnostic(home, root_thread):
         "root_event_types": {},
         "spawn_role_argument_fields": {},
         "named_role_spawn_outputs": [],
-        "child_rollout_count": 0,
+        "subagent_rollouts_on_host_unattributed": 0,
         "child_session_metadata_keys": {},
         "child_source_shape": {},
         "notes": [],
@@ -99,15 +99,16 @@ def diagnostic(home, root_thread):
                         count += 1
                         child_keys.update(meta.keys())
                         source_shapes.update(source.keys())
-        result["child_rollout_count"] = count
+        result["subagent_rollouts_on_host_unattributed"] = count
         result["child_session_metadata_keys"] = dict(child_keys)
         result["child_source_shape"] = dict(source_shapes)
+    result["notes"].append("Unattributed host session counts are NOT proof of child threads for this root run")
     if result["spawn_calls_observed"] == 0:
         result["notes"].append("No native spawn_agent call found in root response_item rollout")
     if result["spawn_calls_observed"] > 0 and not verified_candidates:
         result["notes"].append("Spawn calls exist but exact named-role + successful child-ID evidence not paired")
-    if verified_candidates and result["child_rollout_count"] == 0:
-        result["notes"].append("Named-role spawns found, but no child session metadata found in this CODEX_HOME")
+    if verified_candidates and result["subagent_rollouts_on_host_unattributed"] == 0:
+        result["notes"].append("Named-role spawns found, but no subagent session metadata found in this CODEX_HOME")
     return result
 
 def main(argv=None):
