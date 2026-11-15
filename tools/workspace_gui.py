@@ -29,11 +29,13 @@ class WorkspaceWindow:
         self.busy = False
         self.job_kind = ""
         self.cancel_event = threading.Event()
+        self._oneclick_connect_done = False
         self.events: queue.Queue[tuple[str, Any]] = queue.Queue()
         self.started = 0.0
         self.timeout = 200.0
         self.timed_out = False
         self.closed = False
+        self._worker: threading.Thread | None = None
         self.controls: list[Any] = []
         self.status = tk.StringVar(value="准备就绪；仅手动同步")
         self.account = tk.StringVar(value="GitHub：未连接")
@@ -62,6 +64,17 @@ class WorkspaceWindow:
         ttk.Label(bottom, textvariable=self.status, wraplength=750).pack(side="left")
         self.cancel_button = ttk.Button(bottom, text="取消", command=self.cancel, state="disabled")
         self.cancel_button.pack(side="right")
+        self.completion_summary = tk.StringVar(value="")
+        self.completion_frame = ttk.Frame(outer)
+        ttk.Label(self.completion_frame, textvariable=self.completion_summary, wraplength=880).pack(anchor="w")
+        completion_row = ttk.Frame(self.completion_frame)
+        completion_row.pack(fill="x")
+        self.completion_sync_button = ttk.Button(completion_row, text="Sync Now", command=self.sync)
+        self.completion_sync_button.pack(side="left", padx=(0, 6))
+        self.controls.append(self.completion_sync_button)
+        self.completion_open_button = ttk.Button(completion_row, text="Open My Repository", command=self.open_repository)
+        self.completion_open_button.pack(side="left")
+        self.controls.append(self.completion_open_button)
         self.window.protocol("WM_DELETE_WINDOW", self.close)
         self._refresh_status()
         if wizard:
@@ -76,6 +89,10 @@ class WorkspaceWindow:
 
     def _build_setup(self) -> None:
         ttk = self.ttk
+        row = ttk.Frame(self.setup_page)
+        row.pack(fill="x", pady=(0, 8))
+        self.oneclick_button = self._button(row, "一鍵初始化", self.start_one_click)
+        ttk.Label(row, text="按順序完成授權、建倉、初始化、同步與 ChatGPT 指引；開始前一次列出全部寫操作。", wraplength=700).pack(side="left")
         ttk.Label(self.setup_page, textvariable=self.account).pack(anchor="w")
         ttk.Label(self.setup_page, text="通过 GitHub 浏览器设备授权登录；需要配置 OAuth public client ID 和系统凭据存储。\n仓库必须属于当前账户、保持 private；同步模式固定为 manual。", wraplength=830).pack(anchor="w", pady=8)
         advanced = ttk.LabelFrame(self.setup_page, text="高级设置 · OAuth public client ID", padding=8)
@@ -173,6 +190,49 @@ class WorkspaceWindow:
     def open_repository(self) -> None:
         self.start("repository_url", self.controller.repository_url)
 
+    def _one_click_setup(self) -> Any:
+        """Build the one-click orchestrator.
+
+        The controller may supply a one_click factory (used by tests); otherwise
+        lazily import the real orchestrator so this module loads without it.
+        """
+        def on_step(step: str, state: str) -> None:
+            self.events.put(("oneclick_progress", {"step": step, "state": state}))
+        factory = getattr(self.controller, "one_click", None)
+        if callable(factory):
+            setup = factory(on_step=on_step)
+            if setup is not None and hasattr(setup, "plan") and hasattr(setup, "run"):
+                return setup
+        from tools.workspace_oneclick import OneClickSetup
+        return OneClickSetup(self.controller, on_step=on_step)
+
+    def start_one_click(self) -> None:
+        if self.busy:
+            return
+        try:
+            setup = self._one_click_setup()
+            plan = setup.plan()
+        except Exception:
+            self.status.set("一鍵初始化計劃讀取失敗；請檢查後重試。")
+            return
+        steps = plan.get("steps") if isinstance(plan, dict) else None
+        valid = ([item for item in steps
+                  if isinstance(item, dict) and isinstance(item.get("name"), str)
+                  and isinstance(item.get("writes"), str)]
+                 if isinstance(steps, list) else [])
+        if not valid:
+            self.status.set("一鍵初始化計劃不可用；請檢查後重試。")
+            return
+        lines = ["一鍵初始化將按順序執行以下寫操作："]
+        lines.extend(f"· {item['name']}：{item['writes']}" for item in valid)
+        lines.append("全部完成後可再手動同步或打開倉庫。繼續？")
+        if not self._confirm("一鍵初始化確認", "\n".join(lines)):
+            return
+        self.start("oneclick", lambda: setup.run(
+            confirmed=True,
+            cancel_event=self.cancel_event,
+            on_challenge=lambda challenge: self.events.put(("challenge", challenge))))
+
     def _refresh_status(self) -> None:
         try:
             state = self.controller.status()
@@ -188,13 +248,15 @@ class WorkspaceWindow:
             return
         self.busy = True
         self.job_kind = kind
+        if kind == "oneclick":
+            self._oneclick_connect_done = False
         self.started = time.monotonic()
         self.timed_out = False
         self.cancel_event.clear()
         for widget in self.controls:
             widget.configure(state="disabled")
         self.backup_combo.configure(state="disabled")
-        self.cancel_button.configure(state="normal" if kind == "connect" else "disabled")
+        self.cancel_button.configure(state="normal" if kind in ("connect", "oneclick") else "disabled")
         self.status.set("正在授权；可请求取消。" if kind == "connect" else "正在处理；请等待操作安全结束。")
 
         def worker() -> None:
@@ -205,10 +267,14 @@ class WorkspaceWindow:
                 # Only explicitly allowlisted fixed identifiers may cross the boundary.
                 code = getattr(exc, "code", None)
                 self.events.put(("error", code if code == "OAUTH_CLIENT_ID_REQUIRED" else None))
-        threading.Thread(target=worker, daemon=True).start()
+        self._worker = threading.Thread(target=worker, daemon=True)
+        self._worker.start()
 
     def cancel(self) -> None:
-        if self.busy and self.job_kind == "connect":
+        if self.busy and self.job_kind in ("connect", "oneclick"):
+            if self.job_kind == "oneclick" and self._oneclick_connect_done:
+                self.status.set("一鍵初始化授權已完成；取消只在授權步驟有效，請等待安全結束。")
+                return
             self.cancel_event.set()
             self.status.set("已请求取消授权；正在等待安全结束。")
         elif self.busy:
@@ -225,6 +291,9 @@ class WorkspaceWindow:
             self.status.set("需要先配置 GitHub OAuth public client ID（OAUTH_CLIENT_ID_REQUIRED）。"
                             if value == "OAUTH_CLIENT_ID_REQUIRED" else
                             "操作失败或被阻止；请检查账户、权限与配置冲突后重试。")
+            return
+        if kind == "oneclick":
+            self._result_oneclick(value)
             return
         result_status = value.get("status") if isinstance(value, dict) else None
         guidance = {
@@ -257,6 +326,34 @@ class WorkspaceWindow:
         if kind == "skip":
             self.tabs.select(self.sync_page)
 
+    def _result_oneclick(self, value: Any) -> None:
+        result_status = value.get("status") if isinstance(value, dict) else None
+        if result_status == "COMPLETED":
+            self._show_oneclick_completion(value if isinstance(value, dict) else {})
+            self.status.set("一鍵初始化完成。")
+        elif result_status == "STOPPED":
+            step = value.get("step", "") if isinstance(value, dict) else ""
+            code = value.get("code") if isinstance(value, dict) else None
+            detail = f"步驟：{step}" if isinstance(step, str) and step else "步驟未知"
+            if isinstance(code, str) and code:
+                detail += f"（{code}）"
+            self.status.set(f"一鍵初始化已停止；{detail}。請檢查後重試。")
+        else:
+            self.status.set("一鍵初始化失敗；請檢查後重試。")
+
+    def _show_oneclick_completion(self, value: dict[str, Any]) -> None:
+        try:
+            state = self.controller.status()
+        except Exception:
+            state = {}
+        account = state.get("github_account") or ""
+        repository = value.get("repository") or state.get("repository") or ""
+        sync_status = value.get("sync_status") or state.get("sync_status") or ""
+        chatgpt_status = value.get("chatgpt_status") or state.get("chatgpt_status") or "NOT_CONNECTED"
+        self.completion_summary.set(
+            f"一鍵初始化完成：{account}  |  倉庫：{repository}  |  同步：{sync_status}（manual）  |  ChatGPT：{chatgpt_status}")
+        self.completion_frame.pack(fill="x", pady=(10, 0))
+
     def poll(self) -> None:
         if self.closed:
             return
@@ -270,6 +367,18 @@ class WorkspaceWindow:
                 uri = value.get("verification_uri", "") if isinstance(value, dict) else ""
                 if uri == "https://github.com/login/device" and isinstance(code, str) and len(code) <= 32:
                     self.status.set(f"请在 https://github.com/login/device 输入一次性代码：{code}")
+                self.poll_id = self.window.after(75, self.poll)
+                return
+            if kind == "oneclick_progress":
+                step = value.get("step", "") if isinstance(value, dict) else ""
+                state = value.get("state", "") if isinstance(value, dict) else ""
+                if isinstance(step, str) and 0 < len(step) <= 32 and state in ("started", "done", "stopped"):
+                    self.status.set(f"一鍵初始化：{step} {state}")
+                    if step == "connect" and state == "done":
+                        # Authorization is over; Cancel is only honored by
+                        # connect(), so stop promising a stop that never comes.
+                        self._oneclick_connect_done = True
+                        self.cancel_button.configure(state="disabled")
                 self.poll_id = self.window.after(75, self.poll)
                 return
             self.busy = False
@@ -288,10 +397,25 @@ class WorkspaceWindow:
                 self.status.set("操作超出等待时间；此操作无法中途取消，请等待安全结束。")
         self.poll_id = self.window.after(75, self.poll)
 
+    def _join_worker(self) -> None:
+        """Wait (bounded) for the background job thread to exit.
+
+        The worker only posts to a queue, but CPython's cyclic GC may run
+        on it; if it finalizes Tk variables of an already-destroyed window
+        from that thread, Python 3.11 aborts (Tcl_AsyncDelete: async
+        handler deleted by the wrong thread). Joining first keeps all Tk
+        finalization on the main thread.
+        """
+        worker = self._worker
+        self._worker = None
+        if worker is not None and worker is not threading.current_thread() and worker.is_alive():
+            worker.join(timeout=5)
+
     def close(self) -> None:
         if self.busy:
             self.cancel()
             return
+        self._join_worker()
         self.closed = True
         self.window.after_cancel(self.poll_id)
         self.window.destroy()

@@ -20,8 +20,9 @@ from typing import Any, Callable
 from tools.fs_safety import checked_path
 from tools.workspace_auth import AuthClient
 from tools.workspace_github import GhClient, WorkspaceError, validate_manifest
-from tools.workspace_sync import SyncEngine
 from tools.workspace_lock import LockBusy, exclusive_lock
+from tools.workspace_oneclick import OneClickSetup
+from tools.workspace_sync import SyncEngine
 
 DEFAULT_REPOSITORY = 'my-agent-workspace'
 CHATGPT_GUIDE = 'https://help.openai.com/en/articles/11145903-connecting-github-to-chatgpt-deep-resear'
@@ -415,7 +416,8 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description='Personal AI Workspace: manual pull, explicit writes only')
     parser.add_argument('action', choices=['status', 'connect', 'skip', 'select', 'initialize', 'check',
                                          'preview', 'sync', 'skills', 'backups', 'restore', 'logs',
-                                         'repository-url', 'chatgpt-guide', 'chatgpt-verify', 'configure-oauth', 'disconnect'])
+                                         'repository-url', 'chatgpt-guide', 'chatgpt-verify', 'configure-oauth', 'disconnect',
+                                         'one-click'])
     parser.add_argument('--state-dir', type=Path)
     parser.add_argument('--codex-home', type=Path)
     parser.add_argument('--skills-root', type=Path)
@@ -441,6 +443,7 @@ def main(argv: list[str] | None = None) -> int:
             'logs': controller.error_logs, 'repository-url': controller.repository_url,
             'chatgpt-guide': controller.chatgpt_guide, 'chatgpt-verify': controller.request_chatgpt_verification,
             'configure-oauth': lambda: controller.configure_oauth_client(args.oauth_client_id),
+            'one-click': lambda: _cli_one_click(controller, args.apply),
         }
         result = commands[args.action]()
         print(json.dumps(result, ensure_ascii=False, indent=2))
@@ -449,6 +452,14 @@ def main(argv: list[str] | None = None) -> int:
         code = getattr(exc, 'code', 'OPERATION_FAILED')
         print(json.dumps({'status': 'BLOCKED', 'code': code if code in SAFE_ERRORS else 'OPERATION_FAILED'}))
         return 2
+
+
+def _cli_one_click(controller: WorkspaceController, apply: bool) -> dict[str, Any]:
+    # Without --apply only the enumerated writes are printed; nothing is written.
+    setup = OneClickSetup(controller)
+    if not apply:
+        return setup.plan()
+    return setup.run(confirmed=True)
 
 
 def _cli_challenge(challenge: dict[str, Any]) -> None:

@@ -9,6 +9,7 @@ Existing gates [#8–#13](docs/SIX_GATE_STATUS.md) remain open. A new feature do
 - [x] Own-account private repository validation, explicit create/reuse/init consent and public-only initialization; exercised with Mock API only.
 - [x] Immutable-revision manual pull, conflict detection, pre-write private backups, restore/retry and cross-profile destination locks; real temporary filesystem tests.
 - [x] Sync Center controls and independent ChatGPT connection guidance without fake Connected.
+- [x] One-click initialization (orchestrator + GUI/installer wiring + Mock tests); real OAuth/repository creation still not verified.
 - [x] Pinned runtime/dev requirements and Windows EXE dependency inclusion.
 - [ ] Feature-branch CI / Windows EXE checks — evidence tracked in Draft PR.
 - [ ] Register/configure a real OAuth App and independently verify native keyring + OAuth on Windows/macOS/Linux.
