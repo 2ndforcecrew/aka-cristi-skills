@@ -2,15 +2,15 @@
 
 > **FROM EXPERIENCE TO CAPABILITY｜把协作经验转化为可复用能力。**
 
-[GitHub 公开仓库](https://github.com/2ndforcecrew/aka-cristi-skills) · [英文 README](../README.md)
+[GitHub 公开仓库](https://github.com/2ndforcecrew/aka-cristi-skills) · [完整中文项目说明（包括 CHEF 与四 Agent 配置）](../README.zh-CN.md) · [英文 README](../README.md)
 
 ## 项目是什么？
 
 **AKA.CRISTI Skills** 是一个面向 AI Agent 工作流的公开 Skill 集合，配备一个安全优先、可审计的本地安装工具。它帮助使用者将有效的开发、测试与协作方法整理为可复用的操作流程，减少重复沟通和遗漏验证。
 
-当前发布的是 **方法论 Skills + 本地安装器 V0.1**，不是已经实现自动指挥所有 AI Agent 的完整协作平台。公开仓库与 AKA.CRISTI 的私有开发仓库独立，不包含内部管理规则、账号密钥、客户资料或私有提交历史。
+本页重点介绍 **3 个基础方法论 Skills + 本地安装器 V0.1**；公开仓库另外提供 CHEF Orchestrator、CHEF Global Rules 和 Codex Native Subagents 的文件与安装配置，完整功能见上方「完整中文项目说明」。这些配置不等于已经实现或验证了跨所有厂商的 Agent 自动指挥平台。公开仓库与 AKA.CRISTI 的私有开发仓库独立，不包含内部管理规则、账号密钥、客户资料或私有提交历史。
 
-## 当前包含的 3 个 Skills
+## 重点介绍：3 个基础方法论 Skills
 
 ### 1. Verified Change Loop｜可验证的修改闭环
 [查看 Skill 原文](../skills/verified-change-loop/SKILL.md)
