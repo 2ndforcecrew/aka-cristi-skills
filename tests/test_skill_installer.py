@@ -96,5 +96,27 @@ class InstallerTests(unittest.TestCase):
             inspect(self.src,"hermes",self.out)
 
 
+class PublishedSkillSmokeTests(unittest.TestCase):
+    def test_all_three_public_skills_install_and_verify(self):
+        published = Path(__file__).resolve().parents[1] / "skills"
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve() / "installed"
+            for name in ("verified-change-loop", "feature-journey-map",
+                         "skill-evaluation-gate"):
+                source = published / name
+                plan = inspect(source, root=root)
+                self.assertEqual(plan["action"], "install")
+                self.assertFalse(root.exists())
+                installed = install(source, root=root, apply=True)
+                self.assertTrue(installed["applied"])
+                result = verify(name, root=root)
+                self.assertEqual(result["integrity"], "PASS")
+                self.assertEqual(result["activation"], "NOT_RUN")
+            for name in ("verified-change-loop", "feature-journey-map",
+                         "skill-evaluation-gate"):
+                self.assertTrue(remove(name, root=root, apply=True)["applied"])
+                self.assertFalse((root / name).exists())
+
+
 if __name__=="__main__":
     unittest.main()
