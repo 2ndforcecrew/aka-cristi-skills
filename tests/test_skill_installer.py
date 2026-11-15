@@ -10,7 +10,7 @@ class InstallerTests(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
-        self.base=Path(self.tmp.name)
+        self.base=Path(self.tmp.name).resolve()
         self.src=self.base/"sources"/"sample-skill"
         self.src.mkdir(parents=True)
         self.out=self.base/"installed"
