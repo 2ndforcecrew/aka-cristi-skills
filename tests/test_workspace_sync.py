@@ -28,7 +28,7 @@ def snapshot(content=b"# public rules\n", extra=None):
 class WorkspaceSyncTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
-        self.root = Path(self.temp.name)
+        self.root = Path(self.temp.name).resolve()
         self.home, self.skills = self.root / "codex", self.root / "skills"
         self.engine = SyncEngine(self.root / "state", self.home, self.skills)
 

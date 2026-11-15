@@ -302,16 +302,14 @@ def main(argv=None):
         print("BLOCKED: bundled public data validation failed")
         return 2
     if args.workspace_smoke_test:
-        # Dependency import only; never inspect native credentials during smoke.
+        # Select the native provider without reading/writing any credentials.
         try:
-            import importlib
-            backend = ('keyring.backends.Windows' if sys.platform == 'win32' else
-                       'keyring.backends.macOS' if sys.platform == 'darwin' else 'keyring.backends.SecretService')
-            importlib.import_module(backend)
+            from tools.workspace_auth import AuthError, _native_store
+            _native_store()
             from tools.workspace_gui import main as workspace_main
             return workspace_main(['--smoke-test'])
-        except ImportError:
-            print('BLOCKED: native keyring dependency missing')
+        except (ImportError, AuthError):
+            print('BLOCKED: native keyring provider unavailable')
             return 2
     try:
         import tkinter as tk

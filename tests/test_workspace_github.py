@@ -54,7 +54,8 @@ class GitHubTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
-        self.client = FakeClient(Path(self.tmp.name) / 'managed')
+        self.base = Path(self.tmp.name).resolve()
+        self.client = FakeClient(self.base / 'managed')
         self.client.responses[('repos/alice/work', 'GET')] = repo()
 
     def assert_code(self, code, fn):
@@ -111,7 +112,7 @@ class GitHubTests(unittest.TestCase):
                 return Response(req.full_url, repo())
             self.fail('unexpected API request')
 
-        directory = Path(self.tmp.name) / 'integration'
+        directory = self.base / 'integration'
         auth = AuthClient(directory, store=store, request=request)
         client = GhClient(directory, auth=auth)
         self.assertEqual(client.inspect_account()['login'], 'alice')
@@ -130,7 +131,7 @@ class GitHubTests(unittest.TestCase):
 
     def test_connect_forwards_device_challenge_callback(self):
         auth = Mock()
-        client = GhClient(Path(self.tmp.name) / 'challenge', auth=auth)
+        client = GhClient(self.base / 'challenge', auth=auth)
         auth.connect.return_value = {'login': 'alice', 'secure_storage': True}
         callback = Mock()
         cancellation = Mock()
@@ -245,15 +246,15 @@ class GitHubTests(unittest.TestCase):
         self.assertEqual(self.client.calls, [])
 
     def test_unsafe_paths_rejected(self):
-        directory = Path(self.tmp.name) / 'target'
+        directory = self.base / 'target'
         directory.mkdir()
-        link = Path(self.tmp.name) / 'link'
+        link = self.base / 'link'
         link.symlink_to(directory)
         self.assert_code('CONFIG_UNSAFE', lambda: GhClient(link, auth=Mock()))
 
     def test_auth_adapter_success_cancel_failure_timeout(self):
         auth = Mock()
-        client = GhClient(Path(self.tmp.name) / 'other', auth=auth)
+        client = GhClient(self.base / 'other', auth=auth)
         auth.inspect_account.return_value = {'login': 'alice', 'secure_storage': True}
         auth.connect.return_value = auth.inspect_account.return_value
         self.assertEqual(client.inspect_account()['login'], 'alice')
