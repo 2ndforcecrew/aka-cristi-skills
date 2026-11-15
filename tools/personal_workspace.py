@@ -447,6 +447,9 @@ def main(argv: list[str] | None = None) -> int:
         }
         result = commands[args.action]()
         print(json.dumps(result, ensure_ascii=False, indent=2))
+        # A one-click partial failure must not look successful to CI or agents.
+        if args.action == "one-click" and isinstance(result, dict) and result.get("status") == "STOPPED":
+            return 2
         return 0
     except Exception as exc:
         code = getattr(exc, 'code', 'OPERATION_FAILED')
