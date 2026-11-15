@@ -1,6 +1,10 @@
 # CHEF 六项验收状态
 
-这是开发交付记录，不是“六项完成通知”。工作分支 `feat/chef-six-gates-20261115`，PR [#14](https://github.com/2ndforcecrew/aka-cristi-skills/pull/14)。原文件全部保留，没有合并 main、发布 GitHub Release、部署生产网站或访问已关闭的电脑。
+2026.11.16 已核查：PR [#14](https://github.com/2ndforcecrew/aka-cristi-skills/pull/14) 已合并到 main；main `573fae8` 的 [CI 成功](https://github.com/2ndforcecrew/aka-cristi-skills/actions/runs/43726640530)。Windows GUI EXE、空用户目录启动与来源验签均已通过云端验证。六项发布验收仍分别保留阻塞，不把工程里程碑等同全部完成。原文件与历史提交均保留。
+
+[成长记录 · 2026.11.16](GROWTH_JOURNAL_2026-11-16.md) · [公开成长网站最新进展](https://aka-cristi-growth-journal-f6dh09.v2.appdeploy.ai/#latest)
+
+以下保留前一轮各项实现与验收限制；最新进展以上述核查及同步记录为准。
 
 | Issue | 本次实际开发 | 实际证据与剩余阻塞 |
 |---|---|---|
@@ -21,10 +25,17 @@
 
 ## 成长记录网站
 
-待发布条目：新增六项验收门禁、四类安全修复、候选包真实签名证据、GUI/Claude 文件适配和严格线程检查；保留真实失败与阻塞。六项全部独立验证前不发布完成通知，也不将草稿部署到成长网站。当前总状态 **BLOCKED**。
+2026.11.16 用户另行授权更新成长记录网站，现已保留 CASE 001–016 并追加 CASE 017–022，加入 GUI、来源签名、CI 与 main 合并证据，公开显示真实失败和剩余阻塞。该网站进度同步不属于“六项全部完成”通知；完整发布验收当前仍为 **BLOCKED**。
 
 下一步真实证据：原扫描材料脱敏复核；标准用户 Windows 11 GUI/依赖/卸载；非 Codex 实际调用；三平台独立用户；经过诊断的 Codex 四角色 live run。只在可用且授权的环境进行，不要求启动已关机电脑。
 
 追加：全局 AGENTS.md 安装现在按原始 newline 读取并只在原文后追加，保留 CRLF 与尾部空行；GUI 预览/事务校验使用同一个 append_block 计算，已有规则的原始字节不再被隐藏归一化。回归先失败复现、修正后通过。
 
 GUI 构建首轮 [43721677476](https://github.com/2ndforcecrew/aka-cristi-skills/actions/runs/43721677476)：独立 EXE 构建、空 profile 的实际窗口 smoke 和 OIDC attestation 成功，但 Windows gh 版本探测步骤失败，未上传候选。已改为完整收集原生 stdout 再判断退出码，最终构建及精确身份验签需看后续 PR Checks；不能将这次失败称为验签 PASS。另补测 CRLF managed block 的兼容判断，保持原字节不变。
+
+## 最终云端验证链接补充
+
+- [三平台 CI / 124 项测试版本](https://github.com/2ndforcecrew/aka-cristi-skills/actions/runs/43721892705)：success。
+- [确定性 ZIP 签名及来源验签](https://github.com/2ndforcecrew/aka-cristi-skills/actions/runs/43721887652)：success。
+- [独立 Windows GUI EXE 构建、空 profile 启动、来源验签](https://github.com/2ndforcecrew/aka-cristi-skills/actions/runs/43721887589)：success。
+- [下载 GUI 开发候选](https://github.com/2ndforcecrew/aka-cristi-skills/actions/runs/43721887589/artifacts/14164932492)：可能要求 GitHub 登录，产物保留至 2026-12-15；不是 Authenticode 或完整用户验收。
