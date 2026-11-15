@@ -78,3 +78,19 @@ python -m tools.verify_codex_activation --skill verified-change-loop --out agent
 ```
 
 See [Real Agent Activation Verification](docs/AGENT_ACTIVATION_VERIFICATION.md) for the evaluation contract, other Skill names, and limitations. GitHub Actions only tests the verification machinery with synthetic traces; **it cannot verify a real Codex call without authorized Codex runtime access**. Live activation is NOT_RUN until separately observed.
+
+## CHEF orchestration + global AGENTS.md (portable starter)
+
+For the same **workflow principles** across Codex projects, install the sanitized public CHEF rules and orchestration Skill. This does not transfer anyone's private memories, repository permissions or third-party Agent connections.
+
+```powershell
+python -m tools.chef_global_rules preview
+python -m tools.chef_global_rules install --apply
+python -m tools.skill_installer install skills/chef-orchestrator --target codex --apply
+python -m tools.chef_global_rules verify
+python -m tools.skill_installer verify chef-orchestrator --target codex
+```
+
+The global installer **appends an owned section** to `~/.codex/AGENTS.md` or `CODEX_HOME/AGENTS.md`, without replacing existing rules. You can safely uninstall only the managed section using `python -m tools.chef_global_rules uninstall --apply`.
+
+Read [CHEF Global Rules + Multi-Agent Starter](docs/CHEF_GLOBAL_AND_MULTIAGENT.md) for setup, safe rollback, real Agent verification and the distinction between orchestration policy and actual connected worker agents.
