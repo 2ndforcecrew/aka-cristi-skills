@@ -1,6 +1,6 @@
 # AKA.CRISTI Skills — 中文功能说明
 
-🌐 **Language / 语言：** [English](README.md) · [简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md)
+🌐 **Language / 语言：** [English](README.md) · [简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Français](README.fr.md)
 
 **FROM EXPERIENCE TO CAPABILITY｜将协作经验变成可复用能力**
 
