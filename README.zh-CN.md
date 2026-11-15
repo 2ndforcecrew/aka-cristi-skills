@@ -12,13 +12,13 @@ AKA.CRISTI Skills 是一套公开、可审查、可在本地安装的 **AI Agent
 
 本仓库是公开发行版，与 AKA.CRISTI 的私有开发仓库分离；不会发布私有工作规则、账号信息、客户数据、私有历史记录。
 
-## 六项开发候选：尚未通过发布门禁
+## 六项发布门禁：整体仍未通过
 
-Issues #8–#13 仍需真实验收，**本分支不是已批准的正式版本，也不是安全安装建议**。原始“67 分、24 项”扫描报告缺失；本次固定基线重新执行 SkillSpector 2.12.0 `--no-llm`，得到 **56 分、23 项、DO_NOT_INSTALL**，两者不能混为一次扫描。详见[安全复核](docs/SECURITY_REVIEW_2026-11-15.md)。
+Issues #8–#13 的六项工作已通过 PR #14 合入 main，但整体状态仍为 **BLOCKED**，**不是已批准的正式版本，也不是安全安装建议**。详见[六项验收状态](docs/SIX_GATE_STATUS.md)。原始“67 分、24 项”扫描报告缺失；本次固定基线重新执行 SkillSpector 2.12.0 `--no-llm`，得到 **56 分、23 项、DO_NOT_INSTALL**，两者不能混为一次扫描。详见[安全复核](docs/SECURITY_REVIEW_2026-11-15.md)。
 
 旧版自动获取 main ZIP 的 bootstrap 已改为默认阻塞。固定 commit 的下载不等于验签；远程来源必须先用独立确认的 commit、SHA256、工作流身份与 provenance 验证。不会自动执行未验签的 Codex 安装脚本。前置依赖和来源审查仍需完成。
 
-已有 Python 3.11+、审查过完整本地源码后，可在候选分支测试真实图形窗口：
+已有 Python 3.11+、审查过完整本地源码后，可在 main 上测试真实图形窗口：
 
 ```powershell
 python -m tools.gui_installer

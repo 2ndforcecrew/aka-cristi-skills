@@ -12,15 +12,16 @@ A curated public collection of reusable agent workflows and a safe, local-only S
 
 | Skill | Purpose |
 | --- | --- |
+| [CHEF Orchestrator](skills/chef-orchestrator/SKILL.md) | Lead complex tasks: discover authorized capabilities, plan scoped handoffs, verify outputs, recover from bounded failures |
 | [Verified Change Loop](skills/verified-change-loop/SKILL.md) | Reproduce → diagnose → minimum fix → replay → compare → handoff |
 | [Feature Journey Map](skills/feature-journey-map/SKILL.md) | Map real entry, setup, user action, success and failure paths |
 | [Skill Evaluation Gate](skills/skill-evaluation-gate/SKILL.md) | Evidence, independently reviewed results and approval boundaries |
 
 These are methodology Skills, not third-party licensed packages. Some methods were adapted from user-supplied verification-engineering fieldnotes attributed to Lauren Tan; that attribution was not independently confirmed, and these are **not official third-party Skills**.
 
-## Development candidate: six gates remain blocked
+## Release gates: still blocked
 
-This branch advances Issues #8–#13. **It is not an approved release or an installation recommendation.** The original external 24-finding report is missing. A new exact-baseline SkillSpector 2.12.0 `--no-llm` scan returned **56 / DO_NOT_INSTALL / 23 findings**; these are separate observations. [Security review](docs/SECURITY_REVIEW_2026-11-15.md).
+The six-gate work for Issues #8–#13 is merged into main via PR #14. **It is not an approved release or an installation recommendation.** Overall gate status is **BLOCKED**; see [six-gate status](docs/SIX_GATE_STATUS.md). The original external 24-finding report is missing. A new exact-baseline SkillSpector 2.12.0 `--no-llm` scan returned **56 / DO_NOT_INSTALL / 23 findings**; these are separate observations. [Security review](docs/SECURITY_REVIEW_2026-11-15.md).
 
 Default unauthenticated remote bootstrap is now blocked. A commit-pinned GitHub ZIP is not a verified signature. The PowerShell alternative accepts reviewed local source or an archive with independently pinned digest/commit and verified GitHub provenance. Unverified Codex installer scripts are never automatically executed.
 
