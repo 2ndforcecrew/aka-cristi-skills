@@ -1,5 +1,6 @@
 """Full isolated Git/SQLite host handoff tests; all host turns mocked, never inference."""
 import json
+from contextlib import closing
 import sqlite3
 import subprocess
 import tempfile
@@ -61,7 +62,7 @@ class HostDualEngineTests(unittest.TestCase):
         self.assertEqual(len(set(x[2] for x in history)), 3)
         self.assertTrue(all(x[3].get("authorized") for x in history))
         self.assertEqual((self.repo / "README.md").read_text(), "original\n")
-        with sqlite3.connect(self.db) as db:
+        with closing(sqlite3.connect(self.db)) as db:
             self.assertEqual(db.execute("SELECT COUNT(*) FROM attempts").fetchone()[0], 3)
 
     def test_non_codex_factory_must_not_write_even_if_host_tries(self):
