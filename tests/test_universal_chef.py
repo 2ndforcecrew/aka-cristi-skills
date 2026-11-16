@@ -80,6 +80,22 @@ class UniversalChefTests(unittest.TestCase):
         self.assertEqual(result["status"], "FILES_VERIFIED")
         self.assertEqual(result["roles"], "FILES_PRESENT")  # templates, not host-native roles
 
+    def test_user_global_rules_for_supported_hosts(self):
+        from unittest.mock import patch
+        home = self.project / "mock-home"
+        home.mkdir()
+        with patch("pathlib.Path.home", return_value=home):
+            for host in ("workbuddy", "claude", "gemini", "opencode"):
+                with self.subTest(host=host):
+                    result = uc.install(host, apply=True, scope="user")
+                    self.assertEqual(result["status"], "FILES_VERIFIED")
+                    rule, roles, skills = uc.USER_FILES[host]
+                    self.assertTrue((home / rule).is_file())
+                    self.assertTrue((home / roles / "aka_research.md").is_file())
+                    self.assertTrue((home / skills / "chef-orchestrator" / "SKILL.md").is_file())
+            with self.assertRaises(ValueError):
+                uc.inspect("hermes", scope="user")
+
     def test_symlink_ancestor_fails_closed(self):
         alias = self.project / "linked"
         target = self.project / "real"
