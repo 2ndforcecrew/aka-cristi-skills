@@ -16,6 +16,8 @@
 | **Ubuntu / Debian / 其他 Linux** | 下方 Bash 命令 | Git、Python 3.11+ |
 | **让 Codex / 其他 Agent 协助安装** | 下方 Agent 安装指令 | Agent 有终端权限，用户批准本地写入 |
 
+**当前版本声明：** 本仓库已正式公开发布 **Codex 优先的 `v1.0.0-beta.2` Beta**。网上引用的 `DO_NOT_INSTALL / 23 findings / BLOCKED` 是**旧版第三方扫描或历史发布门禁记录**，并非本版本作者发出的禁止安装通知，也不能直接证明当前版存在 23 个漏洞。已通过跨平台 CI、Windows EXE 构建及 GitHub 来源证明；外部用户安装和真实四 Agent 联动仍需单独验收。可查看[历史扫描说明](docs/SECURITY_REVIEW_2026-11-15.md)与[当前 Beta 发布页](https://github.com/2ndforcecrew/aka-cristi-skills/releases/tag/v1.0.0-beta.2)。
+
 **v1.0.0-beta.2 已包含跨平台一键命令安装器 `tools/quick_install.py`。** Windows EXE 是另一个图形入口；命令安装器适用于 Windows、Mac 和 Ubuntu/Linux。
 
 统一安装入口：`python -m tools.quick_install --interactive`。**先展示全部变更，用户输入 `INSTALL` 后才安装并验证** CHEF 全局规则、4 个角色和 4 个 Skills。默认不带参数时仅预览；也支持手动使用 `--apply`。这个安装器不会启动模型或消耗 Codex 推理额度。
