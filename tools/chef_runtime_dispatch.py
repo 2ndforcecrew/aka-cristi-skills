@@ -19,6 +19,7 @@ import signal
 import subprocess
 import sys
 import time
+import tempfile
 from pathlib import Path
 
 from tools.chef_handoff import plan
@@ -88,27 +89,34 @@ def _terminate_tree(process):
 
 
 def _spawn(argv, cwd: Path, timeout: int):
+    """Bound stdout/stderr memory by spooling to ephemeral private temp files."""
     flags = subprocess.CREATE_NEW_PROCESS_GROUP if os.name == "nt" else 0
-    try:
-        process = subprocess.Popen(
-            argv, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            stdin=subprocess.DEVNULL, text=True, encoding="utf-8",
-            errors="replace", start_new_session=os.name != "nt",
-            creationflags=flags,
-            env={**os.environ, "CODEBUDDY_CODE_DISABLE_BACKGROUND_TASKS": "1"},
-        )
-    except OSError:
-        return {"exit_code": -1, "stdout": "", "error": "HOST_START_FAILED"}
-    try:
-        stdout, stderr = process.communicate(timeout=timeout)
-    except subprocess.TimeoutExpired:
-        _terminate_tree(process)
-        return {"exit_code": -1, "stdout": "", "error": "HOST_TIMEOUT"}
-    if len(stdout) > MAX_STDOUT:
-        return {"exit_code": -1, "stdout": "", "error": "OUTPUT_TOO_LARGE"}
-    # Never store or print stderr; it may contain tokens, private paths, etc.
-    return {"exit_code": process.returncode, "stdout": stdout,
-            "error": "HOST_PROCESS_FAILED" if process.returncode else None}
+    # Host subprocesses may produce large/sensitive traces. Never materialize
+    # raw stderr in Python strings or persistent evidence files.
+    with tempfile.TemporaryFile(mode="w+b") as out, \
+         tempfile.TemporaryFile(mode="w+b") as err:
+        try:
+            process = subprocess.Popen(
+                argv, cwd=cwd, stdout=out, stderr=err,
+                stdin=subprocess.DEVNULL, start_new_session=os.name != "nt",
+                creationflags=flags,
+                env={**os.environ, "CODEBUDDY_CODE_DISABLE_BACKGROUND_TASKS": "1"},
+            )
+        except OSError:
+            return {"exit_code": -1, "stdout": "", "error": "HOST_START_FAILED"}
+        try:
+            process.wait(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            _terminate_tree(process)
+            return {"exit_code": -1, "stdout": "", "error": "HOST_TIMEOUT"}
+        out.seek(0, os.SEEK_END)
+        count = out.tell()
+        if count > MAX_STDOUT:
+            return {"exit_code": -1, "stdout": "", "error": "OUTPUT_TOO_LARGE"}
+        out.seek(0)
+        stdout = out.read(MAX_STDOUT + 1).decode("utf-8", errors="replace")
+        return {"exit_code": process.returncode, "stdout": stdout,
+                "error": "HOST_PROCESS_FAILED" if process.returncode else None}
 
 
 def _parse_result(host: str, result: dict):
