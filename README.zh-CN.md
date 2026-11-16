@@ -6,6 +6,28 @@
 >
 > 面向 Codex 的 CHEF 主厨工作规则、4 个 Skills、4 个原生 Codex 角色和安全安装器。**Beta 可以下载测试，但不是已完成外部验收的稳定版本。** Windows EXE 具有 GitHub 来源证明，但**没有 Authenticode 签名**。
 
+## 一条命令：安装并初始化当前已开发的功能
+
+这是 **`main` 分支的完整引导入口**，不是仅把命令藏在 ZIP 中。安装器先展示全部改动、检查冲突，再经确认安装 CHEF `AGENTS.md`、四个 Skills、四个原生 Codex 角色；随后检查 Codex CLI 登录状态。Personal AI Workspace 私人 GitHub 同步和四 Agent 真实调用测试是可选步骤，各自需要额外授权；无法满足 OAuth Client ID、权限或额度条件时会准确说明原因，不会声称已连接。
+
+**Windows 11 / PowerShell（复制整行）：**
+
+```powershell
+git clone --depth 1 https://github.com/2ndforcecrew/aka-cristi-skills.git; if ($LASTEXITCODE -ne 0) { throw "Git clone failed" }; Set-Location aka-cristi-skills; py -3 -m tools.full_setup --interactive --workspace --test-agents
+```
+
+**macOS / Ubuntu / Linux（复制整行）：**
+
+```bash
+git clone --depth 1 https://github.com/2ndforcecrew/aka-cristi-skills.git && cd aka-cristi-skills && python3 -m tools.full_setup --interactive --workspace --test-agents
+```
+
+**前置要求：** Git、Python 3.11+；真实 Agent 运行需要已安装、已登录、支持 Subagents 的 Codex CLI。这条命令不会擅自替用户登录、创建私人仓库、消耗模型额度、修改已有私人配置或部署。确认安装本地文件时输入 `YES`；另外的 GitHub 授权、额外依赖及额度调用均单独询问。该命令针对**持续更新的 `main`**，如需固定审核版本，使用 [v1.0.0-beta.2](https://github.com/2ndforcecrew/aka-cristi-skills/releases/tag/v1.0.0-beta.2) 已验证的核心安装入口。用户已有同名目录时，先进入目录检查版本、现有修改和文件冲突，不要重复 clone。
+
+**让 Codex Agent 帮忙安装：** 将这一句粘贴到具有终端访问能力的 Codex：「检查 https://github.com/2ndforcecrew/aka-cristi-skills 的当前 main 与发布说明，在我的测试环境运行适用系统的 `tools.full_setup --interactive --workspace --test-agents`；展示安装计划，我明确同意后才修改文件。GitHub OAuth、包依赖安装和真实 Agent 额度调用需要分别确认。记录 FILES_VERIFIED、登录、Workspace、真实四角色运行结果，失败则提供可复现的原因，不做强制覆盖。」
+
+**当前支持范围：** CHEF 核心规则及四角色文件自动安装已实现；Personal AI Workspace 有 CLI/GUI 和 GitHub Device Flow，但缺少发布者已配置的 GitHub OAuth App 公共 Client ID 或系统 keyring 时，无法自动创建私人同步仓库；Claude / Hermes / ChatGPT 完整跨厂商调用尚未实现。源码入口：[tools/full_setup.py](tools/full_setup.py)。工作流程图：[Personal AI Workspace](docs/PERSONAL_AI_WORKSPACE.md)。
+
 ## 01 · 选择安装方式
 
 | 系统 / 使用方式 | 推荐方法 | 需要什么 |
