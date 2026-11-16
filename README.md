@@ -2,7 +2,7 @@
 
 **让 AI 协作经验变成可安装、可验证、可复用的工作能力。**
 
-> **当前公开版本：[v1.0.0-beta.1（Beta 测试版）](https://github.com/2ndforcecrew/aka-cristi-skills/releases/tag/v1.0.0-beta.1)** · [反馈问题](https://github.com/2ndforcecrew/aka-cristi-skills/issues) · [开发与验收记录](docs/CODEX_V1_RELEASE_ACCEPTANCE.md)
+> **当前公开版本：[v1.0.0-beta.2（Beta 测试版）](https://github.com/2ndforcecrew/aka-cristi-skills/releases/tag/v1.0.0-beta.2)** · [反馈问题](https://github.com/2ndforcecrew/aka-cristi-skills/issues) · [开发与验收记录](docs/CODEX_V1_RELEASE_ACCEPTANCE.md)
 >
 > 面向 Codex 的 CHEF 主厨工作规则、4 个 Skills、4 个原生 Codex 角色和安全安装器。**Beta 可以下载测试，但不是已完成外部验收的稳定版本。** Windows EXE 具有 GitHub 来源证明，但**没有 Authenticode 签名**。
 
@@ -10,19 +10,19 @@
 
 | 系统 / 使用方式 | 推荐方法 | 需要什么 |
 | --- | --- | --- |
-| **Windows 11** | [下载图形安装器](https://github.com/2ndforcecrew/aka-cristi-skills/releases/download/v1.0.0-beta.1/AKA-CRISTI-CHEF-Setup.exe) | 独立测试环境、Codex CLI |
+| **Windows 11** | [下载图形安装器](https://github.com/2ndforcecrew/aka-cristi-skills/releases/download/v1.0.0-beta.2/AKA-CRISTI-CHEF-Setup.exe) | 独立测试环境、Codex CLI |
 | **Windows 11 命令行** | 下方 PowerShell 命令 | Git、Python 3.11+ |
 | **macOS（Apple Silicon / Intel）** | 下方 Terminal 命令 | Git、Python 3.11+ |
 | **Ubuntu / Debian / 其他 Linux** | 下方 Bash 命令 | Git、Python 3.11+ |
 | **让 Codex / 其他 Agent 协助安装** | 下方 Agent 安装指令 | Agent 有终端权限，用户批准本地写入 |
 
-****注意：** 以下跨平台统一命令属于即将合入 `main` 的新增功能，**不是 `v1.0.0-beta.1` 的现有功能**。
+**v1.0.0-beta.2 已包含跨平台一键命令安装器 `tools/quick_install.py`。** Windows EXE 是另一个图形入口；命令安装器适用于 Windows、Mac 和 Ubuntu/Linux。
 
 统一安装入口：`python -m tools.quick_install --interactive`。**先展示全部变更，用户输入 `INSTALL` 后才安装并验证** CHEF 全局规则、4 个角色和 4 个 Skills。默认不带参数时仅预览；也支持手动使用 `--apply`。这个安装器不会启动模型或消耗 Codex 推理额度。
 
 ### Windows 11 · 图形安装（最适合朋友）
 
-1. 从 [GitHub Release](https://github.com/2ndforcecrew/aka-cristi-skills/releases/tag/v1.0.0-beta.1) 下载 `AKA-CRISTI-CHEF-Setup.exe`。
+1. 从 [GitHub Release](https://github.com/2ndforcecrew/aka-cristi-skills/releases/tag/v1.0.0-beta.2) 下载 `AKA-CRISTI-CHEF-Setup.exe`。
 2. 在独立的 Windows 11 测试账户或虚拟机中，先核验来源和 SHA-256，再打开 EXE。
 3. 点击 **检查与预览**，确认现有 `AGENTS.md` 不会被覆盖。
 4. 阅读差异后明确同意，再点击 **安装并校验文件**；需要撤销时使用内置受保护恢复功能。
@@ -33,35 +33,32 @@
 Get-FileHash "$env:USERPROFILE\Downloads\AKA-CRISTI-CHEF-Setup.exe" -Algorithm SHA256
 ```
 
-期望结果：
+预期 SHA-256 应与 **本次 `v1.0.0-beta.2` 的 `gui-candidate-manifest.json`** 对应。不要沿用上一版 Hash；必须先验证清单的 GitHub 来源证明。
 
-```text
-f540ad61c88a3c33c2e8e5ee0878589d2e3805f1dfa5a689028b7373b919d96f
-```
-
-核对 Hash 不能代替验证发布者身份。可从 [Release](https://github.com/2ndforcecrew/aka-cristi-skills/releases/tag/v1.0.0-beta.1) 下载 `gui-provenance.sigstore.json`，在两个文件所在目录使用 **GitHub CLI 2.102.0+** 进行来源验证：
+核对 Hash 不能代替验证发布者身份。可从 [Release](https://github.com/2ndforcecrew/aka-cristi-skills/releases/tag/v1.0.0-beta.2) 下载 `gui-provenance.sigstore.json`，在两个文件所在目录使用 **GitHub CLI 2.102.0+** 进行来源验证：
 
 ```powershell
-gh attestation verify .\AKA-CRISTI-CHEF-Setup.exe --bundle .\gui-provenance.sigstore.json --repo 2ndforcecrew/aka-cristi-skills --signer-workflow 2ndforcecrew/aka-cristi-skills/.github/workflows/beta-release.yml --signer-digest f2ed0a46a1f65e909690962994554aba1d0e7e46 --source-digest f2ed0a46a1f65e909690962994554aba1d0e7e46 --source-ref refs/heads/main --predicate-type https://slsa.dev/provenance/v1
+$commit = (gh api repos/2ndforcecrew/aka-cristi-skills/git/ref/tags/v1.0.0-beta.2 --jq '.object.sha').Trim()
+gh attestation verify .\AKA-CRISTI-CHEF-Setup.exe --bundle .\gui-provenance.sigstore.json --repo 2ndforcecrew/aka-cristi-skills --signer-workflow 2ndforcecrew/aka-cristi-skills/.github/workflows/beta-release.yml --signer-digest $commit --source-digest $commit --source-ref refs/heads/main --predicate-type https://slsa.dev/provenance/v1
 ```
 
 验证失败或遇到系统安全策略限制时**停止安装**；不要为了运行 Beta 关闭系统保护。
 
 ### Windows 11 · PowerShell 一条命令
 
-先安装 Git、Python 3.11+；把下面**整行**复制到 PowerShell。命令会下载并切换到固定的 Beta 版本，然后**只预览**：
+先安装 Git、Python 3.11+；把下面**整行**复制到 PowerShell。命令将下载固定的 Beta Tag 并展示全部安装预览；只有输入 `INSTALL` 才会实际写入：
 
 ```powershell
-git clone https://github.com/2ndforcecrew/aka-cristi-skills.git; if ($LASTEXITCODE -ne 0) { throw "下载失败" }; cd aka-cristi-skills; git checkout main; if ($LASTEXITCODE -ne 0) { throw "版本校验失败" }; py -3 -m tools.quick_install --interactive
+git clone https://github.com/2ndforcecrew/aka-cristi-skills.git; if ($LASTEXITCODE -ne 0) { throw "下载失败" }; cd aka-cristi-skills; git checkout v1.0.0-beta.2; if ($LASTEXITCODE -ne 0) { throw "版本校验失败" }; py -3 -m tools.quick_install --interactive
 ```
 
-仔细查看预览并确认没有冲突，才执行**一条安装命令**：
+如果希望分开进行预览和安装，可以在确认预览后执行：
 
 ```powershell
 py -3 -m tools.quick_install --apply
 ```
 
-**说明：** 命令从仓库检出 Tag，请审查该版本的源码及来源。如果目录已经存在，不要重新 clone；进入原目录检查当前修改后再操作。
+**说明：** 命令检出固定的 `beta.2` Tag，请审查源码和来源。如果目录已经存在，不要重新 clone；进入原目录检查当前修改后再操作。
 
 ### Mac · Terminal 安装（M 系列 / Intel 都适用）
 
@@ -70,7 +67,7 @@ py -3 -m tools.quick_install --apply
 **① 下载并预览：**
 
 ```bash
-git clone https://github.com/2ndforcecrew/aka-cristi-skills.git && cd aka-cristi-skills && git checkout main && python3 -m tools.quick_install --interactive
+git clone https://github.com/2ndforcecrew/aka-cristi-skills.git && cd aka-cristi-skills && git checkout v1.0.0-beta.2 && python3 -m tools.quick_install --interactive
 ```
 
 **② 如想分开执行，先预览，再明确授权安装：**
@@ -94,7 +91,7 @@ Mac 安装的是 **Codex Skills + AGENTS.md + 自定义角色配置**；Windows 
 **① 下载并预览：**
 
 ```bash
-git clone https://github.com/2ndforcecrew/aka-cristi-skills.git && cd aka-cristi-skills && git checkout main && python3 -m tools.quick_install --interactive
+git clone https://github.com/2ndforcecrew/aka-cristi-skills.git && cd aka-cristi-skills && git checkout v1.0.0-beta.2 && python3 -m tools.quick_install --interactive
 ```
 
 **② 也可以分开执行明确授权安装：**
@@ -113,7 +110,7 @@ python3 -m tools.quick_install --codex-home /tmp/aka-chef-test-codex --skills-ro
 
 ### 给 Agent 的安装指令（可复制到 Codex）
 
-> 请检查本机是否安装 Git、Python 3.11+ 及 Codex CLI；确认操作系统。阅读 https://github.com/2ndforcecrew/aka-cristi-skills 的 README，检出当前已审查的 `main`（**旧版 `v1.0.0-beta.1` 不包含新安装入口**），执行 `python3 -m tools.quick_install --interactive`（Windows 使用 `py -3`），展示完整预览；**我输入 `INSTALL` 同意后**再自动安装和验证，并检查 `FILES_VERIFIED`。若有冲突或来源异常，停止，不覆盖我的现有 `AGENTS.md`、Skills、凭据或 Agent 文件。记录版本、修改和校验结果，不把文件安装成功冒充真实 Agent 调用。
+> 请检查本机是否安装 Git、Python 3.11+ 及 Codex CLI；确认操作系统。阅读 https://github.com/2ndforcecrew/aka-cristi-skills 的 README，检出固定测试版 `v1.0.0-beta.2`（包含统一安装器），执行 `python3 -m tools.quick_install --interactive`（Windows 使用 `py -3`），展示完整预览；**我输入 `INSTALL` 同意后**再自动安装和验证，并检查 `FILES_VERIFIED`。若有冲突或来源异常，停止，不覆盖我的现有 `AGENTS.md`、Skills、凭据或 Agent 文件。记录版本、修改和校验结果，不把文件安装成功冒充真实 Agent 调用。
 
 **不支持的安装捷径：** 目前尚未验证 `npx skills add 2ndforcecrew/aka-cristi-skills` 是可用的官方入口。**粘贴仓库链接给 Agent 不等于自动安装成功**，必须验证真实文件与运行环境。
 
@@ -162,7 +159,7 @@ python3 -m tools.skill_installer uninstall chef-orchestrator --target codex --ap
 
 ## 04 · 真实状态与版本限制
 
-- **已公开：** [v1.0.0-beta.1 GitHub Release](https://github.com/2ndforcecrew/aka-cristi-skills/releases/tag/v1.0.0-beta.1)，含 Windows EXE、源码 ZIP、SHA-256 与 GitHub 来源证明。
+- **已公开：** [v1.0.0-beta.2 GitHub Release](https://github.com/2ndforcecrew/aka-cristi-skills/releases/tag/v1.0.0-beta.2)，含 Windows EXE、源码 ZIP、SHA-256 与 GitHub 来源证明。
 - **已完成工程 CI：** Windows/macOS/Ubuntu 回归、Windows EXE 构建和来源证明。测试通过不等于每台电脑都能安装。
 - **未完成：** 外部 Windows 11 首次安装 UAT、当前发布版本四个真实子 Agent 的完整验收、独立 MCP 权限隔离验证、Windows Authenticode 证书签名。
 - **实验功能：** Personal AI Workspace 的真实 OAuth、用户私人仓库创建及多设备同步；不能以模拟测试声称已在真实账户通过。
