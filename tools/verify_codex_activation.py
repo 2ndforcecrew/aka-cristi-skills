@@ -1,6 +1,7 @@
 """Run a real Codex Skill call in a read-only sandbox; no simulated PASS."""
 import argparse
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -65,13 +66,23 @@ def run(name, codex="codex", timeout=180, root=None):
     source = (root / "skills" / name / "SKILL.md").resolve(strict=True)
     result = {"timestamp": datetime.now(timezone.utc).isoformat(),
               "skill": name, "status": "NOT_RUN", "invoked": False}
+    try:
+        from tools.codex_probe_isolation import IsolationError, probe_environment
+    except ModuleNotFoundError:
+        from codex_probe_isolation import IsolationError, probe_environment
+    try:
+        probe_home, probe_env = probe_environment(Path.cwd().resolve())
+    except IsolationError as exc:
+        result["reason"] = str(exc)
+        return result
+    result["mcp_isolation_preflight"] = "DEDICATED_HOME_NO_LOCAL_REGISTRATIONS"
     exe = shutil.which(codex)
     if not exe:
         result["reason"] = "Codex CLI not installed in executing environment"
         return result
     try:
         login = subprocess.run([exe, "login", "status"], capture_output=True,
-                               timeout=15, check=False)
+                               timeout=15, check=False, env=probe_env)
     except (OSError, subprocess.TimeoutExpired):
         result["reason"] = "Could not check Codex CLI authentication"
         return result
@@ -100,13 +111,30 @@ def run(name, codex="codex", timeout=180, root=None):
         args = [exe, "exec", "--json", "--ephemeral", "--sandbox", "read-only", "--skip-git-repo-check",
                 "--cd", str(workspace), prompt]
         result["invoked"] = True
-        try:
-            proc = subprocess.run(args, cwd=workspace, capture_output=True,
-                                  text=True, encoding="utf-8", errors="replace", timeout=timeout, check=False)
-        except subprocess.TimeoutExpired:
-            return {**result, "status": "FAIL", "reason": "Agent timed out"}
-        except OSError:
-            return {**result, "status": "FAIL", "reason": "Agent execution failed"}
+        if os.name == "nt":
+            try:
+                try:
+                    from tools.aka_windows_job_runner import JobError, JobTimeout, run_in_job
+                except ModuleNotFoundError:
+                    from aka_windows_job_runner import JobError, JobTimeout, run_in_job
+                proc = run_in_job(args, workspace, timeout, env=probe_env)
+                proc.stdout = (proc.stdout.decode("utf-8", errors="replace")
+                               if isinstance(proc.stdout, bytes) else proc.stdout)
+            except JobTimeout:
+                return {**result, "status": "FAIL", "reason": "Agent timed out; Job Object closed",
+                        "descendants_verified_terminated": False}
+            except (JobError, OSError) as exc:
+                return {**result, "status": "FAIL", "reason": "Job Object process failed",
+                        "failure_type": type(exc).__name__}
+        else:
+            try:
+                proc = subprocess.run(args, cwd=workspace, capture_output=True,
+                                      text=True, encoding="utf-8", errors="replace",
+                                      timeout=timeout, check=False, env=probe_env)
+            except subprocess.TimeoutExpired:
+                return {**result, "status": "FAIL", "reason": "Agent timed out (POSIX tree unverified)"}
+            except OSError:
+                return {**result, "status": "FAIL", "reason": "Agent execution failed"}
         result.update(assess(parse_events(proc.stdout), name, nonce, proc.returncode))
         result["exit_code"] = proc.returncode
         result["reason"] = ("Observed agent loading Skill and producing valid behavior"
