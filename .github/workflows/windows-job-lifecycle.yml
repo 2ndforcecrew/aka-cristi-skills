@@ -17,5 +17,7 @@ jobs:
           python-version: '3.13'
       - name: Syntax of verifier and helper
         run: python -m py_compile tools/verify_four_agents.py tools/aka_windows_job_runner.py
+      - name: Codex probe configuration and secret inheritance regression
+        run: python -m unittest discover -s tests -p test_codex_probe_isolation.py -v
       - name: Windows parent/child/unrelated regression (no Codex)
         run: python -m unittest discover -s tests -p test_windows_job_runner.py -v
