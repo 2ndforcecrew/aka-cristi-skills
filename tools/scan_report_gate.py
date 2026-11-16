@@ -52,7 +52,7 @@ def summarize(path: Path, scanner_exit: int) -> dict[str, Any]:
         if (scanner_exit == 0 and recommendation == "SAFE" and complete and executed
                 and percentage == 100 and not exceptions):
             result["status"] = "STATIC_SCAN_PASS_ONLY"
-        elif not complete or percentage != 100 or not executed:
+        elif not complete or percentage != 100 or not executed or exceptions:
             result["status"] = "BLOCKED_INCOMPLETE"
         else:
             result["status"] = "BLOCKED_RISK"
