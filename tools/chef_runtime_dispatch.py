@@ -169,6 +169,18 @@ def run(host: str, kind: str, objective: str, project, *, allow_quota=False,
                "consent": "REQUIRES_EXPLICIT_ALLOW_QUOTA"}
     if not allow_quota:
         return preview
+    output = None
+    if out is not None:
+        # All path/ownership checks MUST happen before invoking paid CLI calls.
+        output = checked_path(Path(out).expanduser().absolute())
+        if output.exists():
+            raise ValueError("Refusing to overwrite report")
+        if not output.parent.is_dir():
+            raise ValueError("Report parent must already exist")
+        if output.parent.is_relative_to(project):
+            raise ValueError("Do not save audit data in project")
+        if os.name != "nt" and output.parent.stat().st_mode & 0o077:
+            raise ValueError("Report parent must be private (chmod 700)")
     binary = shutil.which(HOSTS[host])
     if not binary:
         return {**preview, "reason": "HOST_CLI_NOT_INSTALLED"}
@@ -204,17 +216,7 @@ def run(host: str, kind: str, objective: str, project, *, allow_quota=False,
         "read_only": True,
         "no_model_transcripts_saved": True,
     }
-    if out is not None:
-        output = checked_path(Path(out).expanduser().absolute())
-        if output.exists():
-            raise ValueError("Refusing to overwrite report")
-        if not output.parent.is_dir():
-            raise ValueError("Report parent must already exist")
-        if output.parent.is_relative_to(project):
-            raise ValueError("Do not save audit data in project")
-        # POSIX credentials/reports must be private.
-        if os.name != "nt" and output.parent.stat().st_mode & 0o077:
-            raise ValueError("Report parent must be private (chmod 700)")
+    if output is not None:
         fd = os.open(output, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
         with os.fdopen(fd, "w", encoding="utf-8") as handle:
             json.dump(final, handle, ensure_ascii=True, indent=2)
