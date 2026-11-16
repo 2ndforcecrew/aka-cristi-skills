@@ -26,7 +26,7 @@ class HostRuntimeTests(unittest.TestCase):
     def test_no_inference_without_consent(self):
         with tempfile.TemporaryDirectory() as tmp:
             runner = Mock()
-            result = runtime.invoke("claude", "qa", "review", Path(tmp),
+            result = runtime.invoke("claude", "qa", "review", Path(tmp).resolve(),
                                     runner=runner, consent=False)
             self.assertEqual(result["status"], "CONSENT_REQUIRED")
             runner.assert_not_called()
@@ -34,7 +34,7 @@ class HostRuntimeTests(unittest.TestCase):
     def test_unverified_workbuddy_dispatch_refuses_to_invoke(self):
         with tempfile.TemporaryDirectory() as tmp:
             runner = Mock()
-            result = runtime.invoke("workbuddy", "qa", "review", Path(tmp),
+            result = runtime.invoke("workbuddy", "qa", "review", Path(tmp).resolve(),
                                     runner=runner, consent=True)
             self.assertEqual(result["status"], "UNSUPPORTED")
             runner.assert_not_called()
@@ -46,7 +46,7 @@ class HostRuntimeTests(unittest.TestCase):
                 "payload": {"type": "result", "is_error": False,
                             "session_id": "session-123", "result": "Reviewed"},
             })
-            result = runtime.invoke("claude", "qa", "review", Path(tmp),
+            result = runtime.invoke("claude", "qa", "review", Path(tmp).resolve(),
                                     runner=runner, which=lambda _: "/bin/claude",
                                     consent=True)
             self.assertEqual(result["status"], "HOST_COMPLETED")
@@ -60,7 +60,7 @@ class HostRuntimeTests(unittest.TestCase):
     def test_claude_missing_evidence_blocks(self):
         with tempfile.TemporaryDirectory() as tmp:
             runner = Mock(return_value={"status": "OBSERVED", "payload": {"result": "ok"}})
-            result = runtime.invoke("claude", "studio", "review", Path(tmp),
+            result = runtime.invoke("claude", "studio", "review", Path(tmp).resolve(),
                                     runner=runner, which=lambda _: "/bin/claude",
                                     consent=True)
             self.assertEqual(result["status"], "BLOCKED")
@@ -68,16 +68,16 @@ class HostRuntimeTests(unittest.TestCase):
     def test_timeout_bounds(self):
         with tempfile.TemporaryDirectory() as tmp:
             with self.assertRaises(ValueError):
-                runtime.invoke("claude", "qa", "test", Path(tmp),
+                runtime.invoke("claude", "qa", "test", Path(tmp).resolve(),
                                consent=True, timeout=99999)
             with self.assertRaises(ValueError):
-                runtime._process(["nope"], Path(tmp), 0)
+                runtime._process(["nope"], Path(tmp).resolve(), 0)
 
     def test_no_codex_approval_bypass(self):
         with tempfile.TemporaryDirectory() as tmp:
             with patch.object(runtime, "run_codex", return_value={
                 "status": "COMPLETED", "thread_ids": ["parent"]}) as codex:
-                result = runtime.invoke("codex", "qa", "review", Path(tmp),
+                result = runtime.invoke("codex", "qa", "review", Path(tmp).resolve(),
                                         which=lambda _: "/bin/codex", consent=True)
                 self.assertEqual(result["native_subagent"], "NOT_VERIFIED")
                 self.assertEqual(codex.call_args.kwargs["sandbox"], "read-only")
