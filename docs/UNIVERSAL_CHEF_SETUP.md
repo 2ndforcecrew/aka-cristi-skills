@@ -12,7 +12,7 @@
 | Skills | 同一套四个 Agent Skills，经目标平台原生 Skills 路径安装 | 是否被加载、触发由宿主控制 |
 | Role Profiles | 从 `agents/*.toml` 的职责语义生成各宿主原生 Markdown | WorkBuddy、Claude、Gemini、OpenCode 可发现配置，但运行时需单独验证 |
 | Agent Coordination | 原生角色说明写明 CHEF 分工与交接，提供通用 Handoff 任务契约 | 不能凭文件定义保证宿主实际派发 |
-| Dual-Engine | Factory/Studio/QA 通用 JSON 交接计划 + 现有 Codex CLI 隔离运行时 | 自动执行的跨厂商 Host Runner **尚未实现** |
+| Dual-Engine | Factory/Studio/QA 通用 JSON 交接计划 + 现有 Codex CLI 隔离运行时 | 已新增 V0.4 候选：跨宿主 CLI 只读 Studio/QA 调用；仍需真实宿主 UAT 和权限验收 |
 | Runtime Acceptance | Codex 已有真实 Skill / 四角色验收器 | 非 Codex 宿主真实线程验收仍需开发 |
 
 ## 官方支持的配置映射
@@ -92,7 +92,7 @@ python3 -m tools.chef_handoff --host workbuddy --kind hybrid --objective "修复
 
 保存的 `chef-handoff-<task-id>.json` 说明角色顺序、期望职责、输入/输出和验收边界，并且所有执行状态初始均为 `NOT_RUN`。它**不启动模型**。需要在真实宿主会话内读取此任务文件、委派实际 Agent，并取得可验证的角色/线程证据。
 
-既有 `tools.chef_dual_engine` 包含独立 Git 克隆、SQLite、有限重试、恢复和独立 QA，但其 **自动执行器仍使用 Codex CLI**；需要下一阶段逐厂商实现和验证 Runner。
+既有 `tools.chef_dual_engine` 包含独立 Git 克隆、SQLite、有限重试、恢复和独立 QA。**V0.4 开发候选** 已将 Studio/QA 接入 Claude、Gemini、WorkBuddy/CodeBuddy、OpenCode、Hermes 的 CLI 适配器；Factory 保留 Codex 隔离写入，非 Codex 的原生四子 Agent 自动派发仍未验证。[查看 V0.4 使用、权限与验收范围](HOST_RUNTIME_V04.md)。
 
 ## 完整状态
 
