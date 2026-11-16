@@ -85,36 +85,34 @@ def run(*, apply=False, interactive=False, workspace=False, test_agents=False,
         report["codex_login"] = "CODEX_CLI_MISSING"
         report["next_codex_action"] = "Install official Codex CLI and sign in"
     if workspace:
-        # Workspace uses an external OAuth app and an OS-native credential vault.
-        # No remote repository creation or token access without separate opt-in.
-        if before["workspace_keyring"] != "AVAILABLE":
+        # Remote writes are separately authorized. Failure in this optional
+        # stage must not prevent an independent Codex runtime diagnostic.
+        ready = before["workspace_keyring"] == "AVAILABLE"
+        if not ready:
             if interactive and _approve(
-                "Install pinned optional keyring dependency via pip for Personal AI Workspace?",
+                "Install optional keyring dependency from pinned requirements file?",
                 input_fn,
             ):
-                if not _call([sys.executable, "-m", "pip", "install",
-                              "-r", str(WORKSPACE_REQ)]):
+                ready = _call([sys.executable, "-m", "pip", "install",
+                               "-r", str(WORKSPACE_REQ)])
+                if not ready:
                     report["workspace"] = "DEPENDENCY_INSTALL_FAILED"
-                    return report
             else:
                 report["workspace"] = "DEPENDENCY_REQUIRED"
-                return report
-        if not os.getenv("AKA_WORKSPACE_OAUTH_CLIENT_ID"):
+        if ready and not os.getenv("AKA_WORKSPACE_OAUTH_CLIENT_ID"):
             report["workspace"] = "OAUTH_CLIENT_ID_REQUIRED"
             report["workspace_next_action"] = (
-                "Configure the official GitHub OAuth App public Client ID before device authorization"
+                "Configure the public GitHub OAuth App Client ID; "
+                "no third-party account is connected automatically"
             )
-            return report
-        if interactive and not _approve(
-            "Start GitHub Personal AI Workspace one-click device authorization and private repository setup?",
+        elif ready and not interactive:
+            report["workspace"] = "SEPARATE_CONFIRMATION_REQUIRED"
+        elif ready and not _approve(
+            "Authorize GitHub device flow and private workspace setup? Cloud operations may write to your GitHub account.",
             input_fn,
         ):
             report["workspace"] = "CANCELLED"
-        elif not interactive:
-            report["workspace"] = "SEPARATE_CONFIRMATION_REQUIRED"
-        else:
-            # The workspace controller internally enforces auth, private repo,
-            # user confirmation and fail-closed sync permissions.
+        elif ready:
             report["workspace"] = (
                 "SETUP_ATTEMPT_COMPLETE" if _call([
                     sys.executable, "-m", "tools.personal_workspace",
