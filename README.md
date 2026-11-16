@@ -16,7 +16,9 @@
 | **Ubuntu / Debian / 其他 Linux** | 下方 Bash 命令 | Git、Python 3.11+ |
 | **让 Codex / 其他 Agent 协助安装** | 下方 Agent 安装指令 | Agent 有终端权限，用户批准本地写入 |
 
-**统一安装入口：** `python -m tools.quick_install`。不带 `--apply` 仅预览；用户明确同意后加 `--apply`，会安装 CHEF 全局规则、4 个角色和 4 个 Skills，并自动校验文件。该命令**不启动或连接模型、不调用 MCP、不使用 Codex 推理额度**。
+****注意：** 以下跨平台统一命令属于即将合入 `main` 的新增功能，**不是 `v1.0.0-beta.1` 的现有功能**。
+
+统一安装入口：** `python -m tools.quick_install`。不带 `--apply` 仅预览；用户明确同意后加 `--apply`，会安装 CHEF 全局规则、4 个角色和 4 个 Skills，并自动校验文件。该命令**不启动或连接模型、不调用 MCP、不使用 Codex 推理额度**。
 
 ### Windows 11 · 图形安装（最适合朋友）
 
@@ -50,7 +52,7 @@ gh attestation verify .\AKA-CRISTI-CHEF-Setup.exe --bundle .\gui-provenance.sigs
 先安装 Git、Python 3.11+；把下面**整行**复制到 PowerShell。命令会下载并切换到固定的 Beta 版本，然后**只预览**：
 
 ```powershell
-git clone https://github.com/2ndforcecrew/aka-cristi-skills.git; if ($LASTEXITCODE -ne 0) { throw "下载失败" }; cd aka-cristi-skills; git checkout v1.0.0-beta.1; if ($LASTEXITCODE -ne 0) { throw "版本校验失败" }; py -3 -m tools.quick_install
+git clone https://github.com/2ndforcecrew/aka-cristi-skills.git; if ($LASTEXITCODE -ne 0) { throw "下载失败" }; cd aka-cristi-skills; git checkout main; if ($LASTEXITCODE -ne 0) { throw "版本校验失败" }; py -3 -m tools.quick_install
 ```
 
 仔细查看预览并确认没有冲突，才执行**一条安装命令**：
@@ -68,7 +70,7 @@ py -3 -m tools.quick_install --apply
 **① 下载并预览：**
 
 ```bash
-git clone https://github.com/2ndforcecrew/aka-cristi-skills.git && cd aka-cristi-skills && git checkout v1.0.0-beta.1 && python3 -m tools.quick_install
+git clone https://github.com/2ndforcecrew/aka-cristi-skills.git && cd aka-cristi-skills && git checkout main && python3 -m tools.quick_install
 ```
 
 **② 检查预览后，一条命令完成安装及文件校验：**
@@ -92,7 +94,7 @@ Mac 安装的是 **Codex Skills + AGENTS.md + 自定义角色配置**；Windows 
 **① 下载并预览：**
 
 ```bash
-git clone https://github.com/2ndforcecrew/aka-cristi-skills.git && cd aka-cristi-skills && git checkout v1.0.0-beta.1 && python3 -m tools.quick_install
+git clone https://github.com/2ndforcecrew/aka-cristi-skills.git && cd aka-cristi-skills && git checkout main && python3 -m tools.quick_install
 ```
 
 **② 明确同意后安装：**
