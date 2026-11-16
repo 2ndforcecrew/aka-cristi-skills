@@ -1,207 +1,362 @@
-# AKA.CRISTI Skills
+<div align="center">
 
-**让 AI 协作经验变成可安装、可验证、可复用的工作能力。**
+# AKA.CRISTI / SKILLS
 
-> **当前公开版本：[v1.0.0-beta.2（Beta 测试版）](https://github.com/2ndforcecrew/aka-cristi-skills/releases/tag/v1.0.0-beta.2)** · [反馈问题](https://github.com/2ndforcecrew/aka-cristi-skills/issues) · [开发与验收记录](docs/CODEX_V1_RELEASE_ACCEPTANCE.md)
->
-> 面向 Codex 的 CHEF 主厨工作规则、4 个 Skills、4 个原生 Codex 角色和安全安装器。**Beta 可以下载测试，但不是已完成外部验收的稳定版本。** Windows EXE 具有 GitHub 来源证明，但**没有 Authenticode 签名**。
+**把人与 AI 的成功协作，转化为可安装、可验证、可持续进化的工作能力。**
 
-## 一条命令：安装并初始化当前已开发的功能
+*DESIGN × CODE × AI × AUTOMATION*
 
-这是 **`main` 分支的完整引导入口**，不是仅把命令藏在 ZIP 中。安装器先展示全部改动、检查冲突，再经确认安装 CHEF `AGENTS.md`、四个 Skills、四个原生 Codex 角色；随后检查 Codex CLI 登录状态。Personal AI Workspace 私人 GitHub 同步和四 Agent 真实调用测试是可选步骤，各自需要额外授权；无法满足 OAuth Client ID、权限或额度条件时会准确说明原因，不会声称已连接。
+**CODEX FIRST** &nbsp; | &nbsp; **CHEF ORCHESTRATOR** &nbsp; | &nbsp; **DUAL-ENGINE** &nbsp; | &nbsp; **AGENT COLLABORATION**
 
-**Windows 11 / PowerShell（复制整行）：**
+[一键安装](#quick-start) · [项目理念](#vision) · [全部功能](#features) · [双引擎架构](#dual-engine) · [当前状态](#status) · [功能手册](docs/FEATURE_CATALOG.md) · [GitHub Release](https://github.com/2ndforcecrew/aka-cristi-skills/releases)
 
-```powershell
-git clone --depth 1 https://github.com/2ndforcecrew/aka-cristi-skills.git; if ($LASTEXITCODE -ne 0) { throw "Git clone failed" }; Set-Location aka-cristi-skills; py -3 -m tools.full_setup --interactive --workspace --test-agents
-```
-
-**macOS / Ubuntu / Linux（复制整行）：**
-
-```bash
-git clone --depth 1 https://github.com/2ndforcecrew/aka-cristi-skills.git && cd aka-cristi-skills && python3 -m tools.full_setup --interactive --workspace --test-agents
-```
-
-**前置要求：** Git、Python 3.11+；真实 Agent 运行需要已安装、已登录、支持 Subagents 的 Codex CLI。这条命令不会擅自替用户登录、创建私人仓库、消耗模型额度、修改已有私人配置或部署。确认安装本地文件时输入 `YES`；另外的 GitHub 授权、额外依赖及额度调用均单独询问。该命令针对**持续更新的 `main`**，如需固定审核版本，使用 [v1.0.0-beta.2](https://github.com/2ndforcecrew/aka-cristi-skills/releases/tag/v1.0.0-beta.2) 已验证的核心安装入口。用户已有同名目录时，先进入目录检查版本、现有修改和文件冲突，不要重复 clone。
-
-**让 Codex Agent 帮忙安装：** 将这一句粘贴到具有终端访问能力的 Codex：「检查 https://github.com/2ndforcecrew/aka-cristi-skills 的当前 main 与发布说明，在我的测试环境运行适用系统的 `tools.full_setup --interactive --workspace --test-agents`；展示安装计划，我明确同意后才修改文件。GitHub OAuth、包依赖安装和真实 Agent 额度调用需要分别确认。记录 FILES_VERIFIED、登录、Workspace、真实四角色运行结果，失败则提供可复现的原因，不做强制覆盖。」
-
-**当前支持范围：** CHEF 核心规则及四角色文件自动安装已实现；Personal AI Workspace 有 CLI/GUI 和 GitHub Device Flow，但缺少发布者已配置的 GitHub OAuth App 公共 Client ID 或系统 keyring 时，无法自动创建私人同步仓库；Claude / Hermes / ChatGPT 完整跨厂商调用尚未实现。源码入口：[tools/full_setup.py](tools/full_setup.py)。工作流程图：[Personal AI Workspace](docs/PERSONAL_AI_WORKSPACE.md)。
-
-## 01 · 选择安装方式
-
-| 系统 / 使用方式 | 推荐方法 | 需要什么 |
-| --- | --- | --- |
-| **Windows 11** | [下载图形安装器](https://github.com/2ndforcecrew/aka-cristi-skills/releases/download/v1.0.0-beta.2/AKA-CRISTI-CHEF-Setup.exe) | 独立测试环境、Codex CLI |
-| **Windows 11 命令行** | 下方 PowerShell 命令 | Git、Python 3.11+ |
-| **macOS（Apple Silicon / Intel）** | 下方 Terminal 命令 | Git、Python 3.11+ |
-| **Ubuntu / Debian / 其他 Linux** | 下方 Bash 命令 | Git、Python 3.11+ |
-| **让 Codex / 其他 Agent 协助安装** | 下方 Agent 安装指令 | Agent 有终端权限，用户批准本地写入 |
-
-**当前版本声明：** 本仓库已正式公开发布 **Codex 优先的 `v1.0.0-beta.2` Beta**。网上引用的 `DO_NOT_INSTALL / 23 findings / BLOCKED` 是**旧版第三方扫描或历史发布门禁记录**，并非本版本作者发出的禁止安装通知，也不能直接证明当前版存在 23 个漏洞。已通过跨平台 CI、Windows EXE 构建及 GitHub 来源证明；外部用户安装和真实四 Agent 联动仍需单独验收。可查看[历史扫描说明](docs/SECURITY_REVIEW_2026-11-15.md)与[当前 Beta 发布页](https://github.com/2ndforcecrew/aka-cristi-skills/releases/tag/v1.0.0-beta.2)。
-
-**v1.0.0-beta.2 已包含跨平台一键命令安装器 `tools/quick_install.py`。** Windows EXE 是另一个图形入口；命令安装器适用于 Windows、Mac 和 Ubuntu/Linux。
-
-统一安装入口：`python -m tools.quick_install --interactive`。**先展示全部变更，用户输入 `INSTALL` 后才安装并验证** CHEF 全局规则、4 个角色和 4 个 Skills。默认不带参数时仅预览；也支持手动使用 `--apply`。这个安装器不会启动模型或消耗 Codex 推理额度。
-
-### Windows 11 · 图形安装（最适合朋友）
-
-1. 从 [GitHub Release](https://github.com/2ndforcecrew/aka-cristi-skills/releases/tag/v1.0.0-beta.2) 下载 `AKA-CRISTI-CHEF-Setup.exe`。
-2. 在独立的 Windows 11 测试账户或虚拟机中，先核验来源和 SHA-256，再打开 EXE。
-3. 点击 **检查与预览**，确认现有 `AGENTS.md` 不会被覆盖。
-4. 阅读差异后明确同意，再点击 **安装并校验文件**；需要撤销时使用内置受保护恢复功能。
-
-**Beta EXE 的 SHA-256：**
-
-```powershell
-Get-FileHash "$env:USERPROFILE\Downloads\AKA-CRISTI-CHEF-Setup.exe" -Algorithm SHA256
-```
-
-预期 SHA-256 应与 **本次 `v1.0.0-beta.2` 的 `gui-candidate-manifest.json`** 对应。不要沿用上一版 Hash；必须先验证清单的 GitHub 来源证明。
-
-核对 Hash 不能代替验证发布者身份。可从 [Release](https://github.com/2ndforcecrew/aka-cristi-skills/releases/tag/v1.0.0-beta.2) 下载 `gui-provenance.sigstore.json`，在两个文件所在目录使用 **GitHub CLI 2.102.0+** 进行来源验证：
-
-```powershell
-$commit = (gh api repos/2ndforcecrew/aka-cristi-skills/git/ref/tags/v1.0.0-beta.2 --jq '.object.sha').Trim()
-gh attestation verify .\AKA-CRISTI-CHEF-Setup.exe --bundle .\gui-provenance.sigstore.json --repo 2ndforcecrew/aka-cristi-skills --signer-workflow 2ndforcecrew/aka-cristi-skills/.github/workflows/beta-release.yml --signer-digest $commit --source-digest $commit --source-ref refs/heads/main --predicate-type https://slsa.dev/provenance/v1
-```
-
-验证失败或遇到系统安全策略限制时**停止安装**；不要为了运行 Beta 关闭系统保护。
-
-### Windows 11 · PowerShell 一条命令
-
-先安装 Git、Python 3.11+；把下面**整行**复制到 PowerShell。命令将下载固定的 Beta Tag 并展示全部安装预览；只有输入 `INSTALL` 才会实际写入：
-
-```powershell
-git clone https://github.com/2ndforcecrew/aka-cristi-skills.git; if ($LASTEXITCODE -ne 0) { throw "下载失败" }; cd aka-cristi-skills; git checkout v1.0.0-beta.2; if ($LASTEXITCODE -ne 0) { throw "版本校验失败" }; py -3 -m tools.quick_install --interactive
-```
-
-如果希望分开进行预览和安装，可以在确认预览后执行：
-
-```powershell
-py -3 -m tools.quick_install --apply
-```
-
-**说明：** 命令检出固定的 `beta.2` Tag，请审查源码和来源。如果目录已经存在，不要重新 clone；进入原目录检查当前修改后再操作。
-
-### Mac · Terminal 安装（M 系列 / Intel 都适用）
-
-需要 Git 和 Python **3.11 或更新版本**。打开「终端 Terminal」，复制以下命令：
-
-**① 下载并预览：**
-
-```bash
-git clone https://github.com/2ndforcecrew/aka-cristi-skills.git && cd aka-cristi-skills && git checkout v1.0.0-beta.2 && python3 -m tools.quick_install --interactive
-```
-
-**② 如想分开执行，先预览，再明确授权安装：**
-
-```bash
-python3 -m tools.quick_install --apply
-```
-
-**③ 检查版本：**
-
-```bash
-python3 --version && git describe --tags --exact-match
-```
-
-Mac 安装的是 **Codex Skills + AGENTS.md + 自定义角色配置**；Windows `.exe` **不能在 macOS 使用**。这里不会安装 Codex 本体，也不保证 Codex 已登录或真的生成四个子 Agent。
-
-### Ubuntu / Debian / Linux · Bash 一条命令
-
-确保已安装 Git 与 Python 3.11+；Ubuntu 默认 Python 可能比 3.11 旧，需先使用系统认可的软件源安装适用版本，**不要擅自替换系统 Python**。
-
-**① 下载并预览：**
-
-```bash
-git clone https://github.com/2ndforcecrew/aka-cristi-skills.git && cd aka-cristi-skills && git checkout v1.0.0-beta.2 && python3 -m tools.quick_install --interactive
-```
-
-**② 也可以分开执行明确授权安装：**
-
-```bash
-python3 -m tools.quick_install --apply
-```
-
-**③ 不修改用户现有配置的隔离测试：**
-
-```bash
-python3 -m tools.quick_install --codex-home /tmp/aka-chef-test-codex --skills-root /tmp/aka-chef-test-skills
-```
-
-建议使用本机普通用户账号运行，**不需要 `sudo`，也不应写进 root 的 Codex 配置**。Linux/macOS 还需要自行安装和授权 Codex CLI 才能实际调用模型。
-
-### 给 Agent 的安装指令（可复制到 Codex）
-
-> 请检查本机是否安装 Git、Python 3.11+ 及 Codex CLI；确认操作系统。阅读 https://github.com/2ndforcecrew/aka-cristi-skills 的 README，检出固定测试版 `v1.0.0-beta.2`（包含统一安装器），执行 `python3 -m tools.quick_install --interactive`（Windows 使用 `py -3`），展示完整预览；**我输入 `INSTALL` 同意后**再自动安装和验证，并检查 `FILES_VERIFIED`。若有冲突或来源异常，停止，不覆盖我的现有 `AGENTS.md`、Skills、凭据或 Agent 文件。记录版本、修改和校验结果，不把文件安装成功冒充真实 Agent 调用。
-
-**不支持的安装捷径：** 目前尚未验证 `npx skills add 2ndforcecrew/aka-cristi-skills` 是可用的官方入口。**粘贴仓库链接给 Agent 不等于自动安装成功**，必须验证真实文件与运行环境。
-
-## 02 · 项目提供什么？
-
-| 模块 | 作用 |
-| --- | --- |
-| [CHEF Orchestrator](skills/chef-orchestrator/SKILL.md) | 按 Inspect → Plan → Build → Test → Review → Deliver 统筹任务和 Agent |
-| [Verified Change Loop](skills/verified-change-loop/SKILL.md) | 复现、最小修复、重跑测试、独立验收 |
-| [Feature Journey Map](skills/feature-journey-map/SKILL.md) | 检查真实用户操作路径与异常恢复 |
-| [Skill Evaluation Gate](skills/skill-evaluation-gate/SKILL.md) | 使用实际证据决定是否升级或发布 Skill |
-| [CHEF 全局规则](docs/CHEF_GLOBAL_AND_MULTIAGENT.md) | 追加受管理区块到 Codex `AGENTS.md`，保留原始内容及备份 |
-| [四角色配置](docs/CODEX_NATIVE_SUBAGENTS_V02.md) | `aka_research`、`aka_coding`、`aka_qa`、`aka_automation` |
-| [安全安装器](tools/quick_install.py) | 默认预览；授权后安装及文件校验；冲突阻止写入 |
-
-这是一套 **Agent 工作规则与 Skill 工具**，不是自动拥有所有 Agent 权限的独立大脑。是否可以调用其他服务，取决于真实连接、凭据、用户权限与宿主支持程度。
-
-## 03 · 验证、卸载与常见问题
-
-**本地安装验证：**
-
-```bash
-python3 -m tools.chef_global_rules verify
-python3 -m tools.codex_subagents verify
-python3 -m tools.skill_installer verify chef-orchestrator --target codex
-```
-
-**删除自己安装的受管理配置（不会强行删除用户原有文件）：**
-
-```bash
-python3 -m tools.chef_global_rules uninstall --apply
-python3 -m tools.codex_subagents uninstall --apply
-python3 -m tools.skill_installer uninstall chef-orchestrator --target codex --apply
-```
-
-其余三个 Skills 也分别通过 `tools.skill_installer uninstall 技能名称 --target codex --apply` 卸载；安装器对未受管理或已经修改的文件会拒绝覆盖/删除。旧版本的受管理文件可按实际备份执行 `rollback`。
-
-**常见问题：**
-
-- **安装命令提示 Git / Python 不存在：** 先独立安装对应依赖，再检查 `git --version` 与 `python3 --version`（Windows 可用 `py -3 --version`）。
-- **预览或安装出现 CONFLICT：** 现有自定义规则或配置与目标相冲突；检查差异，不要删除私人数据来强制通过。
-- **显示 FILES_VERIFIED，但 Codex 没调用 Skill：** 文件校验与 Agent 运行是两回事。重启 Codex，使用已授权的真实环境单独验收。
-- **能否一键连接 Hermes、Claude 或 ChatGPT？** 不能承诺。这些宿主仍需要独立适配与真实授权验收。
-- **能否在正式工作电脑直接安装 Beta？** 建议先在独立测试环境使用，核实备份和撤销流程后再决定。
-- **SkillSpector 是否必须安装？** 不需要。它是可选第三方审计工具，不是本仓库运行依赖或强制发布步骤。
-
-## 04 · 真实状态与版本限制
-
-- **已公开：** [v1.0.0-beta.2 GitHub Release](https://github.com/2ndforcecrew/aka-cristi-skills/releases/tag/v1.0.0-beta.2)，含 Windows EXE、源码 ZIP、SHA-256 与 GitHub 来源证明。
-- **已完成工程 CI：** Windows/macOS/Ubuntu 回归、Windows EXE 构建和来源证明。测试通过不等于每台电脑都能安装。
-- **未完成：** 外部 Windows 11 首次安装 UAT、当前发布版本四个真实子 Agent 的完整验收、独立 MCP 权限隔离验证、Windows Authenticode 证书签名。
-- **实验功能：** Personal AI Workspace 的真实 OAuth、用户私人仓库创建及多设备同步；不能以模拟测试声称已在真实账户通过。
-- **跨宿主：** Claude 项目级文件适配范围有限；Hermes 和 ChatGPT 的完整集成尚未验证。
-
-[发布验收标准](docs/CODEX_V1_RELEASE_ACCEPTANCE.md) · [Windows GUI 说明](docs/WINDOWS_GUI.md) · [宿主兼容情况](docs/HOST_CAPABILITY_MATRIX.md) · [四 Agent 验收方法](docs/FOUR_AGENT_EVIDENCE_V03.md) · [外部用户测试计划](docs/EXTERNAL_UAT.md)
-
-## 05 · 开发验证
-
-在已信任且审查过的仓库中：
-
-```bash
-python3 -m unittest discover -s tests -v
-python3 -m unittest discover -s tests -p 'test_quick_install.py' -v
-```
-
-测试只验证本地流程，不调用真实 Codex 模型。任何需要网络访问、付费或外部发布的动作均需单独授权。
+</div>
 
 ---
 
-**AKA.CRISTI · CREATE BEAUTIFULLY. BUILD INTELLIGENTLY. AUTOMATE EVERYTHING REASONABLE.**
+> ### FROM EXPERIENCE TO CAPABILITY
+>
+> **让 AI 不止于回答，而是真正参与工作的全过程。**
+>
+> AKA.CRISTI Skills 是一个以 **CHEF 主厨模式** 为核心的 AI Agent 协作项目。它将统一工作规则、专业 Agent 角色、可复用 Skills、双引擎任务执行、独立验收、错误恢复以及个人配置管理逐步组合成一个系统。
+>
+> 我们关注的不只是「AI 能完成一次任务」，更是「它能否安全地重复完成、用证据证明结果，并把经验转化为下一次可直接复用的能力」。
+
+### 解决什么问题？
+
+| 普通 Agent 使用体验 | AKA.CRISTI 希望建立的工作方式 |
+| :--- | :--- |
+| 每个任务都要重新交代工作要求 | `AGENTS.md` 统一执行原则与交付标准 |
+| 一个 Agent 又开发又自己宣布通过 | CHEF 分工 + 独立 QA + 可追踪的结果 |
+| 出错后靠用户反复手动修复 | 有边界的诊断、重试、恢复和验证闭环 |
+| 好的工作方法只留在聊天记录中 | 用 Skills、结构化证据和版本信息保留经验 |
+| 换电脑或换 Agent 就重新配置 | 个人 Workspace 与跨宿主适配逐步实现 |
+| AI 说「完成了」，却没有可核查结果 | 记录实际变更、测试、线程和验收状态 |
+
+**项目定位：** 现在是面向 **OpenAI Codex** 的公开 Beta。部分能力已经有本地实现与跨平台 CI；完整的跨厂商、全自动、长期运行 Agent OS 仍在发展中。**不把规划写成已完成，也不把安装成功写成真实 Agent 已激活。**
+
+<a id="quick-start"></a>
+## 01 / QUICK START — 一条命令，启动完整安装向导
+
+用户打开 GitHub `main` 首页，复制对应操作系统的整行命令即可进入引导。它先检查环境、已有配置和冲突，再由用户授权安装。
+
+### Windows 11 — PowerShell
+
+~~~powershell
+git clone --depth 1 https://github.com/2ndforcecrew/aka-cristi-skills.git; if ($LASTEXITCODE -ne 0) { throw "Git clone failed" }; Set-Location aka-cristi-skills; py -3 -m tools.full_setup --interactive --workspace --test-agents
+~~~
+
+### macOS — Apple Silicon / Intel
+
+~~~bash
+git clone --depth 1 https://github.com/2ndforcecrew/aka-cristi-skills.git && cd aka-cristi-skills && python3 -m tools.full_setup --interactive --workspace --test-agents
+~~~
+
+### Ubuntu / Debian / Linux
+
+使用与 macOS 相同的 Bash 命令。请使用普通用户账户，不需要 `sudo`。
+
+**前提：** Git、Python 3.11+。如果需要真实调用 Agent，还必须安装、登录受支持的 Codex CLI，并具有可用额度和权限。此命令针对持续更新的 `main`，运行前应审查来源；已有 `aka-cristi-skills` 文件夹时，应先检查现有代码，避免覆盖。
+
+| 阶段 | 自动处理的内容 | 授权与验收 |
+| --- | --- | --- |
+| **01 · Inspect** | 检查 Python、Git、Codex 和现有本地配置 | 默认无写入 |
+| **02 · Preview** | 展示 CHEF 规则、四个 Skills、四个角色的变更计划 | 冲突则停止 |
+| **03 · Install** | 安装并验证受管理的配置与 Skill 文件 | 本地写入前输入 `YES` |
+| **04 · Connect** | 检查 Codex CLI 登录状态 | 未登录则提示用户 |
+| **05 · Workspace** | 可选进入 GitHub 私人工作空间向导 | OAuth、依赖和云端操作需另行授权 |
+| **06 · Agent Verify** | 可选执行四个真实 Codex 角色验收测试 | 单独同意使用 Codex 额度 |
+
+**重要：** 安装验证状态 `FILES_VERIFIED` = 文件已正确放置；不表示已自动完成 GitHub OAuth、跨电脑同步或真实多 Agent 调用。
+
+### 给 Codex Agent 的安装指令
+
+把这段文字粘贴到具有本地终端权限的 Codex，让它协助完成安装：
+
+> 请读取 `https://github.com/2ndforcecrew/aka-cristi-skills` 当前 `main` 和完整功能目录。检查操作系统、Git、Python 3.11+、Codex CLI 以及现有配置；执行对应系统的 `tools.full_setup --interactive --workspace --test-agents` 安装引导。先展示修改计划，获得我明确批准后才安装。GitHub OAuth、额外依赖及消耗额度的真实 Agent 测试必须各自单独确认。完成后报告实际安装文件、`FILES_VERIFIED`、登录情况、Workspace 状态、真实 Agent 运行证据与未解决问题。禁止覆盖私人配置、提交凭据、模拟验收通过。
+
+没有终端访问权限的 Agent 只能指导安装，不能直接操作你的电脑。
+
+**更保守的安装方式：** 仅安装 CHEF + 四 Skills + 四角色配置，可以在已下载仓库内运行 `python3 -m tools.quick_install --interactive`（Windows 用 `py -3`）。已公开的 [`v1.0.0-beta.2`](https://github.com/2ndforcecrew/aka-cristi-skills/releases/tag/v1.0.0-beta.2) 包含这个核心安装入口，但**不包含之后才合入 `main` 的 `tools.full_setup`**。
+
+<a id="vision"></a>
+## 02 / CORE CONCEPT — CHEF、Skills、Agents 与双引擎
+
+这四种能力构成项目的核心：
+
+- **CHEF（主厨）**：理解用户意图、安排执行顺序、分配角色、管理风险、验证交付。
+- **AGENTS.md（工作规则）**：约束 Agent 如何检查环境、保护已有工作、修复错误和报告证据。
+- **Skills（工作方法）**：把实践中可复用的流程写成结构化的专业能力。
+- **Agent Roles（执行角色）**：Research、Coding、QA、Automation 各司其职，减少自查自批。
+- **Dual-Engine（任务运行引擎）**：根据任务属性在 Factory（工程）与 Studio（体验/创意）之间选择执行路径。
+
+~~~text
+                         USER INTENT
+                        用户目标 / 需求
+                              │
+                              ▼
+                       CHEF ORCHESTRATOR
+                   理解目标 · 策略 · 风险 · 验收
+                              │
+             ┌────────────────┼────────────────┐
+             ▼                ▼                ▼
+           AGENTS.md         SKILLS         AGENT ROLES
+          统一工作规范       可复用流程       专业执行角色
+             └────────────────┼────────────────┘
+                              ▼
+                 DUAL-ENGINE TASK RUNTIME
+                  ┌──────────┴──────────┐
+                  ▼                     ▼
+              FACTORY                STUDIO
+           代码 / 测试 / 修复       设计 / 体验 / 审阅
+                  └──────────┬──────────┘
+                             ▼
+                        INDEPENDENT QA
+                        证据 · 风险 · 验收
+                             ▼
+                    REVIEW → DELIVER
+                      修复与经验沉淀
+~~~
+
+**这是整体架构方向，不是已完成的自动在线编排全景图。** 当前四个原生 Codex 角色与 Dual-Engine CLI 是两条不同的实现路径：角色由 Codex 宿主发现与调用，Dual-Engine 目前使用独立 Python/CLI 子进程执行，默认不会被 `full_setup` 自动启动。
+
+<a id="features"></a>
+## 03 / FEATURE SYSTEM — 功能全景
+
+> **以下全部来源于仓库实际文件。** 每个模块可以点进源码或文档，详细的适用范围、使用命令、验证状态和限制均整理在 [《完整功能目录》](docs/FEATURE_CATALOG.md)。
+
+### 01. CHEF Orchestrator — 主厨总指挥
+
+**本地规则与 Skill 已实现。** 通过项目底座、环境检查、任务目标拆解、分工、可控修改、测试、独立复核与经验沉淀，统一 AI 的工作方式。`AGENTS.md` 以受管理区块追加，不应盲目覆盖个人规则。
+
+[CHEF 规则](docs/CHEF_GLOBAL_AND_MULTIAGENT.md) · [CHEF Skill](skills/chef-orchestrator/SKILL.md)
+
+### 02. Dual-Engine V0.3 — Factory × Studio 双引擎 <a id="dual-engine"></a>
+
+**实验性运行时已实现，真实 Codex 端到端交付尚未验收。**
+
+这是项目的核心创新之一，不只是说明文档，实际运行代码位于 [`tools/chef_dual_engine.py`](tools/chef_dual_engine.py)。
+
+| 引擎 | 关注重点 | 工作内容 |
+| --- | --- | --- |
+| **FACTORY** | 可运行、可测试、可维护 | 在独立 Git 快照中提出代码变更候选，运行有限测试，交给 QA |
+| **STUDIO** | 用户体验、视觉审美、产品目标 | 审视实际方案的用户旅程、设计质量、可用性和创意意图 |
+| **HYBRID** | 工程质量 × 体验质量 | Factory → Studio → 独立 QA，顺序交接与审查 |
+
+**当前已写入的机制：** 本地 Git 隔离克隆、结构化角色交接、SQLite 任务与事件日志、失败/中断状态、有限超时与重试、显式 `--resume` 恢复、私有产物目录、来源快照检查、独立 QA 与人工审查边界。
+
+**和一般多 Agent 聊天有什么不同？** 双引擎处理的是一个具体任务从工程实施到体验审阅、证据记录和恢复的生命周期，不靠多个 Agent 在同一个工作目录里同时修改文件。
+
+**当前限制：** 运行时有离线回归和脚本宿主 E2E；此前真实 Codex 执行遇到连接与授权错误，没有获得完整 Factory→Studio→QA 交付记录。它也不会自动发布 PR、合并代码或启动为长期后台进程。
+
+**实验性独立调用：**
+
+~~~bash
+python3 -m tools.chef_dual_engine --kind hybrid --prompt "修复一个小问题并评估用户旅程" --workspace /absolute/project --db /absolute/private-state/chef.sqlite3 --timeout 300
+~~~
+
+该命令需要可信的、干净且已提交的 Git 项目，以及已经登录可用的 Codex CLI；可能消耗额度。日志和运行数据应放在原项目目录之外。
+
+[双引擎架构与阶段路线](docs/CHEF_DUAL_ENGINE_V03_ROADMAP.md) · [运行机制、限制与真实测试记录](docs/CHEF_DUAL_ENGINE_V03_RUNTIME.md)
+
+### 03. Four Native Codex Agents — 四个专业角色
+
+**原生 TOML 角色定义与安装器已实现；真实调用依赖用户 Codex 宿主。**
+
+| Agent | 配置名 | 负责什么 |
+| --- | --- | --- |
+| **Research** | `aka_research` | 查阅文档、源码、来源、证据与不确定性 |
+| **Coding** | `aka_coding` | 根据明确授权范围写代码、修复、运行测试 |
+| **QA** | `aka_qa` | 独立复核代码、回归、可访问性、可靠性及证据 |
+| **Automation** | `aka_automation` | 设计 API / MCP 流程、重试、超时、日志和恢复 |
+
+这些角色是 **Codex 内的自定义子 Agent 配置**，不是四个自动购买或登录的第三方 AI。安装 `agents/*.toml` 文件不等于成功创建四个线程；[真实四角色验证器](tools/verify_four_agents.py) 能在授权环境中检测线程与执行结果。
+
+[角色配置与激活流程](docs/CODEX_NATIVE_SUBAGENTS_V02.md) · [真实验收要求](docs/FOUR_AGENT_RUNTIME_ACCEPTANCE.md)
+
+### 04. Four Reusable Skills — 四个方法论 Skill
+
+| Skill | 帮用户完成什么 |
+| --- | --- |
+| [**CHEF Orchestrator**](skills/chef-orchestrator/SKILL.md) | 规划、委派、监督、交接、验收 |
+| [**Verified Change Loop**](skills/verified-change-loop/SKILL.md) | 复现 Bug → 最小修复 → 回归与复核 |
+| [**Feature Journey Map**](skills/feature-journey-map/SKILL.md) | 检查从用户入口到最终结果的真实使用路径 |
+| [**Skill Evaluation Gate**](skills/skill-evaluation-gate/SKILL.md) | 评估 Skill 的行为、质量、风险和升级证据 |
+
+**已实现安装与文件验证。** Skill 是工作流程和说明，不是自己运行的后台程序；需要真实 Agent 读取和执行才能发挥作用。
+
+### 05. Personal AI Workspace — 私人配置与同步
+
+**实验性 CLI/GUI 已实现；真实 GitHub OAuth / 外部用户端到端验收尚未完成。**
+
+规划让每位用户使用自己的 GitHub 账号管理私有 `my-agent-workspace`：Device Flow 授权、私人仓库创建/复用、公开配置白名单初始化、固定版本拉取、差异预览、冲突检测、本地备份、恢复、日志和 Sync Center。
+
+默认是**用户确认后的手动 Pull**，不是自动 Push，更不是已完成的跨设备实时双向同步。OAuth 还需要发布者提供 GitHub OAuth App 公共 Client ID、系统原生安全凭据库与用户授权；不会假装 ChatGPT 已 Connected。
+
+[Personal AI Workspace](docs/PERSONAL_AI_WORKSPACE.md) · [一键初始化编排](tools/workspace_oneclick.py) · [同步与备份引擎](tools/workspace_sync.py)
+
+### 06. Universal Skill Toolkit — Skill 创建、验证与生命周期
+
+**本地工具已实现；完整自动进化尚未实现。**
+
+- [Skill Validator](tools/skill_validator.py)：只读检查 Skill 结构、元数据和危险路径。
+- [Skill Builder](tools/skill_builder.py)：生成标准 Skill 目录与模板；预览优先，不覆盖已有作品。
+- [Skill Lifecycle](tools/skill_lifecycle.py)：生成 SHA-256 清单、结构检查与维护/退役建议。
+- [Skill Evidence](tools/skill_evidence.py)：核对验证账本与证据引用的格式，等待真实审核。
+- [Skill Installer](tools/skill_installer.py)：受管理的预览、安装、校验与卸载。
+
+**未来目标：** 自动识别反复成功的流程 → 形成 Skill 候选 → 独立复测 → 版本评估 → 更新或淘汰。当前并没有不经确认就自动改写、发布或淘汰用户 Skills 的自进化服务。
+
+[Universal Skill Architecture](docs/UNIVERSAL_SKILL_ARCHITECTURE.md)
+
+### 07. Multi-Host Agent Adapters — 跨厂商适配
+
+**只读发现与部分文件适配已实现，真实跨厂商调度尚未实现。**
+
+- [Agent Discovery](tools/agent_adapters.py)：探测 Codex、Claude Code、Gemini CLI、OpenCode、Hermes 和自定义 Agent 的本地候选能力。
+- [Host Adapters](tools/host_adapters.py)：提供 inspect、preview、install、verify、uninstall 的统一契约。Codex 用户级 Skills 和 Claude Code 项目级 Skill 文件有受控适配；Hermes、ChatGPT 不会被假装连接成功。
+- **不自动生成凭据或第三方访问权限。** 不支持的宿主、缺少真实调用证据的功能明确报告未验证。
+
+[当前宿主能力矩阵](docs/HOST_CAPABILITY_MATRIX.md) · [适配器契约](docs/UNIVERSAL_AGENT_ADAPTERS.md)
+
+### 08. Activation & Diagnostics — 真实 Agent 调用验收
+
+**调用验证程序和离线回归已实现。**
+
+- [Skill Activation](tools/verify_codex_activation.py)：真实 `codex exec` 只读探针，检查是否确实读取 Skill 和测试案例。
+- [Four-Agent Runtime](tools/verify_four_agents.py)：核对真实父子线程、准确角色、完成回复，而非仅听 AI 自称。
+- [Diagnostics](tools/diagnose_four_agents.py)：对格式变化、不完整调用和异常提供诊断。
+- [Probe Isolation](tools/codex_probe_isolation.py)：控制测试工作区与配置边界。
+
+曾取得 **Codex CLI 0.169.0 限定只读协作案例**的外部跨源证据；旧自动解析器对此标记 `INCONCLUSIVE`，与完整的独立用户验收是不同层级。
+
+[真实调用验收标准](docs/AGENT_ACTIVATION_VERIFICATION.md) · [已记录证据](docs/UNIVERSAL_VERIFICATION_2026-11-16.md)
+
+### 09. Install, Protection & Recovery — 安装、来源与恢复
+
+**已有可用的本地安装工程与跨平台测试。**
+
+- [`tools.full_setup`](tools/full_setup.py)：`main` 的统一安装引导，连接核心配置、可选 Workspace、可选真实 Agent 测试。
+- [`tools.quick_install`](tools/quick_install.py)：`beta.2` 包含的核心配置快速安装。
+- [Windows GUI](tools/gui_installer.py)：预览、确认、进度、取消、验证、受保护恢复。
+- [Install Transaction](tools/install_transaction.py)：记录受管理的文件变化、检查冲突与回滚条件。
+- [Windows Job Object](tools/aka_windows_job_runner.py)：管理超时子进程的生命周期；**不是权限沙盒**。
+- [Release Verification](tools/verify_release.py)：源码版本、摘要与 GitHub 来源证明验证。
+
+**发布机制：** Windows EXE 和源码 ZIP 由 GitHub Actions 构建，配 SHA-256 与 GitHub OIDC / Sigstore provenance；Windows EXE 尚无 Authenticode 证书签名。
+
+[Windows GUI 使用与恢复](docs/WINDOWS_GUI.md) · [候选包与来源验证](docs/RELEASE_VERIFICATION.md)
+
+### 10. Testing, Evidence & Release Quality — 质量与持续交付
+
+**CI、离线测试、验收文档均已建立。**
+
+- Windows、macOS、Ubuntu 运行多组单元、安装、GUI、同步与安全检查。
+- [Acceptance Gate](tools/acceptance_gate.py) 管理证据资料预检，不会代替独立审核。
+- [Scan Report Gate](tools/scan_report_gate.py) 可选整理静态扫描记录，不代表完整软件已获安全认证。
+- [成长记录](docs/GROWTH_JOURNAL_2026-11-16.md)、[路线图](ROADMAP.md) 和 [外部 UAT 指引](docs/EXTERNAL_UAT.md) 保留开发过程和未完成事项。
+
+历史 SkillSpector 标记不能直接拿来断言当前 Beta 有多少实际漏洞，也不能因为发布 Beta 就声称所有历史发现都是误报。[查看历史审计范围](docs/SECURITY_REVIEW_2026-11-15.md)。
+
+### 11. Agent Collaboration OS — 长期演进方向
+
+**这是以上模块组合的产品目标，还不是所有部分都已交付。**
+
+将来希望把任务状态、Agent Registry、跨厂商调度、Factory/Studio 执行、质量复核、自动恢复、Skill Evolution、持续维护/淘汰和个人 Workspace 串成统一系统。当前仓库已有其中多个可独立使用的模块，**尚未具备完整的后台自动调度、自动发布和全部宿主的真实端到端连通能力**。
+
+[双引擎研发阶段](docs/CHEF_DUAL_ENGINE_V03_ROADMAP.md) · [全部功能与源码明细](docs/FEATURE_CATALOG.md)
+
+<a id="status"></a>
+## 04 / RELEASE & REALITY — 当前版本状态
+
+| 类别 | 状态 | 说明 |
+| --- | --- | --- |
+| **公开发布** | **已完成 Beta** | [`v1.0.0-beta.2`](https://github.com/2ndforcecrew/aka-cristi-skills/releases/tag/v1.0.0-beta.2) 提供 Windows EXE、源码 ZIP、SHA-256、GitHub provenance |
+| **CHEF + 4 Skills + 4 角色配置** | **已实现** | 可本地预览、安装、校验；不是自动启动所有 Agent |
+| **跨平台 CI** | **已通过相应测试** | Windows、macOS、Ubuntu；不代表所有外部用户环境 |
+| **Dual-Engine Factory / Studio** | **实验性运行时** | 隔离执行、SQLite、恢复、QA；尚无完整真实 Codex E2E |
+| **Personal AI Workspace** | **实验性** | GUI/CLI/Mock 已实现，真实 OAuth 与私人仓库流程需验收 |
+| **Skill Builder / Validator / Lifecycle** | **本地工具已实现** | 自动进化、安装和退役流程尚未闭环 |
+| **跨厂商 Adapter** | **部分实现** | Claude 项目级文件适配；Hermes/ChatGPT 完整调用未实现 |
+| **四 Agent 真实协作** | **有范围限定的实测证据** | 普通用户安装后的完整激活仍需单独验证 |
+| **Windows Authenticode 签名** | **尚未签署** | GitHub OIDC 来源证明不能代替代码签名证书 |
+| **外部用户验收 / Stable** | **未完成** | Beta 可供独立用户测试，不等于稳定版 |
+
+**开发分支与正式 Beta 请分清：** `main` 上的一键完整引导器 `tools.full_setup` 是在 `beta.2` 发布之后新增的；`beta.2` 只包含 `quick_install` 核心安装入口。安装一次也不会自动常驻启动 `Dual-Engine`。
+
+<a id="verify"></a>
+## 05 / VERIFY — 如何验证安装与真实 Agent 调用？
+
+进入已经下载并审查过的仓库目录：
+
+~~~bash
+python3 -m tools.chef_global_rules verify
+python3 -m tools.codex_subagents verify
+python3 -m tools.skill_installer verify chef-orchestrator --target codex
+~~~
+
+Windows 可以用 `py -3` 替换 `python3`。完整四角色真实调用需要用户已登录 Codex CLI，且**另外授权使用模型额度**：
+
+~~~bash
+codex login status
+python3 -m tools.verify_four_agents --timeout 600 --out four-agent-report.json
+~~~
+
+`PASS` 表示在该次验收范围内得到完整证据；`INCONCLUSIVE` 表示证据不足；`FAIL` 表示执行失败；`NOT_RUN` 表示未执行或缺少运行条件。不要把 `FILES_VERIFIED` 与真实 Agent 激活混为一谈。
+
+### 常见问题
+
+**Q：安装后能自动调用 Hermes、Claude 和 ChatGPT 吗？**  
+不能。目前它是 Codex-first 项目，跨厂商完整调度仍需独立实现与用户授权。
+
+**Q：Dual-Engine 不是已经开发了吗？为什么安装后没有界面？**  
+已存在独立 `tools.chef_dual_engine` CLI 运行时，但还未集成进统一安装器的自动启动或后台服务。请查看 [双引擎文档](docs/CHEF_DUAL_ENGINE_V03_RUNTIME.md)。
+
+**Q：为什么安装成功后仍可能无法启动四个 Agent？**  
+因为文件校验不等于宿主加载；还需支持 Subagents 的 Codex、登录、额度、实际权限及真实父子线程验证。
+
+**Q：是否会覆盖我的个人 AGENTS.md？**  
+安装器以受管理区块/文件所有权进行预览与保护，发现不受管理或用户改动冲突时拒绝直接覆盖。请先审查预览及备份。
+
+**Q：可以直接用于正式生产或真实客户数据吗？**  
+这是 Beta，推荐先在独立测试环境验证；缺失的真实 OAuth、外部 UAT、签名和宿主兼容验收必须如实考虑。
+
+<a id="resources"></a>
+## 06 / DOCUMENTATION — 完整文档与参与开发
+
+| 文档 | 适合了解什么 |
+| --- | --- |
+| [**完整功能目录 · Feature Catalog**](docs/FEATURE_CATALOG.md) | **全部模块、实际能力、状态、源码与使用边界** |
+| [Dual-Engine 架构路线](docs/CHEF_DUAL_ENGINE_V03_ROADMAP.md) | Factory / Studio / Hybrid 与未来扩展 |
+| [Dual-Engine 运行实录](docs/CHEF_DUAL_ENGINE_V03_RUNTIME.md) | 隔离 Git、SQLite、恢复、QA、实测限制 |
+| [Codex 四 Agent 配置](docs/CODEX_NATIVE_SUBAGENTS_V02.md) | 四角色职责、安装、加载、测试 |
+| [Personal AI Workspace](docs/PERSONAL_AI_WORKSPACE.md) | GitHub Device Flow、私人仓库、备份与同步 |
+| [Universal Skill Architecture](docs/UNIVERSAL_SKILL_ARCHITECTURE.md) | Skill Validator、Builder、Lifecycle |
+| [Agent Host 能力矩阵](docs/HOST_CAPABILITY_MATRIX.md) | Codex、Claude、Hermes、ChatGPT 的适配范围 |
+| [版本验收标准](docs/CODEX_V1_RELEASE_ACCEPTANCE.md) | 工程验证、Beta、稳定版的区别 |
+| [外部测试计划](docs/EXTERNAL_UAT.md) | Windows/macOS/Linux 的真实安装记录要求 |
+| [GitHub Issues](https://github.com/2ndforcecrew/aka-cristi-skills/issues) | Bug、兼容性反馈与建议 |
+
+帮助项目改进时，欢迎提交可复现的操作步骤、系统版本和**脱敏**测试证据；请勿上传 Token、密钥、客户隐私或完整私人会话日志。
+
+### Developer Checks
+
+~~~bash
+python3 -m unittest discover -s tests -v
+python3 -m unittest discover -s tests -p 'test_full_setup.py' -v
+python3 -m unittest discover -s tests -p 'test_chef_dual_engine.py' -v
+~~~
+
+测试与真实付费模型调用不是一回事。CI 通过可以证明特定代码路径工作，并不证明所有 Agent 已经在用户电脑上成功协作。
+
+---
+
+<div align="center">
+
+**AKA.CRISTI**
+
+*CREATE BEAUTIFULLY. BUILD INTELLIGENTLY. AUTOMATE EVERYTHING REASONABLE.*
+
+[返回一键安装](#quick-start) · [完整功能手册](docs/FEATURE_CATALOG.md) · [查看发布版本](https://github.com/2ndforcecrew/aka-cristi-skills/releases) · [反馈问题](https://github.com/2ndforcecrew/aka-cristi-skills/issues)
+
+</div>
