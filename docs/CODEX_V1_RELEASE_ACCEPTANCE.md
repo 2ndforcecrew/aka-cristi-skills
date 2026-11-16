@@ -8,6 +8,19 @@ Status: **CANDIDATE / NOT PUBLISHED**. Record exact candidate SHA, CI run links,
 - Windows Job Object timeout containment has actual Windows regression evidence but is **not** an OS permission or MCP sandbox.
 - Personal AI Workspace OAuth, account creation, synchronization, cross-vendor live activation and fully automated cross-agent orchestration are **experimental / NOT VERIFIED** until real end-to-end acceptance; do not advertise these as stable or automatically connected.
 
+## Beta distribution comes BEFORE external UAT
+
+**No circular gate:** It is valid to distribute an explicitly labelled **Pre-release / Beta** for independent Windows 11 installation testing. Successful external UAT is a **stable-release** requirement, not a prerequisite for getting the Beta into testers' hands.
+
+Beta entry conditions:
+1. Reviewed exact candidate commit and successful platform CI; no known unmitigated critical installer/credential exposure risk.
+2. Windows EXE/source archive built from the exact approved SHA; publish independently verified SHA-256 and GitHub OIDC provenance, with an honest **NOT Authenticode signed** notice.
+3. A GitHub Pre-release page, versioned test instructions, expected limitations and a bug-report channel; prefer a test profile or disposable Windows 11 VM.
+4. Explicitly describe Codex role activation, OAuth workspace, ChatGPT/Hermes/Claude and third-party service integration as not guaranteed where actual acceptance is missing.
+5. Collect independent results, fix reported defects, then run a newly signed release candidate and final stable readiness review.
+
+Do not call a Beta "stable", fabricate signatures, copy a previously signed artifact to a changed commit, or disable local integrity safeguards.
+
 ## Release checklist
 
 | Check | Evidence required | Current state |
