@@ -30,6 +30,13 @@ FILES = {
     "hermes": ("AGENTS.md", ".aka-chef/role-templates", None),
     "generic": ("AGENTS.md", ".aka-chef/role-templates", ".agents/skills"),
 }
+USER_FILES = {
+    "workbuddy": FILES["workbuddy"],
+    "claude": FILES["claude"],
+    "gemini": (".gemini/GEMINI.md", ".gemini/agents", ".gemini/skills"),
+    "opencode": (".config/opencode/AGENTS.md",
+                 ".config/opencode/agents", ".config/opencode/skills"),
+}
 APPEND_RULES = {"gemini", "opencode", "hermes", "generic"}
 STATE_DIR = ".aka-chef-install"
 MAX_RULE_BYTES = 128 * 1024
@@ -139,18 +146,28 @@ def _file_action(path, expected, recorded):
     return "CONFLICT_MISSING" if recorded is not None else "INSTALL"
 
 
-def inspect(host, project=None, hermes_skills_root=None):
+def inspect(host, project=None, hermes_skills_root=None, scope="project"):
     if host not in HOSTS:
         raise InstallError("Unknown host")
     if host == "codex":
         return {"host": host, "scope": "user", "status": "PREVIEW",
                 "codex": quick_install.execute(), "activation": "NOT_RUN"}
-    if project is None:
-        raise InstallError("Non-Codex hosts require --project")
+    if scope not in ("project", "user"):
+        raise InstallError("Invalid scope")
+    if scope == "user":
+        if host not in USER_FILES:
+            raise InstallError("This host has no verified user-level CHEF rules path")
+        if project is not None:
+            raise InstallError("--project is incompatible with --scope user")
+        project = Path.home()
+        rule_rel, agent_dir, skills_dir = USER_FILES[host]
+    else:
+        if project is None:
+            raise InstallError("Project-scoped install requires --project")
+        rule_rel, agent_dir, skills_dir = FILES[host]
     project = _safe(Path(project).expanduser().absolute()).resolve(strict=True)
     if not project.is_dir():
-        raise InstallError("Project must be a directory")
-    rule_rel, agent_dir, skills_dir = FILES[host]
+        raise InstallError("Target root must already exist")
     if host == "hermes" and hermes_skills_root is not None:
         skills_dir = str(_safe(Path(hermes_skills_root).expanduser().resolve()))
     state_path = _state_file(project, host)
@@ -205,7 +222,7 @@ def inspect(host, project=None, hermes_skills_root=None):
     problems.extend(f"{name}: {p['action']}" for name, p in skill_plans.items()
                     if p["action"].startswith("conflict"))
     return {
-        "host": host, "scope": "project", "project": str(project),
+        "host": host, "scope": scope, "project": str(project),
         "rule_path": str(rule_target), "role_format": (
             "native-markdown" if host not in ("hermes", "generic") else "handoff-reference"),
         "role_activation": "NOT_RUN",
@@ -216,14 +233,14 @@ def inspect(host, project=None, hermes_skills_root=None):
     }
 
 
-def install(host, project=None, apply=False, hermes_skills_root=None):
+def install(host, project=None, apply=False, hermes_skills_root=None, scope="project"):
     if host == "codex":
         return quick_install.execute(apply=apply)
-    plan = inspect(host, project, hermes_skills_root)
+    plan = inspect(host, project, hermes_skills_root, scope)
     if not apply or plan["conflicts"]:
         return plan
     project = Path(plan["project"])
-    rule_rel, agent_dir, _ = FILES[host]
+    rule_rel, agent_dir, _ = (USER_FILES[host] if scope == "user" else FILES[host])
     state_file = _state_file(project, host)
     state = _read_state(state_file)
     new_state = {"schema": 1, "files": dict(state["files"]), "rule": state.get("rule")}
@@ -282,14 +299,15 @@ def install(host, project=None, apply=False, hermes_skills_root=None):
             else:
                 _atomic_write(path, before)
         raise
-    return verify(host, project, hermes_skills_root)
+    return verify(host, None if scope == "user" else project,
+                  hermes_skills_root, scope=scope)
 
 
-def verify(host, project=None, hermes_skills_root=None):
+def verify(host, project=None, hermes_skills_root=None, scope="project"):
     if host == "codex":
         return {"host": host, "status": "USE_CODEX_NATIVE_VERIFY",
                 "hint": "Run python -m tools.quick_install --interactive"}
-    plan = inspect(host, project, hermes_skills_root)
+    plan = inspect(host, project, hermes_skills_root, scope)
     if plan["status"] == "CONFLICT":
         return {"host": host, "status": "FAIL", "conflicts": plan["conflicts"]}
     if any(x["action"] != "ALREADY_INSTALLED" for x in plan["files"].values()):
@@ -309,6 +327,7 @@ def main(argv=None):
     p = argparse.ArgumentParser(description="AKA.CRISTI universal host project adapter")
     p.add_argument("action", choices=("preview", "install", "verify"))
     p.add_argument("--host", choices=HOSTS, required=True)
+    p.add_argument("--scope", choices=("project", "user"), default="project")
     p.add_argument("--project", type=Path)
     p.add_argument("--hermes-skills-root", type=Path,
                    help="Explicit authorized Hermes user skills folder (e.g. ~/.hermes/skills)")
@@ -319,9 +338,11 @@ def main(argv=None):
         p.error("Choose --apply or --interactive")
     try:
         if args.action == "verify":
-            report = verify(args.host, args.project, args.hermes_skills_root)
+            report = verify(args.host, args.project, args.hermes_skills_root,
+                            scope=args.scope)
         else:
-            plan = inspect(args.host, args.project, args.hermes_skills_root)
+            plan = inspect(args.host, args.project, args.hermes_skills_root,
+                           scope=args.scope)
             if plan.get("conflicts"):
                 report = plan
             elif args.action == "preview" or not (args.apply or args.interactive):
@@ -333,7 +354,8 @@ def main(argv=None):
                 except (EOFError, KeyboardInterrupt):
                     approved = ""
                 report = (install(args.host, args.project, apply=True,
-                                  hermes_skills_root=args.hermes_skills_root)
+                                  hermes_skills_root=args.hermes_skills_root,
+                                  scope=args.scope)
                           if approved == "INSTALL" else {"status": "CANCELLED"})
             else:
                 report = install(args.host, args.project, apply=True,
