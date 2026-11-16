@@ -141,13 +141,13 @@ test_upgrade_and_rollback (test_skill_installer.InstallerTests.test_upgrade_and_
 test_all_three_public_skills_install_and_verify (test_skill_installer.PublishedSkillSmokeTests.test_all_three_public_skills_install_and_verify) ... ok
 
 ----------------------------------------------------------------------
-Ran 140 tests in 4.570s
+Ran 140 tests in 4.416s
 
 OK (skipped=3)
 {
   "action": "install",
   "name": "sample-skill",
-  "root": "/tmp/tmpuju4gd5n/installed",
+  "root": "/tmp/tmpfo46tfit/installed",
   "sha256": "4ae4ecce1d2787fb69f7378522cd1cefb089315df5c401d552600772d8b7bf9f",
   "files": 1
 }

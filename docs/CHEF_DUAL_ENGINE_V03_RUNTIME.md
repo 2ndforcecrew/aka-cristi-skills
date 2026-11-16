@@ -101,6 +101,10 @@ acceptance remain human review steps.
   release behavior. Findings led to snapshot checks, interrupted attempt
   accounting, external DB default, descendant cleanup, Git timeouts and signing
   overrides. That code review is separate from live runtime QA acceptance.
+- Initial PR CI [43787736954](https://github.com/2ndforcecrew/aka-cristi-skills/actions/runs/43787736954)
+  passed Linux/macOS but failed Windows test teardown: SQLite connection context
+  managers do not close handles. Test fixtures now explicitly close connections;
+  this preserves the real failure evidence and does not skip the checks.
 - Existing three-platform PR CI runs this suite; local Linux success does not
   imply Windows/macOS, external UAT, visual UX or six-gate completion.
 

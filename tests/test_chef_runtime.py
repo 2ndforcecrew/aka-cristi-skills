@@ -1,5 +1,6 @@
 """Offline orchestration tests. Fake processes NEVER prove live acceptance."""
 import json
+from contextlib import closing
 import sqlite3
 import subprocess
 import tempfile
@@ -43,7 +44,7 @@ class IsolatedRuntimeTests(unittest.TestCase):
         self.assertEqual(len({c[1] for c in calls}), 3)
         self.assertEqual(calls[0][3]['sandbox'], 'workspace-write')
         self.assertEqual(calls[-1][3]['sandbox'], 'read-only')
-        with sqlite3.connect(self.db) as db:
+        with closing(sqlite3.connect(self.db)) as db:
             self.assertEqual(db.execute('select status from tasks').fetchone()[0], 'REVIEW_REQUIRED')
         self.assertEqual(result['release'], 'BLOCKED')
 
@@ -76,14 +77,14 @@ class IsolatedRuntimeTests(unittest.TestCase):
         with patch.object(runtime, 'run_codex', side_effect=KeyboardInterrupt):
             with self.assertRaises(KeyboardInterrupt):
                 runtime.orchestrate('factory', 'inspect', self.repo, self.db)
-        with sqlite3.connect(self.db) as db:
+        with closing(sqlite3.connect(self.db)) as db:
             task_id = db.execute('select task_id from tasks').fetchone()[0]
             self.assertEqual(db.execute('select count(*) from attempts').fetchone()[0], 1)
         with patch.object(runtime, 'run_codex', return_value={
                 'status': 'FAILED', 'reason': 'offline fixture'}):
             result = runtime.orchestrate('factory', 'inspect', self.repo, self.db, task_id=task_id)
         self.assertEqual(result['status'], 'BLOCKED')
-        with sqlite3.connect(self.db) as db:
+        with closing(sqlite3.connect(self.db)) as db:
             self.assertEqual(db.execute('select count(*) from attempts').fetchone()[0], 2)
 
     def test_retry_budget_is_bounded(self):
@@ -169,7 +170,7 @@ print(json.dumps({"type": "turn.completed"}))
         self.assertEqual(result['results']['factory']['snapshot'], first['results']['factory']['snapshot'])
         self.assertEqual((Path(result['qa']['workspace']) / 'input.txt').read_text(), 'proposal\n')
         self.assertEqual((self.repo / 'input.txt').read_text(), 'original\n')
-        with sqlite3.connect(self.db) as db:
+        with closing(sqlite3.connect(self.db)) as db:
             self.assertEqual(db.execute('select count(*) from attempts').fetchone()[0], 4)
 
     @unittest.skipUnless(__import__('os').name == 'posix', 'POSIX private log permissions')
