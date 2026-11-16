@@ -1,9 +1,11 @@
 """Offline tests of activation EVIDENCE JUDGING, not real Codex runs."""
 import json
+import os
 import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from tools.verify_codex_activation import assess, parse_events, run
@@ -71,14 +73,20 @@ class CodexAgentEvidenceTests(unittest.TestCase):
             events = trace("feature-journey-map", nonce)
             return subprocess.CompletedProcess(
                 args, 0, "\n".join(json.dumps(x, ensure_ascii=False) for x in events), "")
-        with patch("tools.verify_codex_activation.shutil.which", return_value="codex"), \
-                patch("tools.verify_codex_activation.subprocess.run", side_effect=fake_run):
-            result = run("feature-journey-map")
+        with tempfile.TemporaryDirectory() as dedicated:
+            with patch.dict("os.environ", {"AKA_CODEX_PROBE_HOME": dedicated}), \
+                 patch("tools.verify_codex_activation.shutil.which", return_value="codex"), \
+                 patch("tools.verify_codex_activation.subprocess.run", side_effect=fake_run), \
+                 patch.dict("sys.modules", {"tools.aka_windows_job_runner": SimpleNamespace(
+                     JobError=RuntimeError, JobTimeout=TimeoutError,
+                     run_in_job=lambda args, cwd, timeout, env=None: fake_run(args, cwd=cwd, env=env))}):
+                result = run("feature-journey-map")
         self.assertEqual(result["status"], "PASS")
         args, options = calls[0]
         self.assertIn("--skip-git-repo-check", args)
-        self.assertEqual(options.get("encoding"), "utf-8")
-        self.assertEqual(options.get("errors"), "replace")
+        if os.name != "nt":
+            self.assertEqual(options.get("encoding"), "utf-8")
+            self.assertEqual(options.get("errors"), "replace")
         self.assertEqual(args[args.index("--sandbox") + 1], "read-only")
 
     def test_missing_codex_reports_not_run(self):
