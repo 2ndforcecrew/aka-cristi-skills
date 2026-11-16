@@ -2,8 +2,9 @@
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
-from tools.quick_install import SKILLS, execute
+from tools.quick_install import SKILLS, execute, main
 
 
 class QuickInstallTests(unittest.TestCase):
@@ -29,6 +30,16 @@ class QuickInstallTests(unittest.TestCase):
             self.assertTrue((home / "AGENTS.md").read_bytes().startswith(original.encode("utf-8")))
             self.assertEqual(execute(apply=True, codex_home=home,
                                      skills_root=skills)["status"], "FILES_VERIFIED")
+
+    def test_interactive_cancel_never_writes(self):
+        with tempfile.TemporaryDirectory() as d:
+            home, skills = Path(d).resolve() / "codex", Path(d).resolve() / "skills"
+            with patch("builtins.input", return_value="no"):
+                code = main(["--interactive", "--codex-home", str(home),
+                             "--skills-root", str(skills)])
+            self.assertEqual(code, 0)
+            self.assertFalse(home.exists())
+            self.assertFalse(skills.exists())
 
     def test_conflict_rejects_all_writes(self):
         with tempfile.TemporaryDirectory() as d:
