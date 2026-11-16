@@ -137,6 +137,10 @@ git clone --depth 1 https://github.com/2ndforcecrew/aka-cristi-skills.git; if ($
 
 [完整安装说明](PRODUCT_REFERENCE.md#quick-start) · [安装器源码](tools/full_setup.py) · [CLI 源码](aka_skills/cli.py) · [MCP Server 源码](aka_skills/mcp_server.py) · [历史 Beta 下载](https://github.com/2ndforcecrew/aka-cristi-skills/releases)
 
+> **Runtime V0.4 开发候选（暂未发布）：** 已加入 WorkBuddy/CodeBuddy、Claude、Gemini、OpenCode、Hermes 的**真实 CLI 调用适配器**，并允许在 Dual-Engine 的独立 Git 克隆中，用 Codex 执行 Factory、指定其他宿主执行 Studio / QA。默认不调用模型；只有明确 `--allow-live` 才会尝试真实调用，WorkBuddy / Hermes 还需额外权限确认。**目前仅有合成 CLI 输出与本地 Git/SQLite 测试，不等于真实外部宿主已完成验收，也不是原生父子 Agent 自动调度的全部实现。**
+
+[Runtime V0.4 开发与真实验证说明](docs/HOST_RUNTIME_V04.md) · [跨宿主真实 CLI 适配代码](tools/host_runtime.py) · [开发任务 #44](https://github.com/2ndforcecrew/aka-cristi-skills/issues/44)
+
 ---
 
 <a id="visual-design"></a>
