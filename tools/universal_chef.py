@@ -359,7 +359,8 @@ def main(argv=None):
                           if approved == "INSTALL" else {"status": "CANCELLED"})
             else:
                 report = install(args.host, args.project, apply=True,
-                                 hermes_skills_root=args.hermes_skills_root)
+                                 hermes_skills_root=args.hermes_skills_root,
+                                 scope=args.scope)
         print(json.dumps(report, ensure_ascii=True, indent=2))
         return 0 if report.get("status") not in ("CONFLICT", "FAIL", "NOT_INSTALLED") else 1
     except (OSError, ValueError, UnicodeError, json.JSONDecodeError) as exc:
