@@ -94,6 +94,12 @@ python3 -m tools.chef_handoff --host workbuddy --kind hybrid --objective "修复
 
 既有 `tools.chef_dual_engine` 包含独立 Git 克隆、SQLite、有限重试、恢复和独立 QA，但其 **自动执行器仍使用 Codex CLI**；需要下一阶段逐厂商实现和验证 Runner。
 
+## CHEF Runtime v0.4 · CodeBuddy / Claude 真实 CLI 调用
+
+已实现一个新的**只读 CLI 调度阶段**：当用户明确允许消耗模型额度，并且安装了已登录的 `codebuddy`（CodeBuddy Code CLI）或 `claude`（Claude Code CLI），可以实际调用三次独立的 Factory → Studio → QA 角色主会话，要求真实 CLI JSON 返回 Session ID、非空结果，并记录脱敏摘要。执行不开放工具与写入权限，不自动登录、修改生产文件或绕过安全审查。
+
+**不等于 WorkBuddy 桌面 Expert Team 的原生子 Agent 调度，也不是完整 Dual-Engine 自动执行。** Gemini、OpenCode、Hermes 的真实运行时仍需要单独开发和测试。详情参见 [CHEF Runtime v0.4](CHEF_RUNTIME_V04.md)，源码 [CLI Runtime](../tools/chef_runtime_dispatch.py)。
+
 ## 完整状态
 
 - **已实现 / 经过工程测试：** 各宿主原生规则/角色/Skills 文件生成、冲突预检、确认安装、状态记录、文件完整性验证、受管理文件撤销；通用 Dual-Engine Handoff 生成器。

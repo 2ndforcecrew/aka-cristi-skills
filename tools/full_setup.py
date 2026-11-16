@@ -14,7 +14,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from tools import quick_install, universal_chef
+from tools import quick_install, universal_chef, chef_runtime_dispatch
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKSPACE_REQ = ROOT / "requirements-workspace.txt"
@@ -80,7 +80,26 @@ def _run_portable_host(*, host, project, apply, interactive, workspace,
     if workspace:
         report["workspace"] = "CODEX_ONBOARDING_ONLY"
     if test_agents:
-        report["live_agents"] = "HOST_NATIVE_RUNTIME_NOT_VERIFIED"
+        if host not in ("workbuddy", "claude"):
+            report["live_agents"] = "NO_VERIFIED_NON_CODEX_HOST_RUNTIME"
+        elif not interactive:
+            report["live_agents"] = "SEPARATE_CONSENT_REQUIRED"
+        elif not _approve(
+            "Run four independent, read-only host CLI sessions? This uses model quota; it does NOT verify native subagents.",
+            input_fn,
+        ):
+            report["live_agents"] = "CANCELLED"
+        else:
+            cli = "codebuddy" if host == "workbuddy" else "claude"
+            active_project = project if project is not None else Path.cwd()
+            result = chef_runtime_dispatch.run(
+                cli, "four-roles", "Review the CHEF Research/Coding/QA/Automation collaboration methodology. "
+                "Do not inspect private data, run tools, or modify files.",
+                active_project, allow_quota=True, timeout=180,
+            )
+            report["live_agents"] = result["status"]
+            report["cli_session_evidence"] = result
+            report["native_subagents"] = "NOT_VERIFIED"
     report["next_action"] = (
         "Open a NEW host session in the selected project; inspect its loaded "
         "rules/Skills/roles and perform a separately authorized real subagent "
