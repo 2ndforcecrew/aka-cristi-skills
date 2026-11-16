@@ -6,7 +6,7 @@
 
 上一版本 v1.0.0-beta.3 能把 CHEF Rules、Skills 和四个角色文件装进多个 Agent 的目录，但**不能实际派发任务**。
 
-现在增加 `tools.chef_runtime_dispatch`：当系统中存在 **CodeBuddy Code CLI** 或 **Claude Code CLI**，且用户单独确认使用模型额度时，CHEF 会创建三个独立的模型会话并分别调用：
+现在增加 `tools.chef_runtime_dispatch`：支持 `--kind hybrid` 的 Factory → Studio → QA 三阶段只读会话，及 `--kind four-roles` 的 Research → Coding → QA → Automation 四角色只读会话。当系统中存在 **CodeBuddy Code CLI** 或 **Claude Code CLI**，且用户单独确认使用模型额度时，CHEF 会创建三或四个独立的模型会话并分别调用：
 
 ```text
 用户明确授权调用 / 同意使用模型额度
@@ -36,7 +36,7 @@ REVIEW_REQUIRED（由人独立验收，不自动发布）
 
 - **默认只读预览：** 无 `--allow-quota` 就不会调用任何模型，也不会尝试登录或更新账号。
 - **工具权限最小化：** CodeBuddy 使用 `--tools "" --strict-mcp-config`，Claude 使用 `--tools "" --permission-mode plan`。不调用命令执行工具，不绕过宿主授权，不写入生产代码。
-- **真实会话识别：** 必须在真实 CLI JSON 中见到有效 `session_id`、非空回复与正常退出；三个角色的会话 ID 不得重复。文本里自称“Agent 已完成”不足以通过。
+- **真实会话识别：** 必须在真实 CLI JSON 中见到有效 `session_id`、非空回复与正常退出；各角色的会话 ID 不得重复。文本里自称“Agent 已完成”不足以通过。
 - **错误停止：** 任一角色失败、退出码异常、JSON 不完整、缺失会话 ID、超时或重复线程 ID，流程即停止并报告 `BLOCKED`，不会继续执行后续 QA。
 - **证据脱敏：** 仅保留角色、会话 ID、模型回复字节数和 SHA-256 摘要；不向报告写入模型原始回复、私人路径或 Token。
 - **限时与终止：** 每个调用 1–600 秒，超时终止进程树；Windows 与 POSIX 使用不同终止策略。
@@ -66,13 +66,20 @@ python3 -m tools.chef_runtime_dispatch run --host codebuddy --kind hybrid --proj
 
 Claude Code 换成 `--host claude`。Windows PowerShell 把 `python3` 换为 `py -3`。
 
+**四角色独立会话验证（不是原生子 Agent）：**
+
+```bash
+python3 -m tools.chef_runtime_dispatch run --host codebuddy --kind four-roles --project . --objective "核查 Research/Coding/QA/Automation 的只读分工" --allow-quota
+```
+
+
 **从通用 CHEF 一键安装后自动引导验收：**
 
 ```bash
 python3 -m tools.full_setup --host workbuddy --scope user --interactive --test-agents
 ```
 
-本命令先让用户批准配置写入，然后再次单独询问是否使用额度测试三段真实 CLI 会话；`--test-agents` 不会默认自动调用或绕过额度确认。
+本命令先让用户批准配置写入，然后再次单独询问是否使用额度测试四段真实 CLI 会话；`--test-agents` 不会默认自动调用或绕过额度确认。
 
 ## 验收范围及状态
 
