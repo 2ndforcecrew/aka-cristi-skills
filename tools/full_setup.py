@@ -86,7 +86,7 @@ def _run_portable_host(*, host, project, apply, interactive, workspace,
         elif not interactive:
             report["live_agents"] = "SEPARATE_CONSENT_REQUIRED"
         elif not _approve(
-            "Run three independent, read-only host CLI sessions? This uses model quota; it does NOT verify native subagents.",
+            "Run four independent, read-only host CLI sessions? This uses model quota; it does NOT verify native subagents.",
             input_fn,
         ):
             report["live_agents"] = "CANCELLED"
@@ -94,7 +94,7 @@ def _run_portable_host(*, host, project, apply, interactive, workspace,
             cli = "codebuddy" if host == "workbuddy" else "claude"
             active_project = project if project is not None else Path.cwd()
             result = chef_runtime_dispatch.run(
-                cli, "hybrid", "Review the CHEF Factory/Studio/QA methodology. "
+                cli, "four-roles", "Review the CHEF Research/Coding/QA/Automation collaboration methodology. 
                 "Do not inspect private data, run tools, or modify files.",
                 active_project, allow_quota=True, timeout=180,
             )
