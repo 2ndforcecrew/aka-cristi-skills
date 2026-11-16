@@ -70,25 +70,25 @@ def main(argv=None):
     try:
         if args.interactive:
             preview = execute(codex_home=args.codex_home, skills_root=args.skills_root)
-            print(json.dumps(preview, indent=2, ensure_ascii=False))
-            print("请检查全部计划。输入 INSTALL 才会修改本地文件；其他输入均取消。", flush=True)
+            print(json.dumps(preview, indent=2, ensure_ascii=True))
+            print("Review the full preview. Enter INSTALL to apply; other input cancels.", flush=True)
             try:
-                consent = input("确认安装（输入 INSTALL）：").strip()
+                consent = input("Confirm installation [type INSTALL]: ").strip()
             except (EOFError, KeyboardInterrupt):
                 consent = ""
             if consent != "INSTALL":
-                print(json.dumps({"status": "CANCELLED", "applied": False}, ensure_ascii=False))
+                print(json.dumps({"status": "CANCELLED", "applied": False}, ensure_ascii=True))
                 return 0
             result = execute(apply=True, codex_home=args.codex_home, skills_root=args.skills_root)
         else:
             result = execute(apply=args.apply, codex_home=args.codex_home,
                              skills_root=args.skills_root)
-        print(json.dumps(result, indent=2, ensure_ascii=False))
+        print(json.dumps(result, indent=2, ensure_ascii=True))
         return 0 if result["status"] != "FAIL" else 1
     except (OSError, ValueError, UnicodeError, KeyError) as exc:
         print(json.dumps({"status": "FAIL", "error_type": type(exc).__name__,
                           "message": "安装中止，请检查配置与文件冲突；不会强制覆盖。"},
-                         ensure_ascii=False))
+                         ensure_ascii=True))
         return 1
 
 
