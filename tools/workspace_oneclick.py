@@ -51,6 +51,10 @@ class OneClickSetup:
         """
         if not confirmed:
             raise WorkspaceError("CONFIRMATION_REQUIRED")
+        # Only a repository explicitly selected in an earlier successful step may
+        # be reused without another consent dialog. An arbitrary pre-existing
+        # account repository must still stop with REUSE_REQUIRED.
+        previous_selection = self.controller.status().get("repository")
         completed: list[str] = []
         step: str | None = None
         try:
@@ -62,7 +66,10 @@ class OneClickSetup:
 
             step = "repository"
             self._emit(step, "started")
-            selected = self.controller.select_repository(confirmed=True)
+            from tools.personal_workspace import DEFAULT_REPOSITORY
+            account = self.controller.status().get("github_account")
+            already_selected = bool(account and previous_selection == f"{account}/{DEFAULT_REPOSITORY}")
+            selected = self.controller.select_repository(confirmed=True, reuse=already_selected)
             # Never silently consent to reuse an existing private repository.
             # The manual wizard must obtain a separate explicit reuse approval.
             if selected.get("status") == "REUSE_REQUIRED":
