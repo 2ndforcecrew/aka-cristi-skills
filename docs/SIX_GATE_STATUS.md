@@ -1,3 +1,5 @@
+> **历史六项发布门禁记录，非当前 Beta 发布状态。** 这里的 `BLOCKED` 记录描述当时的开发基线或尚未完成的独立验收项目；仓库已经公开发布 [v1.0.0-beta.2 Pre-release](https://github.com/2ndforcecrew/aka-cristi-skills/releases/tag/v1.0.0-beta.2)。Windows/macOS/Ubuntu CI、Windows EXE 构建、SHA-256 与 GitHub 来源证明已经通过。**Beta 发布不等于完整外部 UAT、Windows Authenticode 签名或四个真实子 Agent 已通过验收。** SkillSpector 历史报告不再是发布门禁。原始证据保留供审计，不应被当作当前版本的禁止安装声明。
+
 # CHEF 六项验收状态
 
 ## 2026-11-16 Universal 候选增量核查
