@@ -33,7 +33,7 @@
 | 换电脑或换 Agent 就重新配置 | 个人 Workspace 与跨宿主适配逐步实现 |
 | AI 说「完成了」，却没有可核查结果 | 记录实际变更、测试、线程和验收状态 |
 
-**项目定位：** 以 **OpenAI Codex** 为首个已实现运行时，现提供跨宿主原生文件适配。部分能力已经有本地实现与跨平台 CI；完整的跨厂商、全自动、长期运行 Agent OS 仍在发展中。**不把规划写成已完成，也不把安装成功写成真实 Agent 已激活。**
+**项目定位：** CHEF Core 已可安装到多个宿主的原生规则 / Skills / 角色目录；真实自动执行运行时目前仍以 Codex 为先。部分能力已经有本地实现与跨平台 CI；完整的跨厂商、全自动、长期运行 Agent OS 仍在发展中。**不把规划写成已完成，也不把安装成功写成真实 Agent 已激活。**
 
 <a id="quick-start"></a>
 
@@ -114,7 +114,7 @@ git clone --depth 1 https://github.com/2ndforcecrew/aka-cristi-skills.git && cd 
 
 没有终端访问权限的 Agent 只能指导安装，不能直接操作你的电脑。
 
-**更保守的安装方式：** 仅安装 CHEF + 四 Skills + 四角色配置，可以在已下载仓库内运行 `python3 -m tools.quick_install --interactive`（Windows 用 `py -3`）。已公开的 [`v1.0.0-beta.2`](https://github.com/2ndforcecrew/aka-cristi-skills/releases/tag/v1.0.0-beta.2) 包含这个核心安装入口，但**不包含之后才合入 `main` 的 `tools.full_setup`**。
+**更保守的安装方式：** 仅安装 Codex 核心配置，可运行 `python3 -m tools.quick_install --interactive`（Windows 用 `py -3`）。`v1.0.0-beta.2` 是历史 Codex-first Beta；新版 `v1.0.0-beta.3` 将通用宿主源码安装器一起打包。
 
 <a id="vision"></a>
 ## 02 / CORE CONCEPT — CHEF、Skills、Agents 与双引擎
@@ -274,7 +274,7 @@ python3 -m tools.chef_dual_engine --kind hybrid --prompt "修复一个小问题�
 **已有可用的本地安装工程与跨平台测试。**
 
 - [`tools.full_setup`](tools/full_setup.py)：`main` 的统一安装引导，连接核心配置、可选 Workspace、可选真实 Agent 测试。
-- [`tools.quick_install`](tools/quick_install.py)：`beta.2` 包含的核心配置快速安装。
+- [`tools.quick_install`](tools/quick_install.py)：早期 `beta.2` 已包含的 Codex 核心配置快速安装。
 - [Windows GUI](tools/gui_installer.py)：预览、确认、进度、取消、验证、受保护恢复。
 - [Install Transaction](tools/install_transaction.py)：记录受管理的文件变化、检查冲突与回滚条件。
 - [Windows Job Object](tools/aka_windows_job_runner.py)：管理超时子进程的生命周期；**不是权限沙盒**。
@@ -308,7 +308,7 @@ python3 -m tools.chef_dual_engine --kind hybrid --prompt "修复一个小问题�
 
 | 类别 | 状态 | 说明 |
 | --- | --- | --- |
-| **公开发布** | **已完成 Beta** | [`v1.0.0-beta.2`](https://github.com/2ndforcecrew/aka-cristi-skills/releases/tag/v1.0.0-beta.2) 提供 Windows EXE、源码 ZIP、SHA-256、GitHub provenance |
+| **公开发布** | **已完成 Beta** | [`v1.0.0-beta.3`](https://github.com/2ndforcecrew/aka-cristi-skills/releases/tag/v1.0.0-beta.3) 将提供 Windows EXE、源码 ZIP、SHA-256、GitHub provenance |
 | **CHEF + 4 Skills + 4 角色配置** | **已实现** | 可本地预览、安装、校验；不是自动启动所有 Agent |
 | **跨平台 CI** | **已通过相应测试** | Windows、macOS、Ubuntu；不代表所有外部用户环境 |
 | **Dual-Engine Factory / Studio** | **实验性运行时** | 隔离执行、SQLite、恢复、QA；尚无完整真实 Codex E2E |
@@ -319,7 +319,7 @@ python3 -m tools.chef_dual_engine --kind hybrid --prompt "修复一个小问题�
 | **Windows Authenticode 签名** | **尚未签署** | GitHub OIDC 来源证明不能代替代码签名证书 |
 | **外部用户验收 / Stable** | **未完成** | Beta 可供独立用户测试，不等于稳定版 |
 
-**开发分支与正式 Beta 请分清：** `main` 上的一键完整引导器 `tools.full_setup` 是在 `beta.2` 发布之后新增的；`beta.2` 只包含 `quick_install` 核心安装入口。安装一次也不会自动常驻启动 `Dual-Engine`。
+**版本区别：** `v1.0.0-beta.2` 只包含 Codex 核心 `quick_install`；`v1.0.0-beta.3` 新增 `full_setup` 的跨宿主适配、全局/项目级安装、受管理卸载和 Dual-Engine 通用交接协议。安装一次仍不会自动启动任何宿主的真实 Agent 或 Dual-Engine 后台进程。
 
 <a id="verify"></a>
 ## 05 / VERIFY — 如何验证安装与真实 Agent 调用？
