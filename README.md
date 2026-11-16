@@ -75,7 +75,7 @@ git clone --depth 1 https://github.com/2ndforcecrew/aka-cristi-skills.git && cd 
 
 ## CHEF RUNTIME v0.4 — 真正调用 Agent CLI（开发验证阶段）
 
-过去的通用安装器只能安装规则、Skills 和角色配置。现在增加 **[真实 CLI 会话调度器](tools/chef_runtime_dispatch.py)**：在用户单独授权使用模型额度后，可以通过 **CodeBuddy Code CLI** 或 **Claude Code CLI**，依次调用 Factory → Studio → 独立 QA 的**只读主会话**，记录真实 Session ID、回复摘要与失败原因。
+过去的通用安装器只能安装规则、Skills 和角色配置。现在增加 **[真实 CLI 会话调度器](tools/chef_runtime_dispatch.py)**：在用户单独授权使用模型额度后，可以通过 **CodeBuddy Code CLI** 或 **Claude Code CLI**，按需调用 Factory → Studio → 独立 QA，或 Research → Coding → QA → Automation 的**只读独立主会话**，记录真实 Session ID、回复摘要与失败原因。
 
 **CodeBuddy Code CLI ≠ WorkBuddy 桌面端原生 Agent。** 目前还不能据此声称 WorkBuddy Expert Team 子 Agent 已被启动；本次验证只覆盖已确认命令行接口的单次模型调用。安全起见，模型调用时不开放文件、终端或 MCP 工具，也不会自动改写项目。
 
@@ -88,7 +88,7 @@ python3 -m tools.chef_runtime_dispatch run --host codebuddy --kind hybrid --proj
 python3 -m tools.chef_runtime_dispatch run --host codebuddy --kind hybrid --project . --objective "检查 CHEF 工作流程" --allow-quota
 ```
 
-Windows 将 `python3` 替换为 `py -3`。Claude CLI 使用 `--host claude`。统一安装器增加 `--test-agents` 之后会**另行确认额度调用**，不是安装时偷偷执行。
+Windows 将 `python3` 替换为 `py -3`。Claude CLI 使用 `--host claude`。统一安装器的 `--test-agents` 会先**另行确认额度调用**，之后测试四个角色，不是安装时偷偷执行。
 
 **[运行机制、权限保护、证据标准及尚未实现的部分](docs/CHEF_RUNTIME_V04.md)** · [跨平台真实调度开发任务](https://github.com/2ndforcecrew/aka-cristi-skills/issues/44)
 
