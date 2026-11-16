@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "date_utc": "2026-11-16",
+  "baseline_prs": {
+    "26": "17a16e031f506d3b416687725ac95be3facb0ff2",
+    "27": "223d49d0e934c7614d7b18f7ae829c8cfcd9f477"
+  },
+  "host": {
+    "os": "Linux",
+    "codex_version": "codex-cli 0.167.0-alpha.4",
+    "login_probe": "Logged in using ChatGPT; subsequent invocation failed token refresh"
+  },
+  "command": [
+    "python",
+    "-m",
+    "tools.chef_dual_engine",
+    "--kind",
+    "hybrid",
+    "--prompt",
+    "Fix add in calculator.py. Factory: run python -m unittest before and after fixing it. Studio: independently inspect whether the calculator API and error behavior meet user intent and report limitations. QA: independently run python -m unittest and inspect the actual diff, challenge correctness and report findings with commands and results. Do not access network or publish anything.",
+    "--workspace",
+    "/tmp/chef-live/source",
+    "--db",
+    "/tmp/chef-live/events.db",
+    "--timeout",
+    "60"
+  ],
+  "real_agent_acceptance": "BLOCKED",
+  "studio": "NOT_RUN",
+  "independent_runtime_qa": "NOT_RUN",
+  "release": "BLOCKED",
+  "attempts": [
+    {
+      "task_id": "77324196-e59c-4e35-bfe5-c00d01adace5",
+      "status": "BLOCKED",
+      "results": {
+        "factory": {
+          "status": "FAILED",
+          "exit_code": 1,
+          "event_count": 0,
+          "output": "",
+          "thread_ids": [],
+          "stderr_tail": "WARNING: proceeding, even though we could not create PATH aliases: Read-only file system (os error 30)\nReading additional input from stdin...\nError: failed to initialize in-process app-server client: Read-only file system (os error 30)\n",
+          "workspace": "/tmp/chef-live/events.db.runs/77324196-e59c-4e35-bfe5-c00d01adace5/factory-1-ef7d144a19874fb0b1183430c9c7c1bd",
+          "patch": "/tmp/chef-live/events.db.runs/77324196-e59c-4e35-bfe5-c00d01adace5/factory-1-ef7d144a19874fb0b1183430c9c7c1bd.patch"
+        }
+      },
+      "qa": "NOT_RUN",
+      "release": "BLOCKED",
+      "evidence_kind": "agent_invocation_requires_independent_acceptance"
+    },
+    {
+      "task_id": "77324196-e59c-4e35-bfe5-c00d01adace5",
+      "status": "BLOCKED",
+      "results": {
+        "factory": {
+          "status": "FAILED",
+          "exit_code": 1,
+          "event_count": 4,
+          "output": "",
+          "thread_ids": [
+            "01a1e1fc-4a86-77d0-beb9-3f7187c19819"
+          ],
+          "stderr_tail": "uest id: req_032ee59ea7be43ad8ad47bbe39b4c1bf\n2026-11-16T01:32:51.139254Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when UnexpectedServerResponse(\"HTTP 451: {\\\"message\\\":\\\"no_biscuit_no_service\\\"}\")\n2026-11-16T01:32:51.383321Z ERROR codex_api::endpoint::responses_websocket: failed to connect to Responses WebSocket stage=Unknown\n2026-11-16T01:32:52.341322Z ERROR codex_api::endpoint::responses_websocket: failed to connect to Responses WebSocket stage=Unknown\n",
+          "workspace": "/tmp/chef-live/events.db.runs/77324196-e59c-4e35-bfe5-c00d01adace5/factory-2-e6fc8f17903046f3b43511dd6649ea81",
+          "patch": "/tmp/chef-live/events.db.runs/77324196-e59c-4e35-bfe5-c00d01adace5/factory-2-e6fc8f17903046f3b43511dd6649ea81.patch"
+        }
+      },
+      "qa": "NOT_RUN",
+      "release": "BLOCKED",
+      "evidence_kind": "agent_invocation_requires_independent_acceptance"
+    },
+    {
+      "task_id": "77324196-e59c-4e35-bfe5-c00d01adace5",
+      "status": "BLOCKED",
+      "results": {
+        "factory": {
+          "status": "FAILED",
+          "exit_code": 1,
+          "event_count": 4,
+          "output": "",
+          "events": [
+            {
+              "type": "thread.started",
+              "thread_id": "01a1e1ff-fb55-75d3-a0ce-62986495a9aa"
+            },
+            {
+              "type": "turn.started"
+            },
+            {
+              "type": "error",
+              "message": "Your access token could not be refreshed because you have since logged out or signed in to another account. Please sign in again."
+            },
+            {
+              "type": "turn.failed",
+              "error": {
+                "message": "Your access token could not be refreshed because you have since logged out or signed in to another account. Please sign in again."
+              }
+            }
+          ],
+          "sandbox": "workspace-write",
+          "thread_ids": [
+            "01a1e1ff-fb55-75d3-a0ce-62986495a9aa"
+          ],
+          "stderr_tail": "uest id: req_d79bd6eeb23e461fb5a3ac917f637014\n2026-11-16T01:36:52.991644Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when UnexpectedServerResponse(\"HTTP 451: {\\\"message\\\":\\\"no_biscuit_no_service\\\"}\")\n2026-11-16T01:36:53.046942Z ERROR codex_api::endpoint::responses_websocket: failed to connect to Responses WebSocket stage=Unknown\n2026-11-16T01:36:54.061792Z ERROR codex_api::endpoint::responses_websocket: failed to connect to Responses WebSocket stage=Unknown\n",
+          "workspace": "/tmp/chef-live/events.db.runs/77324196-e59c-4e35-bfe5-c00d01adace5/factory-3-61f2fee41abb4f72910eebebc865a419",
+          "patch": "/tmp/chef-live/events.db.runs/77324196-e59c-4e35-bfe5-c00d01adace5/factory-3-61f2fee41abb4f72910eebebc865a419.patch",
+          "patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "qa": "NOT_RUN",
+      "release": "BLOCKED",
+      "evidence_kind": "agent_invocation_requires_independent_acceptance"
+    }
+  ],
+  "database_sha256": "4d028f91ca45631ed545d64596d1f5bbb1c314586dd5ab80244b31e6e320dae5",
+  "notes": [
+    "First invocation failed initializing read-only host directory.",
+    "Authorized sandbox escalation allowed CLI initialization; nested worker sandbox remained enabled.",
+    "Attempts 2/3 failed HTTP451 no_biscuit_no_service / Responses WebSocket / expired login refresh. No credentials changed.",
+    "No completed Factory output, Studio execution or independent runtime QA acceptance.",
+    "Scripted-host end-to-end tests are offline harness coverage, not live acceptance."
+  ]
+}
