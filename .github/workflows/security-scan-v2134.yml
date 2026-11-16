@@ -1,7 +1,9 @@
 name: Security rescan v2.13.4 (source and exact candidate)
 
+# Optional, manually launched third-party audit.
+# SkillSpector is NOT a required release gate for AKA.CRISTI Skills.
+# Existing audit behavior and evidence remain intact.
 on:
-  pull_request:
   workflow_dispatch:
 
 permissions:
