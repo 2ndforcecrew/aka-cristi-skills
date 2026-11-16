@@ -60,10 +60,6 @@ jobs:
         with:
           name: skillspector-2134-audit
           path: |
-            ${{ runner.temp }}/full-source.json
-            ${{ runner.temp }}/exact-package.json
             ${{ runner.temp }}/security-scan-summary.json
-            ${{ runner.temp }}/full-source.stderr
-            ${{ runner.temp }}/exact-package.stderr
           retention-days: 14
           if-no-files-found: warn
