@@ -48,9 +48,9 @@ def _approve(question, input_fn):
 
 
 def _run_portable_host(*, host, project, apply, interactive, workspace,
-                       test_agents, hermes_skills_root, input_fn):
+                       test_agents, hermes_skills_root, scope, input_fn):
     """Install native project rules + Skills + roles, never fake runtime activation."""
-    plan = universal_chef.inspect(host, project, hermes_skills_root)
+    plan = universal_chef.inspect(host, project, hermes_skills_root, scope=scope)
     report = {
         "host": host,
         "preflight": dependency_status(),
@@ -72,7 +72,8 @@ def _run_portable_host(*, host, project, apply, interactive, workspace,
         report["core_install"] = "CANCELLED"
         return report
     installed = universal_chef.install(
-        host, project, apply=True, hermes_skills_root=hermes_skills_root
+        host, project, apply=True, hermes_skills_root=hermes_skills_root,
+        scope=scope,
     )
     report["core_install"] = installed["status"]
     report["host_file_verification"] = installed
@@ -90,14 +91,15 @@ def _run_portable_host(*, host, project, apply, interactive, workspace,
 
 def run(*, apply=False, interactive=False, workspace=False, test_agents=False,
         codex_home=None, skills_root=None, input_fn=input, host="codex",
-        project=None, hermes_skills_root=None):
+        project=None, hermes_skills_root=None, scope="project"):
     if apply and interactive:
         raise ValueError("Choose --interactive or --apply, not both")
     if host != "codex":
         return _run_portable_host(
             host=host, project=project, apply=apply, interactive=interactive,
             workspace=workspace, test_agents=test_agents,
-            hermes_skills_root=hermes_skills_root, input_fn=input_fn,
+            hermes_skills_root=hermes_skills_root, scope=scope,
+            input_fn=input_fn,
         )
     before = dependency_status()
     preview = quick_install.execute(codex_home=codex_home, skills_root=skills_root)
@@ -211,6 +213,7 @@ def main(argv=None):
                         help="optionally test real four-role invocation with separate consent")
     parser.add_argument("--host", choices=universal_chef.HOSTS, default="codex",
                         help="host-specific native configuration; Codex remains user-scoped")
+    parser.add_argument("--scope", choices=("project", "user"), default="project")
     parser.add_argument("--project", type=Path,
                         help="existing target project required for non-Codex hosts")
     parser.add_argument("--hermes-skills-root", type=Path,
@@ -223,7 +226,7 @@ def main(argv=None):
                      workspace=args.workspace, test_agents=args.test_agents,
                      codex_home=args.codex_home, skills_root=args.skills_root,
                      host=args.host, project=args.project,
-                     hermes_skills_root=args.hermes_skills_root)
+                     hermes_skills_root=args.hermes_skills_root, scope=args.scope)
         print(json.dumps(result, ensure_ascii=True, indent=2))
         return 1 if result.get("core_install") not in (
             "PREVIEW_ONLY", "CANCELLED", "FILES_VERIFIED",
