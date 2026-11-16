@@ -258,17 +258,28 @@ def failure_category(stderr):
 
 
 def run(timeout=600, codex_bin="codex", codex_home=None, role_source=None):
-    base = Path(codex_home or os.environ.get("CODEX_HOME") or
-                Path.home() / ".codex").expanduser().resolve()
     result = {"checked_at": datetime.now(timezone.utc).isoformat(),
               "status": "NOT_RUN", "invoked": False,
               "roles": {x: "NOT_RUN" for x in ROLES}}
+    try:
+        from tools.codex_probe_isolation import IsolationError, probe_environment
+    except ModuleNotFoundError:
+        from codex_probe_isolation import IsolationError, probe_environment
+    try:
+        base, probe_env = probe_environment(Path.cwd().resolve())
+    except IsolationError as exc:
+        result["reason"] = str(exc)
+        return result
+    if codex_home is not None and Path(codex_home).expanduser().resolve() != base:
+        result["reason"] = "Requested CODEX_HOME does not match isolated probe home"
+        return result
+    result["mcp_isolation_preflight"] = "DEDICATED_HOME_NO_LOCAL_REGISTRATIONS"
     exe = shutil.which(codex_bin)
     if not exe:
         result["reason"] = "Codex CLI missing on this machine"
         return result
     try:
-        version = subprocess.run([exe, "--version"], capture_output=True, timeout=10, check=False)
+        version = subprocess.run([exe, "--version"], capture_output=True, timeout=10, check=False, env=probe_env)
         match = re.fullmatch(r"codex-cli [0-9A-Za-z.+_-]+", decode_output(version.stdout).strip())
         result["codex_cli_version"] = match.group(0) if version.returncode == 0 and match else "UNKNOWN"
     except (OSError, subprocess.TimeoutExpired):
@@ -280,7 +291,7 @@ def run(timeout=600, codex_bin="codex", codex_home=None, role_source=None):
         return result
     try:
         auth = subprocess.run([exe, "login", "status"], capture_output=True,
-                              timeout=20, check=False)
+                              timeout=20, check=False, env=probe_env)
     except (OSError, subprocess.TimeoutExpired):
         result["reason"] = "Cannot inspect Codex CLI authentication"
         return result
@@ -327,13 +338,30 @@ def run(timeout=600, codex_bin="codex", codex_home=None, role_source=None):
                    "-c", "features.multi_agent=true",
                    "-c", "features.unified_exec=false", *overrides, prompt]
         result["invoked"] = True
-        try:
-            proc = subprocess.run(command, cwd=wd, capture_output=True,
-                                  timeout=timeout, check=False)
-        except subprocess.TimeoutExpired:
-            return {**result, "status": "FAIL", "reason": "Codex session timed out"}
-        except OSError:
-            return {**result, "status": "FAIL", "reason": "Codex failed to start"}
+        if os.name == "nt":
+            try:
+                try:
+                    from tools.aka_windows_job_runner import JobError, JobTimeout, run_in_job
+                except ModuleNotFoundError:
+                    from aka_windows_job_runner import JobError, JobTimeout, run_in_job
+                proc = run_in_job(command, wd, timeout, env=probe_env)
+            except JobTimeout:
+                return {**result, "status": "FAIL",
+                        "reason": "Codex session timed out; Windows Job Object closed",
+                        "descendants_verified_terminated": False}
+            except (OSError, JobError) as exc:
+                return {**result, "status": "FAIL",
+                        "reason": "Windows Job Object setup or process launch failed",
+                        "failure_type": type(exc).__name__}
+        else:
+            try:
+                proc = subprocess.run(command, cwd=wd, capture_output=True,
+                                      timeout=timeout, check=False, env=probe_env)
+            except subprocess.TimeoutExpired:
+                return {**result, "status": "FAIL",
+                        "reason": "Codex session timed out (POSIX tree unverified)"}
+            except OSError:
+                return {**result, "status": "FAIL", "reason": "Codex failed to start"}
         events = json_lines(proc.stdout)
         root_thread = next((x.get("thread_id") for x in events
                             if x.get("type") == "thread.started"), None)

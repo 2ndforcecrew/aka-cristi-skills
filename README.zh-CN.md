@@ -1,5 +1,22 @@
 # AKA.CRISTI Skills — 中文功能说明
 
+## Personal AI Workspace｜开发候选功能
+
+新增真实 GitHub 设置向导、自己的私人仓库、Codex 手动拉取与 Sync Center，提供预览、备份、冲突拒绝及恢复。默认 `my-agent-workspace / private / manual`，不自动 Push。仓库创建仅经过 Mock 测试，本轮没有创建真实仓库。需要维护者提供已注册 OAuth 公开 Client ID 与本机系统凭据库；ChatGPT 授权独立且仍待真实验证。
+
+## 一键初始化
+
+设置页新增「一键初始化」按钮；安装器完成后亦提供同流程入口；命令行可用 `python -m tools.personal_workspace one-click`（不加 `--apply` 只打印计划、不写任何东西；加 `--apply` 才执行）。
+
+1. 点击后先以 `plan()` 一次列出全部写操作：授权、建立私人仓库、初始化 10 个公开文件、备份后拉取、打开 ChatGPT 指南；其中同步一步会在备份后直接套用预览的差异，不再二次确认。确认后才开始，拒绝则什么都不做。
+2. 流程按顺序跑授权 → 建仓（已存在则走复用，不覆盖）→ 初始化 → 预览 → 同步 → ChatGPT 指引；任何一步失败即停，显示步骤码，已完成步骤保留，重跑由未完成步骤继续。取消只在授权步骤有效。
+3. 授权期间状态列显示 Device Flow 一次性代码，不写入日志或输出。完成后在窗口底部显示完成摘要（账号、仓库、同步状态、ChatGPT `PENDING_VERIFICATION`），并排提供「Sync Now」与「Open My Repository」；安装器完成画面同样提供这两个按钮，无仓库时禁用。
+4. 同步预设 `manual`，只拉取、不推送。ChatGPT 状态永远不会显示 Connected。
+
+限制：仍需维护者提供已注册 OAuth 公开 Client ID；无 ID 时流程在授权步骤合法停止。本阶段只用 Mock 测试，不建立真实仓库、不做真实授权；真实 OAuth、真实建仓、原生系统凭据库、干净 Windows 11 验收均未进行；Issues #8–#13 仍未关闭。
+
+[安装与能力边界](docs/PERSONAL_AI_WORKSPACE.md) · [开发路线](ROADMAP.md) · [成长记录草稿](docs/GROWTH_PERSONAL_WORKSPACE_2026-11-16.md)。本分支不合并 main、不发布 Release、不部署成长网站。
+
 🌐 **Language / 语言：** [English](README.md) · [简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Français](README.fr.md)
 
 **FROM EXPERIENCE TO CAPABILITY｜将协作经验变成可复用能力**

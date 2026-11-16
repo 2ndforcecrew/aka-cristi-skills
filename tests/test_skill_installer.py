@@ -76,7 +76,12 @@ class InstallerTests(unittest.TestCase):
     def test_symlinks_in_source_rejected(self):
         other=self.base/"outside.txt"
         other.write_text("private")
-        (self.src/"shortcut").symlink_to(other)
+        try:
+            (self.src/"shortcut").symlink_to(other)
+        except OSError as exc:
+            if getattr(exc, "winerror", None) == 1314:
+                self.skipTest("Windows symlink privilege unavailable (WinError 1314)")
+            raise
         with self.assertRaises(InstallError):
             inspect(self.src,root=self.out)
 

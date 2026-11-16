@@ -13,6 +13,7 @@ import shutil
 import sys
 import threading
 import time
+import webbrowser
 
 from tools import install_transaction as transaction
 from tools.fs_safety import checked_path
@@ -69,6 +70,9 @@ class InstallerWindow:
         self.events = queue.Queue()
         self.cancel_event = threading.Event()
         self.busy = False
+        self._worker = None
+        self.workspace_windows = []
+        self._workspace_closed_seen: set[int] = set()
         self.plan = None
         self.last_journal = None
         self.started = 0
@@ -113,6 +117,12 @@ class InstallerWindow:
         self.cancel_button.pack(side="left")
         self.undo_button = ttk.Button(buttons, text="撤销本次安装", command=self.undo, state="disabled")
         self.undo_button.pack(side="left", padx=8)
+        self.workspace_button = ttk.Button(buttons, text="Personal AI Workspace", command=self.open_workspace)
+        self.workspace_button.pack(side="left", padx=6)
+        self.workspace_sync_button = ttk.Button(buttons, text="Sync Now", command=self.workspace_sync, state="disabled")
+        self.workspace_sync_button.pack(side="left", padx=6)
+        self.workspace_open_button = ttk.Button(buttons, text="Open My Repository", command=self.workspace_open_repository, state="disabled")
+        self.workspace_open_button.pack(side="left")
         ttk.Button(buttons, text="退出", command=self.close).pack(side="right")
         self.progressbar = ttk.Progressbar(outer, mode="indeterminate")
         self.progressbar.pack(fill="x", pady=4)
@@ -124,6 +134,98 @@ class InstallerWindow:
         for var in (self.source, self.home, self.skills):
             var.trace_add("write", self.invalidate)
         self.refresh()
+
+    def open_workspace(self, wizard=False):
+        if self.busy:
+            return
+        try:
+            from tools.personal_workspace import WorkspaceController
+            from tools.workspace_gui import WorkspaceWindow
+            controller = WorkspaceController(codex_home=Path(self.home.get()),
+                                             skills_root=Path(self.skills.get()),
+                                             source=Path(self.source.get()))
+            workspace = WorkspaceWindow(self.window, controller=controller, wizard=wizard)
+            self.workspace_windows.append(workspace)
+            self._refresh_workspace_buttons()
+            return workspace
+        except Exception:
+            self.status.set("Workspace 暂时无法打开；请检查本机设置与目录权限。")
+
+    def first_run_workspace(self):
+        try:
+            from tools.personal_workspace import WorkspaceController
+            if WorkspaceController().status().get("wizard_needed"):
+                self.open_workspace(wizard=True)
+        except Exception:
+            self.status.set("Workspace 首次设置暂不可用；可稍后通过按钮重新打开。")
+
+    def offer_workspace(self):
+        from tkinter import messagebox
+        choice = messagebox.askyesnocancel(
+            "Personal AI Workspace",
+            "安装已校验。一鍵初始化（推薦）會按順序完成 GitHub 授權、建立私人倉庫、"
+            "初始化公開配置、同步到 Codex 並打開 ChatGPT 指引；開始前會一次列出全部寫操作請你確認。\n\n"
+            "是：一鍵初始化（推薦）\n否：手動設置\n取消：稍後",
+            parent=self.window)
+        if choice is True:
+            workspace = self.open_workspace(wizard=True)
+            if workspace is not None:
+                workspace.start_one_click()
+        elif choice is False:
+            self.open_workspace(wizard=True)
+
+    def _workspace_controller(self):
+        """Reuse an open workspace window's controller, else lazily build one."""
+        for workspace in self.workspace_windows:
+            if not workspace.closed:
+                return workspace.controller
+        try:
+            from tools.personal_workspace import WorkspaceController
+            return WorkspaceController(codex_home=Path(self.home.get()),
+                                       skills_root=Path(self.skills.get()),
+                                       source=Path(self.source.get()))
+        except Exception:
+            return None
+
+    def _refresh_workspace_buttons(self) -> None:
+        enabled = False
+        try:
+            controller = self._workspace_controller()
+            if controller is not None:
+                enabled = bool(controller.status().get("repository"))
+        except Exception:
+            enabled = False
+        state = "normal" if enabled and not self.busy else "disabled"
+        self.workspace_sync_button.configure(state=state)
+        self.workspace_open_button.configure(state=state)
+
+    def workspace_sync(self) -> None:
+        from tkinter import messagebox
+        if self.busy:
+            return
+        controller = self._workspace_controller()
+        if controller is None:
+            self.status.set("Workspace 同步暫不可用；請檢查本機設置。")
+            return
+        if not messagebox.askyesno("確認手動同步",
+                                   "請先檢查差異。將創建本機備份，並把倉庫配置寫入本機 Codex / Skills 目錄。繼續？",
+                                   parent=self.window):
+            return
+        self.start("workspace_sync", lambda: self._workspace_sync_run(controller))
+
+    @staticmethod
+    def _workspace_sync_run(controller):
+        controller.preview_changes()
+        return controller.sync_now(confirmed=True)
+
+    def workspace_open_repository(self) -> None:
+        if self.busy:
+            return
+        controller = self._workspace_controller()
+        if controller is None:
+            self.status.set("尚未選擇倉庫；請先完成 Workspace 設置。")
+            return
+        self.start("workspace_open", lambda: {"url": controller.repository_url()})
 
     def choose(self, variable):
         from tkinter import filedialog
@@ -142,6 +244,7 @@ class InstallerWindow:
                        and self.trusted.get() and prerequisites()["codex"] == "AVAILABLE")
         self.install_button.configure(state="normal" if can_install else "disabled")
         self.cancel_button.configure(state="normal" if self.busy else "disabled")
+        self.workspace_button.configure(state="disabled" if self.busy else "normal")
         self.undo_button.configure(state="normal" if self.last_journal and not self.busy else "disabled")
 
     def append_log(self, event):
@@ -164,7 +267,8 @@ class InstallerWindow:
             except Exception as exc:
                 # Do not copy exception messages: they may contain private config or paths.
                 self.events.put(("error", type(exc).__name__))
-        threading.Thread(target=worker, daemon=True).start()
+        self._worker = threading.Thread(target=worker, daemon=True)
+        self._worker.start()
 
     def preview(self):
         if not self.trusted.get():
@@ -224,11 +328,20 @@ class InstallerWindow:
                     self.consent.set(False)
                     self.append_log("blocked:" + value)
                     self.status.set("操作阻塞（" + value + "）：检查源码完整性、目录权限、链接或已有配置冲突；修复后重新预览。备份仅保留本机。")
+                elif kind == "workspace_open":
+                    url = value.get("url") if isinstance(value, dict) else None
+                    if isinstance(url, str) and url.startswith("https://"):
+                        webbrowser.open(url)
+                        self.append_log("workspace_repository_opened")
+                    else:
+                        self.status.set("尚未選擇倉庫；請先完成 Workspace 設置。")
                 else:
                     self.append_log(value["status"])
                     self.status.set(value["status"] + "；真实 Agent 激活：NOT_RUN。备份日志仅保留本机，请勿上传。")
                     if kind == "install" and value["status"] == "FILES_VERIFIED":
                         self.last_journal = value["journal"]
+                        self._refresh_workspace_buttons()
+                        self.window.after_idle(self.offer_workspace)
                     elif kind == "rollback":
                         self.last_journal = None
                     self.plan = None
@@ -236,21 +349,51 @@ class InstallerWindow:
                 self.refresh()
         except queue.Empty:
             pass
+        newly_closed = [w for w in self.workspace_windows
+                        if getattr(w, "closed", False) and id(w) not in self._workspace_closed_seen]
+        if newly_closed:
+            # A workspace window closed (e.g. after create/disconnect): the
+            # Sync Now / Open My Repository enabled-state may now be stale.
+            self._workspace_closed_seen.update(id(w) for w in newly_closed)
+            self._refresh_workspace_buttons()
         if self.busy and time.monotonic() - self.started > 60:
             self.cancel_event.set()
             self.status.set("操作超时：已请求安全取消。请等待磁盘操作结束；不会强制中断配置写入。")
         self.window.after(100, self.poll)
 
+    def _join_worker(self):
+        """Wait (bounded) for the background job thread to exit.
+
+        The worker only posts to a queue, but CPython's cyclic GC may run
+        on it; if it finalizes Tk variables of an already-destroyed window
+        from that thread, Python 3.11 aborts (Tcl_AsyncDelete: async
+        handler deleted by the wrong thread). Joining first keeps all Tk
+        finalization on the main thread.
+        """
+        worker = self._worker
+        self._worker = None
+        if worker is not None and worker is not threading.current_thread() and worker.is_alive():
+            worker.join(timeout=5)
+
     def close(self):
+        active = [workspace for workspace in self.workspace_windows
+                  if not workspace.closed and workspace.busy]
+        if active:
+            for workspace in active:
+                workspace.cancel()
+            self.status.set("Workspace 正在处理；授权可请求取消，其他操作须等待安全结束后关闭。")
+            return
         if self.busy:
             self.cancel()
             return
+        self._join_worker()
         self.window.destroy()
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description="CHEF local graphical installer")
     parser.add_argument("--smoke-test", action="store_true", help="Open real Tk widgets, inspect defaults, close; writes no user config")
+    parser.add_argument("--workspace-smoke-test", action="store_true", help="Real workspace Tk controls only; no OAuth/config writes")
     args = parser.parse_args(argv)
     if sys.version_info < (3, 11):
         print("BLOCKED: Python 3.11+ required")
@@ -260,6 +403,16 @@ def main(argv=None):
     except (OSError, ValueError, AttributeError):
         print("BLOCKED: bundled public data validation failed")
         return 2
+    if args.workspace_smoke_test:
+        # Select the native provider without reading/writing any credentials.
+        try:
+            from tools.workspace_auth import AuthError, _native_store
+            _native_store()
+            from tools.workspace_gui import main as workspace_main
+            return workspace_main(['--smoke-test'])
+        except (ImportError, AuthError):
+            print('BLOCKED: native keyring provider unavailable')
+            return 2
     try:
         import tkinter as tk
     except ImportError:
@@ -275,6 +428,7 @@ def main(argv=None):
             window.destroy()
             print("PASS: real Tk widget smoke; Windows user acceptance and activation NOT_RUN")
         else:
+            window.after_idle(app.first_run_workspace)
             window.mainloop()
     except (RuntimeError, tk.TclError) as exc:
         print("BLOCKED: graphical desktop/Tk unavailable (" + type(exc).__name__ + ")")

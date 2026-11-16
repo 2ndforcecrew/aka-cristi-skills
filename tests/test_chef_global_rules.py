@@ -1,6 +1,7 @@
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from tools.chef_global_rules import GlobalRulesError, START, END, apply, plan
 
@@ -92,6 +93,87 @@ class GlobalRulesTests(unittest.TestCase):
         with self.assertRaises(GlobalRulesError):
             plan("install", self.template, self.home)
         self.assertEqual(target.read_text(), "sensitive")
+
+    def test_failed_atomic_write_preserves_concurrent_user_edit_and_backup(self):
+        self.home.mkdir()
+        original = b"original policy\r\n\r\n"
+        changed = b"concurrent user policy\r\n"
+        self.rules.write_bytes(original)
+        def interrupted_write(path, text):
+            path.write_bytes(changed)
+            raise OSError("simulated failed commit")
+        with patch("tools.chef_global_rules.write_atomic", side_effect=interrupted_write):
+            with self.assertRaises(OSError):
+                apply("install", self.template, self.home, confirmed=True)
+        self.assertEqual(self.rules.read_bytes(), changed)
+        backups = list((self.home / ".aka-chef-backups").glob("*.md"))
+        self.assertEqual(len(backups), 1)
+        self.assertEqual(backups[0].read_bytes(), original)
+
+    def test_failed_atomic_write_does_not_recreate_concurrently_deleted_rules(self):
+        self.home.mkdir()
+        self.rules.write_bytes(b"original policy\n")
+        def interrupted_write(path, text):
+            path.unlink()
+            raise OSError("simulated failed commit")
+        with patch("tools.chef_global_rules.write_atomic", side_effect=interrupted_write):
+            with self.assertRaises(OSError):
+                apply("install", self.template, self.home, confirmed=True)
+        self.assertFalse(self.rules.exists())
+        self.assertEqual(len(list((self.home / ".aka-chef-backups").glob("*.md"))), 1)
+
+    def test_failed_write_retains_original_bytes_and_allows_retry(self):
+        self.home.mkdir()
+        original = b"original policy\r\n\r\n"
+        self.rules.write_bytes(original)
+        with patch("tools.chef_global_rules.write_atomic", side_effect=OSError("before commit")):
+            with self.assertRaises(OSError):
+                apply("install", self.template, self.home, confirmed=True)
+        self.assertEqual(self.rules.read_bytes(), original)
+        result = apply("install", self.template, self.home, confirmed=True)
+        self.assertTrue(result["applied"])
+        self.assertTrue(self.rules.read_bytes().startswith(original))
+
+    def test_uninstall_rechecks_managed_ownership_after_preview(self):
+        from tools.chef_global_rules import read_old
+        apply("install", self.template, self.home, confirmed=True)
+        original = self.rules.read_bytes()
+        changed = original.replace(b"Only public", b"Private concurrent")
+        reads = 0
+        def concurrent_read(path):
+            nonlocal reads
+            reads += 1
+            if reads == 2:
+                self.rules.write_bytes(changed)
+            return read_old(path)
+        before_backups = list((self.home / ".aka-chef-backups").glob("*")) if (self.home / ".aka-chef-backups").exists() else []
+        with patch("tools.chef_global_rules.read_old", side_effect=concurrent_read):
+            with self.assertRaises(GlobalRulesError):
+                apply("uninstall", self.template, self.home, confirmed=True)
+        self.assertEqual(self.rules.read_bytes(), changed)
+        after_backups = list((self.home / ".aka-chef-backups").glob("*")) if (self.home / ".aka-chef-backups").exists() else []
+        self.assertEqual(before_backups, after_backups)
+
+    def test_second_read_rechecks_idempotent_state_without_writing(self):
+        from tools.chef_global_rules import managed_block, read_old
+        for action in ("install", "uninstall"):
+            with self.subTest(action=action):
+                self.home.mkdir(exist_ok=True)
+                block = (managed_block(self.template) + "\n").encode()
+                self.rules.write_bytes(b"private\n" if action == "install" else block)
+                changed = block if action == "install" else b"private\r\n"
+                reads = 0
+                def concurrent_read(path):
+                    nonlocal reads
+                    reads += 1
+                    if reads == 2:
+                        self.rules.write_bytes(changed)
+                    return read_old(path)
+                with patch("tools.chef_global_rules.read_old", side_effect=concurrent_read):
+                    result = apply(action, self.template, self.home, confirmed=True)
+                self.assertFalse(result["applied"])
+                self.assertEqual(self.rules.read_bytes(), changed)
+                self.assertFalse((self.home / ".aka-chef-backups").exists())
 
     def test_wrong_template_not_accepted(self):
         self.template.write_text(START + "\nunsafe\n" + END, encoding="utf-8")

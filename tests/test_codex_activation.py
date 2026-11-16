@@ -1,8 +1,11 @@
 """Offline tests of activation EVIDENCE JUDGING, not real Codex runs."""
 import json
+import os
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from tools.verify_codex_activation import assess, parse_events, run
@@ -57,6 +60,34 @@ class CodexAgentEvidenceTests(unittest.TestCase):
     def test_parse_jsonl_ignores_noise(self):
         line = "not-json\n" + "\n".join(json.dumps(x) for x in trace())
         self.assertEqual(len(parse_events(line)), len(trace()))
+
+    def test_temporary_workspace_probe_has_required_cli_options_and_utf8(self):
+        calls = []
+        def fake_run(args, **kwargs):
+            if args[1:3] == ["login", "status"]:
+                return subprocess.CompletedProcess(args, 0, "", "")
+            calls.append((args, kwargs))
+            case = (Path(kwargs["cwd"]) / "CASE.md").read_text(encoding="utf-8")
+            nonce = next(line.split(": ", 1)[1] for line in case.splitlines()
+                         if line.startswith("Case ID: "))
+            events = trace("feature-journey-map", nonce)
+            return subprocess.CompletedProcess(
+                args, 0, "\n".join(json.dumps(x, ensure_ascii=False) for x in events), "")
+        with tempfile.TemporaryDirectory() as dedicated:
+            with patch.dict("os.environ", {"AKA_CODEX_PROBE_HOME": dedicated}), \
+                 patch("tools.verify_codex_activation.shutil.which", return_value="codex"), \
+                 patch("tools.verify_codex_activation.subprocess.run", side_effect=fake_run), \
+                 patch.dict("sys.modules", {"tools.aka_windows_job_runner": SimpleNamespace(
+                     JobError=RuntimeError, JobTimeout=TimeoutError,
+                     run_in_job=lambda args, cwd, timeout, env=None: fake_run(args, cwd=cwd, env=env))}):
+                result = run("feature-journey-map")
+        self.assertEqual(result["status"], "PASS")
+        args, options = calls[0]
+        self.assertIn("--skip-git-repo-check", args)
+        if os.name != "nt":
+            self.assertEqual(options.get("encoding"), "utf-8")
+            self.assertEqual(options.get("errors"), "replace")
+        self.assertEqual(args[args.index("--sandbox") + 1], "read-only")
 
     def test_missing_codex_reports_not_run(self):
         with tempfile.TemporaryDirectory() as d:

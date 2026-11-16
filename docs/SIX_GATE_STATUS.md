@@ -1,5 +1,10 @@
 # CHEF 六项验收状态
 
+## 2026-11-16 Universal 候选增量核查
+
+最新证据见 [Universal verification](UNIVERSAL_VERIFICATION_2026-11-16.md) 与 [Draft PR #30](https://github.com/2ndforcecrew/aka-cristi-skills/pull/30)。修复的三平台 CI 已通过；原本机14项跳过检查在远端Windows均实际通过。当前Codex宿主的真实Skill调用与四角色关联完成证据已独立核实，范围仅为合成只读案例。原自动INCONCLUSIVE记录保留，新宿主返回结构由官方connector桥接补证。安全扫描范围、签名、非Codex宿主及独立外部UAT仍须分别验收；整体发布状态仍BLOCKED。以下早前表格和失败记录保留为历史，不覆盖上述新证据。
+
+
 2026.11.16 已核查：PR [#14](https://github.com/2ndforcecrew/aka-cristi-skills/pull/14) 已合并到 main；main `573fae8` 的 [CI 成功](https://github.com/2ndforcecrew/aka-cristi-skills/actions/runs/43726640530)。Windows GUI EXE、空用户目录启动与来源验签均已通过云端验证。六项发布验收仍分别保留阻塞，不把工程里程碑等同全部完成。原文件与历史提交均保留。
 
 [成长记录 · 2026.11.16](GROWTH_JOURNAL_2026-11-16.md) · [公开成长网站最新进展](https://aka-cristi-growth-journal-f6dh09.v2.appdeploy.ai/#latest)

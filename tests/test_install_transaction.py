@@ -39,7 +39,7 @@ class TransactionTests(unittest.TestCase):
         (self.home / "AGENTS.md").write_text("new private rules", encoding="utf-8")
         with self.assertRaises(txn.TransactionError):
             txn.install(plan, consent=True)
-        self.assertEqual((self.home / "AGENTS.md").read_text(), "new private rules")
+        self.assertEqual((self.home / "AGENTS.md").read_text(encoding="utf-8"), "new private rules")
         self.assertFalse(self.skills.exists())
 
     def test_install_undo_preserves_original_rules_and_unrelated_files(self):
@@ -54,16 +54,16 @@ class TransactionTests(unittest.TestCase):
         undo = txn.rollback(result["journal"], consent=True)
         self.assertEqual(undo["status"], "ROLLED_BACK")
         self.assertEqual((self.home / "AGENTS.md").read_bytes(), original)
-        self.assertEqual((self.home / "other.txt").read_text(), "keep")
+        self.assertEqual((self.home / "other.txt").read_text(encoding="utf-8"), "keep")
         self.assertFalse((self.skills / "chef-orchestrator").exists())
 
     def test_rollback_refuses_modified_install(self):
         result = txn.install(self.preview(), consent=True)
         path = self.home / "AGENTS.md"
-        path.write_text(path.read_text() + "\nnew rule")
+        path.write_text(path.read_text(encoding="utf-8") + "\nnew rule", encoding="utf-8")
         with self.assertRaises(txn.TransactionError):
             txn.rollback(result["journal"], consent=True)
-        self.assertIn("new rule", path.read_text())
+        self.assertIn("new rule", path.read_text(encoding="utf-8"))
 
     def test_cancel_during_install_restores_completed_steps(self):
         cancelled = threading.Event()
@@ -91,7 +91,7 @@ class TransactionTests(unittest.TestCase):
         (p / "SKILL.md").write_text("private skill")
         with self.assertRaises(txn.TransactionError):
             self.preview()
-        self.assertEqual((p / "SKILL.md").read_text(), "private skill")
+        self.assertEqual((p / "SKILL.md").read_text(encoding="utf-8"), "private skill")
 
     def test_symlink_parent_refused(self):
         self.home.mkdir()
@@ -119,12 +119,12 @@ class TransactionTests(unittest.TestCase):
     def test_concurrent_edit_during_failed_step_blocks_automatic_rollback(self):
         def failed_step(*args, **kwargs):
             path = self.home / "AGENTS.md"
-            path.write_text(path.read_text() + "\nconcurrent private edit")
+            path.write_text(path.read_text(encoding="utf-8") + "\nconcurrent private edit", encoding="utf-8")
             raise OSError("private details")
         with patch("tools.install_transaction.skill_installer.install", side_effect=failed_step):
             result = txn.install(self.preview(), consent=True)
         self.assertEqual(result["status"], "BLOCKED_ROLLBACK_REQUIRED")
-        self.assertIn("concurrent private edit", (self.home / "AGENTS.md").read_text())
+        self.assertIn("concurrent private edit", (self.home / "AGENTS.md").read_text(encoding="utf-8"))
         self.assertNotIn("private details", str(result))
 
     def test_concurrent_edit_after_successful_step_blocks_automatic_rollback(self):
@@ -132,12 +132,12 @@ class TransactionTests(unittest.TestCase):
         def changed_step(*args, **kwargs):
             result = real_install(*args, **kwargs)
             path = self.home / "AGENTS.md"
-            path.write_text(path.read_text() + "\nconcurrent edit")
+            path.write_text(path.read_text(encoding="utf-8") + "\nconcurrent edit", encoding="utf-8")
             return result
         with patch("tools.install_transaction.skill_installer.install", side_effect=changed_step):
             result = txn.install(self.preview(), consent=True)
         self.assertEqual(result["status"], "BLOCKED_ROLLBACK_REQUIRED")
-        self.assertIn("concurrent edit", (self.home / "AGENTS.md").read_text())
+        self.assertIn("concurrent edit", (self.home / "AGENTS.md").read_text(encoding="utf-8"))
 
     def test_second_install_is_idempotent_and_undo_leaves_first_install(self):
         txn.install(self.preview(), consent=True)
