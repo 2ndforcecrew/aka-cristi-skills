@@ -31,6 +31,11 @@ def summarize(path: Path, scanner_exit: int) -> dict[str, Any]:
         issues = report.get("issues")
         exceptions = coverage.get("ledger_exceptions")
         dep = coverage.get("dependency_inspection")
+        if not isinstance(issues, list) or not isinstance(exceptions, list):
+            raise ValueError("missing scanner issue/coverage ledger")
+        suppressed = report.get("suppressed_count", 0)
+        if not isinstance(suppressed, int) or suppressed != 0:
+            raise ValueError("report contains suppressed or unverified findings")
         result.update({
             "report_sha256": hashlib.sha256(raw).hexdigest(),
             "recommendation": recommendation,
@@ -38,11 +43,14 @@ def summarize(path: Path, scanner_exit: int) -> dict[str, Any]:
             "coverage_percent": percentage,
             "coverage_complete": complete,
             "execution_successful": executed,
-            "issue_count": len(issues) if isinstance(issues, list) else None,
-            "ledger_exception_count": len(exceptions) if isinstance(exceptions, list) else None,
+            "issue_count": len(issues),
+            "ledger_exception_count": len(exceptions),
+            "suppressed_count": suppressed,
+            "dependency_inspection_verified": False,
             "dependency_inspection_status": dep.get("status") if isinstance(dep, dict) else "UNKNOWN",
         })
-        if scanner_exit == 0 and recommendation == "SAFE" and complete and executed and percentage == 100:
+        if (scanner_exit == 0 and recommendation == "SAFE" and complete and executed
+                and percentage == 100 and not exceptions):
             result["status"] = "STATIC_SCAN_PASS_ONLY"
         elif not complete or percentage != 100 or not executed:
             result["status"] = "BLOCKED_INCOMPLETE"
