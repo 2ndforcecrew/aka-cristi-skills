@@ -16,13 +16,20 @@ class FilesystemSecurityTests(unittest.TestCase):
         self.actual = self.root / 'actual'
         self.actual.mkdir()
         self.link = self.root / 'alias'
-        try:
-            self.link.symlink_to(self.actual, target_is_directory=True)
-        except (OSError, NotImplementedError):
-            self.skipTest('symlink permission unavailable')
         self.template = Path(__file__).resolve().parents[1] / 'templates/AGENTS.global.md'
 
+    def require_symlink(self, path):
+        try:
+            path.symlink_to(self.actual, target_is_directory=True)
+        except NotImplementedError:
+            self.skipTest('symlinks unsupported')
+        except OSError as exc:
+            if getattr(exc, 'winerror', None) == 1314:
+                self.skipTest('Windows symlink privilege unavailable (WinError 1314)')
+            raise
+
     def test_global_rules_refuse_symlink_ancestor_without_writing(self):
+        self.require_symlink(self.link)
         with self.assertRaises(rules.GlobalRulesError):
             rules.apply('install', self.template, self.link / 'home', confirmed=True)
         self.assertFalse((self.actual / 'home').exists())
@@ -31,13 +38,14 @@ class FilesystemSecurityTests(unittest.TestCase):
         home = self.root / 'home'
         home.mkdir()
         (home / 'AGENTS.md').write_text('user rules\n')
-        (home / '.aka-chef-backups').symlink_to(self.actual, target_is_directory=True)
+        self.require_symlink(home / '.aka-chef-backups')
         with self.assertRaises(rules.GlobalRulesError):
             rules.apply('install', self.template, home, confirmed=True)
         self.assertEqual((home / 'AGENTS.md').read_text(), 'user rules\n')
         self.assertEqual(list(self.actual.iterdir()), [])
 
     def test_roles_refuse_symlink_ancestor_without_writing(self):
+        self.require_symlink(self.link)
         with self.assertRaises(agents.AgentInstallError):
             agents.install('research', self.link / 'home', apply=True)
         self.assertFalse((self.actual / 'home').exists())

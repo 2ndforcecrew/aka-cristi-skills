@@ -5,6 +5,7 @@ import json
 import re
 from pathlib import Path
 
+from tools.fs_safety import checked_path
 from tools.skill_validator import validate_skill
 
 NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
@@ -17,7 +18,7 @@ def plan(name: str, destination: Path, description: str) -> dict[str, object]:
         raise ValueError("description must be a nonempty single line up to 500 chars")
     if any(c in description for c in "\\'\""):
         raise ValueError("description contains unsupported YAML quoting characters")
-    destination = Path(destination)
+    destination = checked_path(destination)
     if destination.is_symlink() or destination.exists():
         raise FileExistsError("destination already exists; refusing overwrite")
     if destination.parent.is_symlink() or not destination.parent.is_dir():
@@ -29,12 +30,15 @@ def create(name: str, destination: Path, description: str, *, apply: bool = Fals
     result = plan(name, destination, description)
     if not apply:
         return result
-    destination = Path(destination)
+    destination = Path(str(result["destination"]))
     # mkdir(exist_ok=False) is an atomic no-overwrite check on the final component.
     destination.mkdir(exist_ok=False)
     try:
+        description_scalar = json.dumps(description, ensure_ascii=False)
+        for separator in ("\u0085", "\u2028", "\u2029"):
+            description_scalar = description_scalar.replace(separator, f"\\u{ord(separator):04x}")
         (destination / "SKILL.md").write_text(
-            "---\nname: " + name + "\ndescription: " + description + "\n---\n\n"
+            "---\nname: " + name + "\ndescription: " + description_scalar + "\n---\n\n"
             "# " + name + "\n\n## When to use\nDescribe the trigger.\n\n"
             "## Procedure\n1. Inspect permissions and project context.\n"
             "2. Execute within the approved scope.\n3. Verify and record evidence.\n\n"

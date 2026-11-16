@@ -249,7 +249,12 @@ class GitHubTests(unittest.TestCase):
         directory = self.base / 'target'
         directory.mkdir()
         link = self.base / 'link'
-        link.symlink_to(directory)
+        try:
+            link.symlink_to(directory, target_is_directory=True)
+        except OSError as exc:
+            if getattr(exc, "winerror", None) == 1314:
+                self.skipTest("Windows symlink privilege unavailable (WinError 1314)")
+            raise
         self.assert_code('CONFIG_UNSAFE', lambda: GhClient(link, auth=Mock()))
 
     def test_auth_adapter_success_cancel_failure_timeout(self):

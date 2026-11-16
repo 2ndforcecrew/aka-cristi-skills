@@ -32,7 +32,7 @@ class OneClickSetup:
             {"name": "connect",
              "writes": "GitHub Device Flow 授權（不寫檔案；user code 只顯示，不入 log）"},
             {"name": "repository",
-             "writes": "建立私人倉庫 my-agent-workspace（已存在則改用現有倉庫，不覆蓋）"},
+             "writes": "建立私人倉庫 my-agent-workspace；恢復已確認選擇的倉庫，首次遇到現有倉庫須另行確認"},
             {"name": "initialize",
              "writes": "寫入 10 個公開檔案到私人倉庫（9 個公開檔案 + workspace.json）"},
             {"name": "preview", "writes": "無寫入（僅預覽本地差異）"},
@@ -62,7 +62,7 @@ class OneClickSetup:
 
             step = "repository"
             self._emit(step, "started")
-            selected = self.controller.select_repository(confirmed=True)
+            selected = self.controller.select_repository(confirmed=True, resume=True)
             # Never silently consent to reuse an existing private repository.
             # The manual wizard must obtain a separate explicit reuse approval.
             if selected.get("status") == "REUSE_REQUIRED":
