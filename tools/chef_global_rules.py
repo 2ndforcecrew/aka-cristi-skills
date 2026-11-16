@@ -129,12 +129,10 @@ def apply(action, template, home=None, confirmed=False):
         stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
         backup = backup_folder / ("AGENTS-" + stamp + "-" + os.urandom(4).hex() + ".md")
         shutil.copy2(path, backup)
-    try:
-        write_atomic(path, new)
-    except Exception:
-        if backup is not None and backup.exists():
-            shutil.copy2(backup, path)
-        raise
+    # Atomic replacement either commits the new bytes or leaves the destination.
+    # A failed write must not restore over concurrent user edits or deletions.
+    # Retain the backup for explicit recovery after inspecting current ownership.
+    write_atomic(path, new)
     return {**info, "applied": True,
             "backup": str(backup) if backup else None,
             "post_state": plan("verify", template, home)["state"]}
