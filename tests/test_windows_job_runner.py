@@ -1,5 +1,9 @@
 """Windows Job Object regression with retained process handles (no Codex invocation)."""
 import ctypes
+import os
+import unittest
+if os.name != 'nt':
+    raise unittest.SkipTest('Windows Job Object regression is Windows-only')
 import pathlib
 import subprocess
 import sys
