@@ -83,6 +83,28 @@ class HostRuntimeTests(unittest.TestCase):
                                       b"short"), 0)["status"], "COMPLETED")
         self.assertNotEqual(rt.parse("opencode", data, 1)["status"], "COMPLETED")
 
+    def test_conflicting_opencode_sessions_are_not_accepted(self):
+        lines = [
+            {"type": "text", "sessionID": "sess-first-12345",
+             "part": {"text": "Text"}},
+            {"type": "step_finish", "sessionID": "sess-other-54321",
+             "part": {"reason": "stop"}},
+        ]
+        result = rt.parse("opencode",
+                          "\n".join(json.dumps(x) for x in lines).encode(), 0)
+        self.assertEqual(result["status"], "INCONCLUSIVE")
+        self.assertEqual(result["reason"], "CONFLICTING_SESSION_IDS")
+
+    def test_conflicting_gemini_init_sessions_are_not_accepted(self):
+        lines = [
+            {"type": "init", "session_id": "sess-first-12345"},
+            {"type": "init", "session_id": "sess-other-54321"},
+            {"type": "result", "status": "success", "response": "Text"},
+        ]
+        result = rt.parse("gemini",
+                          "\n".join(json.dumps(x) for x in lines).encode(), 0)
+        self.assertEqual(result["status"], "INCONCLUSIVE")
+
     def test_authorized_run_uses_real_interface_and_reports_not_spawn(self):
         raw = json.dumps({"type": "result", "subtype": "success",
                           "is_error": False, "result": "Answer",
