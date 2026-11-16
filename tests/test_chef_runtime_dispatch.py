@@ -116,6 +116,32 @@ class HostRuntimeTests(unittest.TestCase):
                 rt.run("claude", "studio", "Review", self.project,
                        allow_quota=True, out=filepath)
 
+    def test_four_role_preview_requires_no_quota_and_no_process(self):
+        with patch.object(rt, "_spawn") as spawn:
+            report = rt.run("codebuddy", "four-roles",
+                            "Study a small system", self.project)
+        self.assertEqual(report["sequence"],
+                         ["research", "coding", "qa", "automation"])
+        self.assertEqual(report["status"], "NOT_RUN")
+        spawn.assert_not_called()
+
+    def test_four_role_sessions_observable_but_not_native_subagent(self):
+        answers = [
+            {"exit_code": 0, "error": None,
+             "stdout": json.dumps({"session_id": f"separate-session-{i:02d}",
+                                    "result": f"Role response {i}"})}
+            for i in range(4)
+        ]
+        with patch.object(rt.shutil, "which", return_value="/mock/cli"), \
+             patch.object(rt, "_spawn", side_effect=answers):
+            report = rt.run("claude", "four-roles", "Review workflow",
+                            self.project, allow_quota=True)
+        self.assertEqual(report["status"], "REVIEW_REQUIRED")
+        self.assertEqual(len(report["roles"]), 4)
+        self.assertEqual([r["role"] for r in report["roles"]],
+                         ["research", "coding", "qa", "automation"])
+        self.assertEqual(report["native_subagent"], "NOT_VERIFIED")
+
     def test_real_local_subprocess_transport_no_model_invocation(self):
         """Use an actual Python child, not an AI host. Does not prove AI acceptance."""
         payload = json.dumps({"result": "Synthetic test only",
