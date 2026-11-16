@@ -73,6 +73,29 @@ git clone --depth 1 https://github.com/2ndforcecrew/aka-cristi-skills.git && cd 
 
 ---
 
+## CHEF RUNTIME V0.4 / 从文件配置到真实宿主会话
+
+**新开发：Claude Code、Gemini CLI、OpenCode 的受控 Headless CLI 调用和 Dual-Engine 独立宿主会话交接。** 不再只有文件安装；在用户同意模型调用、完成宿主登录之后，CHEF 可以运行 Factory → Studio → 独立 QA 的任务序列，复用隔离 Git 快照、SQLite 日志、有限重试和恢复框架。
+
+**这里执行的是独立宿主会话，并非已经验证的原生子 Agent Spawn。** WorkBuddy / Hermes 的安全非交互任务接口尚未验收，因此仍不会冒险调用它们；不覆盖原项目，不自动发布或消耗模型额度。
+
+~~~bash
+# 先预检查；不会调用模型
+python3 -m tools.host_runtime --host claude --role qa \
+  --prompt "检查测试项目" --workspace /absolute/trusted/project
+
+# 明确授权后，实验性运行三阶段 Dual-Engine
+python3 -m tools.chef_dual_engine --host claude --kind hybrid \
+  --prompt "提出修复建议并审查用户体验" \
+  --workspace /absolute/trusted/clean-git-project \
+  --db /absolute/private-state/chef.sqlite3 \
+  --authorize-inference
+~~~
+
+详细说明：[跨宿主 Runtime V0.4](docs/HOST_RUNTIME_V04.md) · [真实宿主执行源码](tools/host_runtime.py) · [开发任务 #44](https://github.com/2ndforcecrew/aka-cristi-skills/issues/44)
+
+---
+
 ## 01 / QUICK START — 一条命令，启动完整安装向导
 
 用户打开 GitHub `main` 首页，复制对应操作系统的整行命令即可进入引导。它先检查环境、已有配置和冲突，再由用户授权安装。
