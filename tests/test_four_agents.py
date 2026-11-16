@@ -13,6 +13,14 @@ from tools.verify_four_agents import (
 )
 
 
+def _mock_job_runner(fake_cli):
+    """Synthetic mock for the Windows branch; NEVER runs a real Codex agent."""
+    return patch.dict("sys.modules", {
+        "tools.aka_windows_job_runner": SimpleNamespace(
+            JobError=RuntimeError, JobTimeout=TimeoutError, run_in_job=fake_cli)
+    })
+
+
 class FourAgentEvidenceTests(unittest.TestCase):
     def test_no_codex_returns_not_run(self):
         with patch("tools.verify_four_agents.shutil.which", return_value=None):
@@ -120,14 +128,19 @@ class FourAgentEvidenceTests(unittest.TestCase):
             events = (json.dumps({"type": "thread.started",
                                   "thread_id": str(uuid.uuid4())}) + "\n" +
                       json.dumps({"type": "turn.completed"}) + "\n").encode("utf-8")
-            calls = [
-                SimpleNamespace(returncode=0, stdout=b"codex-cli 0.167.0-alpha.4", stderr=b""),
-                SimpleNamespace(returncode=0, stdout=b"", stderr=b""),
-                SimpleNamespace(returncode=0, stdout=events + b"\xff",
-                                stderr=b"\xff"),
-            ]
-            with patch("tools.verify_four_agents.shutil.which", return_value="codex.exe"), \
-                 patch("tools.verify_four_agents.subprocess.run", side_effect=calls):
+            def fake_cli(cmd, **kwargs):
+                if "--version" in cmd:
+                    return SimpleNamespace(returncode=0,
+                        stdout=b"codex-cli 0.167.0-alpha.4", stderr=b"")
+                if "login" in cmd:
+                    return SimpleNamespace(returncode=0, stdout=b"", stderr=b"")
+                return SimpleNamespace(returncode=0, stdout=events + b"\\xff",
+                                       stderr=b"\\xff")
+            with patch("tools.codex_probe_isolation.probe_environment",
+                       return_value=(home, {"CODEX_HOME": str(home)})), \
+                 patch("tools.verify_four_agents.shutil.which", return_value="codex.exe"), \
+                 patch("tools.verify_four_agents.subprocess.run", side_effect=fake_cli), \
+                 _mock_job_runner(fake_cli):
                 result = run(codex_home=home)
             self.assertEqual(result["status"], "INCONCLUSIVE")
             self.assertTrue(result["invoked"])
@@ -245,44 +258,61 @@ class StrictCorrelationTests(unittest.TestCase):
 
 class IsolatedRoleSourceTests(unittest.TestCase):
     def test_public_roles_can_be_staged_without_global_host_install(self):
-        public = Path(__file__).resolve().parents[1] / 'agents'
+        public = Path(__file__).resolve().parents[1] / "agents"
         with tempfile.TemporaryDirectory() as temp:
-            home = Path(temp) / 'codex'
+            home = Path(temp) / "codex"
+            home.mkdir()
             calls = []
             def cli(command, **kwargs):
                 calls.append(command)
-                if '--version' in command:
-                    return SimpleNamespace(returncode=0, stdout=b'codex-cli 0.167.0-alpha.4', stderr=b'')
-                if 'login' in command:
-                    return SimpleNamespace(returncode=0, stdout=b'', stderr=b'')
+                if "--version" in command:
+                    return SimpleNamespace(returncode=0,
+                        stdout=b"codex-cli 0.167.0-alpha.4", stderr=b"")
+                if "login" in command:
+                    return SimpleNamespace(returncode=0, stdout=b"", stderr=b"")
                 for role in ROLES:
-                    override = next(x for x in command if x.startswith('agents.' + role + '.config_file='))
-                    path = Path(json.loads(override.split('=', 1)[1]))
+                    override = next(x for x in command if x.startswith(
+                        "agents." + role + ".config_file="))
+                    path = Path(json.loads(override.split("=", 1)[1]))
                     self.assertTrue(path.is_file())
-                return SimpleNamespace(returncode=0, stdout=b'', stderr=b'')
-            with patch('tools.verify_four_agents.shutil.which', return_value='codex'), \
-                 patch('tools.verify_four_agents.subprocess.run', side_effect=cli):
+                return SimpleNamespace(returncode=0, stdout=b"", stderr=b"")
+            with patch("tools.codex_probe_isolation.probe_environment",
+                       return_value=(home, {"CODEX_HOME": str(home)})), \
+                 patch("tools.verify_four_agents.shutil.which", return_value="codex"), \
+                 patch("tools.verify_four_agents.subprocess.run", side_effect=cli), \
+                 _mock_job_runner(cli):
                 result = run(codex_home=home, role_source=public)
-            self.assertTrue(result['invoked'])
-            self.assertFalse(home.exists())
-            self.assertEqual(result['role_configuration'], 'TEMPORARY_PER_PROCESS_OVERRIDES')
+            self.assertTrue(result["invoked"])
+            self.assertTrue(home.exists())
+            self.assertEqual(result["role_configuration"],
+                             "TEMPORARY_PER_PROCESS_OVERRIDES")
+
 
 
 class CliFailureTests(unittest.TestCase):
     def test_nonzero_cli_returns_sanitized_failure_without_raw_stderr(self):
-        public = Path(__file__).resolve().parents[1] / 'agents'
-        calls = [
-            SimpleNamespace(returncode=0, stdout=b'codex-cli 0.167.0-alpha.4', stderr=b''),
-            SimpleNamespace(returncode=0, stdout=b'', stderr=b''),
-            SimpleNamespace(returncode=1, stdout=b'', stderr=b'error: unexpected argument --json SECRET_SENTINEL'),
-        ]
-        with tempfile.TemporaryDirectory() as temp, \
-             patch('tools.verify_four_agents.shutil.which', return_value='codex'), \
-             patch('tools.verify_four_agents.subprocess.run', side_effect=calls):
-            result = run(codex_home=Path(temp), role_source=public)
-        self.assertEqual(result['status'], 'FAIL')
-        self.assertEqual(result['failure_category'], 'CLI_OPTION_REJECTED')
-        self.assertNotIn('SECRET_SENTINEL', json.dumps(result))
+        public = Path(__file__).resolve().parents[1] / "agents"
+        def cli(command, **kwargs):
+            if "--version" in command:
+                return SimpleNamespace(returncode=0,
+                    stdout=b"codex-cli 0.167.0-alpha.4", stderr=b"")
+            if "login" in command:
+                return SimpleNamespace(returncode=0, stdout=b"", stderr=b"")
+            return SimpleNamespace(returncode=1, stdout=b"",
+                stderr=b"error: unexpected argument --json SECRET_SENTINEL")
+        with tempfile.TemporaryDirectory() as temp:
+            home = Path(temp) / "codex"
+            home.mkdir()
+            with patch("tools.codex_probe_isolation.probe_environment",
+                       return_value=(home, {"CODEX_HOME": str(home)})), \
+                 patch("tools.verify_four_agents.shutil.which", return_value="codex"), \
+                 patch("tools.verify_four_agents.subprocess.run", side_effect=cli), \
+                 _mock_job_runner(cli):
+                result = run(codex_home=home, role_source=public)
+        self.assertEqual(result["status"], "FAIL")
+        self.assertEqual(result["failure_category"], "CLI_OPTION_REJECTED")
+        self.assertNotIn("SECRET_SENTINEL", json.dumps(result))
+
 
 if __name__ == "__main__":
     unittest.main()
