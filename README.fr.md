@@ -12,27 +12,27 @@ AKA.CRISTI Skills est un ensemble public, vérifiable et installable localement 
 
 Ce dépôt est une version de distribution publique, séparée du dépôt de développement privé d'AKA.CRISTI. Aucune règle de travail privée, information de compte, donnée client ou historique privé n'y est publiée.
 
-## Six portes de publication : globalement toujours bloquées
+## Version publique actuelle : Beta Codex disponible
 
-Le travail sur les six portes des Issues #8 à #13 a été fusionné dans main via la PR #14, mais le statut global reste **BLOCKED** : ce n'est **ni une version officielle approuvée, ni une recommandation d'installation sûre**. Voir [l'état des six portes](docs/SIX_GATE_STATUS.md). Le rapport de scan original « 67 points, 24 constats » est manquant. Une nouvelle exécution de SkillSpector 2.12.0 `--no-llm` sur la base figée donne **56 points, 23 constats, DO_NOT_INSTALL**. Les deux ne doivent pas être confondus en un seul scan. Voir [la revue de sécurité](docs/SECURITY_REVIEW_2026-11-15.md).
+**[v1.0.0-beta.2](https://github.com/2ndforcecrew/aka-cristi-skills/releases/tag/v1.0.0-beta.2)** est une version de test publique. Elle inclut les règles CHEF, quatre Skills, quatre configurations de rôles Codex, un installateur graphique Windows et une commande unifiée Windows/macOS/Ubuntu. **Les CI des trois systèmes, la compilation de l'EXE et la provenance GitHub sont validées.** Les essais d'installation indépendants et l'exécution réelle des quatre agents restent à vérifier.
 
-L'ancien bootstrap qui téléchargeait automatiquement l'archive ZIP de main est désormais bloqué par défaut. Un téléchargement épinglé sur un commit n'équivaut pas à une signature. Une source distante doit d'abord être vérifiée par un commit, un SHA256, une identité de workflow et une provenance confirmés indépendamment. Aucun script d'installation Codex non vérifié n'est exécuté automatiquement. Les dépendances préalables et la revue des sources restent à terminer.
+Prérequis : Git et Python 3.11+. Les modifications sont prévisualisées ; saisir `INSTALL` autorise leur application.
 
-Si vous utilisez Python 3.11 ou plus et que vous avez relu l'intégralité du code source local, vous pouvez tester la vraie fenêtre graphique sur main :
+Windows PowerShell :
 
 ```powershell
-python -m tools.gui_installer
+git clone https://github.com/2ndforcecrew/aka-cristi-skills.git; if ($LASTEXITCODE -ne 0) { throw 'Clone failed' }; cd aka-cristi-skills; git checkout v1.0.0-beta.2; if ($LASTEXITCODE -ne 0) { throw 'Tag checkout failed' }; py -3 -m tools.quick_install --interactive
 ```
 
-Le code source local peut aussi être lancé en double-cliquant sur `start-gui.cmd`. Un [build candidat EXE autonome pour Windows](.github/workflows/windows-gui-candidate.yml) a également été ajouté : il n'emballe que 9 fichiers de données publiques, avec de vrais tests de contrôles et de démarrage de l'EXE ainsi qu'une vérification de provenance GitHub. Il ne contient pas de certificat Authenticode. L'interface propose un aperçu des différences, une case de consentement, une progression, une vérification des fichiers et une annulation protégée. L'installation automatique des dépendances, l'acceptation sur un Windows 11 propre et la première installation par un ami restent BLOCKED. Le succès de l'installation des fichiers est toujours distinct de l'activation réelle de l'Agent.
+macOS / Ubuntu / Linux :
 
-- [GUI Windows et restauration](docs/WINDOWS_GUI.md)
-- [Candidat signé, identité figée et vérification](docs/RELEASE_VERIFICATION.md)
-- [Matrice de capacités Codex / Claude / Hermes / ChatGPT](docs/HOST_CAPABILITY_MATRIX.md)
-- [Plan d'acceptation par des utilisateurs externes indépendants](docs/EXTERNAL_UAT.md)
-- [Association stricte des threads des quatre rôles](docs/FOUR_AGENT_EVIDENCE_V03.md)
+```bash
+git clone https://github.com/2ndforcecrew/aka-cristi-skills.git && cd aka-cristi-skills && git checkout v1.0.0-beta.2 && python3 -m tools.quick_install --interactive
+```
 
-Claude ne propose actuellement que l'adaptation des fichiers Skill au niveau du projet, l'appel réel est NOT_RUN. Hermes et ChatGPT sont BLOCKED. Un appel réel à Codex dans le cloud a été tenté une fois : il s'est terminé avec le code 1, sans thread attribuable, et ne permet pas de déclarer les quatre rôles validés.
+`FILES_VERIFIED` prouve seulement l'intégrité des fichiers, pas l'activation réelle des agents. L'EXE ne porte pas de signature Authenticode. Vérifier sa provenance et utiliser un environnement isolé.
+
+**À propos des anciens scans :** l'ancienne mention `DO_NOT_INSTALL` et les constats SkillSpector concernent un ancien instantané du code, non une évaluation actuelle de la Beta. SkillSpector n'est pas obligatoire pour installer ni publier. Les [résultats historiques](docs/SECURITY_REVIEW_2026-11-15.md) sont conservés sans affirmer que tous les constats sont des vulnérabilités ou des faux positifs.
 
 ## 1. Fonctionnalités principales
 

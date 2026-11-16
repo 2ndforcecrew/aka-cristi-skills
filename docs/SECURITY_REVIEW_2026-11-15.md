@@ -1,3 +1,5 @@
+> **历史审计快照（2026-11-15），非当前版本安装结论。** 本文中的第三方扫描标记和发现数量对应旧提交、旧扫描模式，**不适用于直接判断已发布的 [v1.0.0-beta.2](https://github.com/2ndforcecrew/aka-cristi-skills/releases/tag/v1.0.0-beta.2)**。当前 Beta 已完成 Windows/macOS/Ubuntu CI、EXE 构建和 GitHub 来源证明；仍需外部用户与真实 Agent 验收。历史扫描数据保留供追溯；不能把所有 finding 直接认定为漏洞，也不能无证据称全部误报。SkillSpector 为自愿第三方审计，不是安装或发布强制依赖。
+
 # 安全复核：进行中，禁止当作安装许可
 
 基线：`63c4339d462136d746e06121f50acf884c4b1e3c`。本次仅检查公开仓库；没有读取用户私有扫描材料、密钥或个人电脑。

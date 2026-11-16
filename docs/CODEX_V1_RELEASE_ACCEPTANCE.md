@@ -1,6 +1,6 @@
 # AKA.CRISTI Skills — Release acceptance checklist (Codex-first)
 
-Status: **CANDIDATE / NOT PUBLISHED**. Record exact candidate SHA, CI run links, SHA-256 and signatures; never substitute a prior commit's artifact or synthetic test for current release evidence.
+Status: **v1.0.0-beta.2 PRE-RELEASE PUBLISHED** (not stable). Build, manifest and GitHub provenance checks passed for [beta.2](https://github.com/2ndforcecrew/aka-cristi-skills/releases/tag/v1.0.0-beta.2). Independent external UAT, Authenticode and real four-agent acceptance remain separate open requirements. Record exact candidate SHA, CI run links, SHA-256 and signatures; never substitute a prior commit's artifact or synthetic test for current release evidence.
 
 ## v1.0 supported surface
 - Codex-first installer with four methodology Skills, global managed AGENTS.md, and four Codex role definitions.
@@ -33,7 +33,7 @@ Do not call a Beta "stable", fabricate signatures, copy a previously signed arti
 | Provenance | deterministic package exact commit; artifact digest; GitHub OIDC attestation verified against exact repo/workflow/ref | release SHA not yet built |
 | Windows EXE | actual frozen EXE starts in clean profile, provenance verified; distinguish GitHub attestation from Authenticode | release SHA not yet built; Authenticode NOT_SIGNED |
 | Fresh Windows 11 UAT | independent standard user install → verify → reinstall → rollback/uninstall, with missing prerequisites and failure recovery | NOT_RUN |
-| Public GitHub Release | tag matches approved main SHA; documented caveats and supported scope; attach artifact/digests/provenance | NOT_PUBLISHED |
+| Public GitHub Pre-release | beta.2 tag and assets; README caveats and provenance attached | PUBLISHED (BETA); stable release NOT_PUBLISHED |
 
 ## Instructions for independent Windows 11 tester
 1. Obtain the **exact release candidate** only after verifying independently reviewed GitHub SHA-256 and source/signer provenance. Do not run arbitrary third-party installers.
