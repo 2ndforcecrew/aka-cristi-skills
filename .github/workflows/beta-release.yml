@@ -220,16 +220,16 @@ jobs:
           **本版本新增：一条命令安装 Codex 核心配置（Windows / macOS / Ubuntu）**。准备 Git 与 Python 3.11+，打开终端执行：
 
           Windows PowerShell：
-          \`\`\`powershell
+          ```powershell
           git clone https://github.com/2ndforcecrew/aka-cristi-skills.git; if ($LASTEXITCODE -ne 0) { throw 'Clone failed' }; cd aka-cristi-skills; git checkout v1.0.0-beta.2; if ($LASTEXITCODE -ne 0) { throw 'Tag checkout failed' }; py -3 -m tools.quick_install --interactive
-          \`\`\`
+          ```
 
           macOS / Ubuntu / Linux：
-          \`\`\`bash
+          ```bash
           git clone https://github.com/2ndforcecrew/aka-cristi-skills.git && cd aka-cristi-skills && git checkout v1.0.0-beta.2 && python3 -m tools.quick_install --interactive
-          \`\`\`
+          ```
 
-          安装器先显示完整预览；**用户必须输入 \`INSTALL\`** 才会安装 CHEF 全局 AGENTS.md、4 个 Skills 和 4 个 Codex 自定义角色，并执行文件完整性校验。只会调用本地安装逻辑，不会自动登录 Codex 或使用推理额度。安装前检查仓库来源及文件变更；如果已有同名目录，请先备份并阅读差异。
+          安装器先显示完整预览；**用户必须输入 `INSTALL`** 才会安装 CHEF 全局 AGENTS.md、4 个 Skills 和 4 个 Codex 自定义角色，并执行文件完整性校验。只会调用本地安装逻辑，不会自动登录 Codex 或使用推理额度。安装前检查仓库来源及文件变更；如果已有同名目录，请先备份并阅读差异。
 
           **下载前核验：** 附件包括 Windows EXE、源码 ZIP、对应 SHA-256 manifest 以及 GitHub OIDC / Sigstore 来源证明。GitHub 来源证明不等于 Windows Authenticode 证书；此 EXE **没有 Authenticode 签名**，可能出现 Windows 安全警告。不要绕过组织安全策略或忽略来源校验。
 
