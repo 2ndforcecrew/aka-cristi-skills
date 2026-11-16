@@ -1,7 +1,5 @@
 """Tests for one-command setup: previews, opt-in boundaries, and capability status."""
-import tempfile
 import unittest
-from pathlib import Path
 from unittest.mock import patch
 
 from tools import full_setup
@@ -40,8 +38,9 @@ class FullSetupTests(unittest.TestCase):
         self.assertEqual(result["core_install"], "CANCELLED")
         self.assertEqual(self.pre.call_count, 1)
 
+    @patch("tools.full_setup._call", return_value=False)
     @patch("tools.full_setup.dependency_status")
-    def test_install_and_report_missing_optional_capabilities(self, status):
+    def test_install_and_report_missing_optional_capabilities(self, status, call):
         status.return_value = self.status
         result = full_setup.run(interactive=True, workspace=True,
                                 test_agents=True, input_fn=lambda _: "YES")
@@ -49,6 +48,7 @@ class FullSetupTests(unittest.TestCase):
         self.assertIn(result["workspace"], ("OAUTH_CLIENT_ID_REQUIRED",
                                             "DEPENDENCY_INSTALL_FAILED"))
         self.assertEqual(result["live_agents"], "CODEX_CLI_MISSING")
+        self.assertEqual(call.call_count, 1)
 
     @patch("tools.full_setup._call", return_value=True)
     @patch("tools.full_setup.dependency_status")
