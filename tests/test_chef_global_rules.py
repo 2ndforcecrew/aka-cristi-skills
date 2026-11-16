@@ -134,6 +134,47 @@ class GlobalRulesTests(unittest.TestCase):
         self.assertTrue(result["applied"])
         self.assertTrue(self.rules.read_bytes().startswith(original))
 
+    def test_uninstall_rechecks_managed_ownership_after_preview(self):
+        from tools.chef_global_rules import read_old
+        apply("install", self.template, self.home, confirmed=True)
+        original = self.rules.read_bytes()
+        changed = original.replace(b"Only public", b"Private concurrent")
+        reads = 0
+        def concurrent_read(path):
+            nonlocal reads
+            reads += 1
+            if reads == 2:
+                self.rules.write_bytes(changed)
+            return read_old(path)
+        before_backups = list((self.home / ".aka-chef-backups").glob("*")) if (self.home / ".aka-chef-backups").exists() else []
+        with patch("tools.chef_global_rules.read_old", side_effect=concurrent_read):
+            with self.assertRaises(GlobalRulesError):
+                apply("uninstall", self.template, self.home, confirmed=True)
+        self.assertEqual(self.rules.read_bytes(), changed)
+        after_backups = list((self.home / ".aka-chef-backups").glob("*")) if (self.home / ".aka-chef-backups").exists() else []
+        self.assertEqual(before_backups, after_backups)
+
+    def test_second_read_rechecks_idempotent_state_without_writing(self):
+        from tools.chef_global_rules import managed_block, read_old
+        for action in ("install", "uninstall"):
+            with self.subTest(action=action):
+                self.home.mkdir(exist_ok=True)
+                block = (managed_block(self.template) + "\n").encode()
+                self.rules.write_bytes(b"private\n" if action == "install" else block)
+                changed = block if action == "install" else b"private\r\n"
+                reads = 0
+                def concurrent_read(path):
+                    nonlocal reads
+                    reads += 1
+                    if reads == 2:
+                        self.rules.write_bytes(changed)
+                    return read_old(path)
+                with patch("tools.chef_global_rules.read_old", side_effect=concurrent_read):
+                    result = apply(action, self.template, self.home, confirmed=True)
+                self.assertFalse(result["applied"])
+                self.assertEqual(self.rules.read_bytes(), changed)
+                self.assertFalse((self.home / ".aka-chef-backups").exists())
+
     def test_wrong_template_not_accepted(self):
         self.template.write_text(START + "\nunsafe\n" + END, encoding="utf-8")
         with self.assertRaises(GlobalRulesError):

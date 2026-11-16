@@ -116,6 +116,13 @@ def apply(action, template, home=None, confirmed=False):
     old = read_old(path)
     span = locate(old)
     block = managed_block(template)
+    # The destination may change after preview. Recheck ownership on these bytes.
+    if span and not same_block(old[span[0]:span[1]], block):
+        raise GlobalRulesError("managed block modified; refusing overwrite")
+    if action == "install" and span:
+        return {**info, "state": "already_installed"}
+    if action == "uninstall" and not span:
+        return {**info, "state": "NOT_INSTALLED"}
     if action == "install":
         # Do not alter a pre-existing project/user policy; append a clearly owned section.
         new = append_block(old, block)
