@@ -107,6 +107,28 @@ class UniversalChefTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             uc.inspect("workbuddy", alias)
 
+    def test_uninstall_preserves_existing_rules_and_archives_owned_skills(self):
+        original = b"# Private rules intact\n"
+        path = self.project / "AGENTS.md"
+        path.write_bytes(original)
+        uc.install("opencode", self.project, apply=True)
+        preview = uc.uninstall("opencode", self.project)
+        self.assertEqual(preview["status"], "UNINSTALL_PREVIEW")
+        self.assertIn(b"AKA.CRISTI", path.read_bytes())
+        result = uc.uninstall("opencode", self.project, apply=True)
+        self.assertEqual(result["status"], "UNINSTALLED")
+        self.assertEqual(path.read_bytes(), original)
+        self.assertFalse((self.project / ".opencode" / "agents" / "aka_qa.md").exists())
+        self.assertFalse((self.project / ".opencode" / "skills" / "chef-orchestrator").exists())
+
+    def test_modified_agent_blocks_uninstall(self):
+        uc.install("workbuddy", self.project, apply=True)
+        target = self.project / ".codebuddy" / "agents" / "aka_qa.md"
+        target.write_text("custom edited", encoding="utf-8")
+        result = uc.uninstall("workbuddy", self.project, apply=True)
+        self.assertEqual(result["status"], "CONFLICT")
+        self.assertEqual(target.read_text(encoding="utf-8"), "custom edited")
+
     def test_codex_reuses_existing_native_core(self):
         with patch.object(uc.quick_install, "execute", return_value={"status": "PREVIEW"}) as mocked:
             data = uc.inspect("codex")
