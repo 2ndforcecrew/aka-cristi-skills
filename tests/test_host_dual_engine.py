@@ -85,7 +85,8 @@ class HostDualEngineTests(unittest.TestCase):
                 "studio", "review", self.repo, self.db, host="gemini",
                 authorize_inference=True)
         self.assertEqual(result["status"], "BLOCKED")
-        self.assertEqual(result["qa"], "NOT_RUN")
+        self.assertEqual(result["qa"]["status"], "FAILED")
+        self.assertEqual(result["qa"]["reason"], "missing output or independent thread identity")
 
 
 if __name__ == "__main__":
