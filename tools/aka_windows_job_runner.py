@@ -65,7 +65,7 @@ class JobTimeout(TimeoutError):
     """The probe exceeded its allotted time."""
 
 
-def run_in_job(command, cwd, timeout):
+def run_in_job(command, cwd, timeout, env=None):
     """Run the child under kill-on-close, rejecting assignment failures.
 
     Does not guarantee race-free containment or MCP/network/credential isolation.
@@ -83,7 +83,7 @@ def run_in_job(command, cwd, timeout):
         ):
             raise JobError("SetInformationJobObject failed")
         proc = subprocess.Popen(
-            command, cwd=cwd, stdin=subprocess.DEVNULL,
+            command, cwd=cwd, env=env, stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         )
         if not _kernel.AssignProcessToJobObject(job, wintypes.HANDLE(int(proc._handle))):
