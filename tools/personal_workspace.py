@@ -264,7 +264,7 @@ class WorkspaceController:
         return repo
 
     def select_repository(self, name: str = DEFAULT_REPOSITORY, confirmed: bool = False,
-                          reuse: bool = False) -> dict[str, Any]:
+                          reuse: bool = False, resume: bool = False) -> dict[str, Any]:
         if not isinstance(name, str) or not NAME.fullmatch(name) or name in ('.', '..'):
             raise _error('NAME_INVALID')
         if name.casefold() == 'aka-cristi-agent-rules':
@@ -283,7 +283,11 @@ class WorkspaceController:
                 repo = self.client.create_private_repo(name, confirmed=True)
             else:
                 self._verified_repo(repo, account['login'], name)
-                if not reuse or not confirmed:
+                # Resume only the exact persisted selection after fresh remote checks.
+                # An unselected existing repository still needs explicit reuse consent.
+                selected = (resume and self._settings['owner'] == account['login']
+                            and self._settings['repository'] == name)
+                if not confirmed or not (reuse or selected):
                     return {'status': 'REUSE_REQUIRED', 'name': name, 'private': True}
             repo = self._verified_repo(repo, account['login'], name)
             self._save(owner=account['login'], repository=name, setup_seen=True)

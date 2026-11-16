@@ -174,6 +174,47 @@ class OneClickTests(unittest.TestCase):
                          [('create', 'my-agent-workspace'), ('initialize', 'my-agent-workspace')])
         self.assertEqual(self.controller.status()['sync_status'], 'SYNCED')
 
+    def test_new_controller_resumes_previously_selected_repository(self) -> None:
+        self.client.fail_initialize_code = 'INITIALIZATION_CONFLICT'
+        first = self.setup.run(confirmed=True)
+        self.assertEqual(first['step'], 'initialize')
+        self.client.fail_initialize_code = None
+        resumed = OneClickSetup(WorkspaceController(**self.options)).run(confirmed=True)
+        self.assertEqual(resumed['status'], 'COMPLETED')
+        self.assertEqual(self.client.connect_calls, 1)
+        self.assertEqual(self.client.writes,
+                         [('create', 'my-agent-workspace'), ('initialize', 'my-agent-workspace')])
+
+    def test_resume_rechecks_repository_security_before_remote_writes(self) -> None:
+        self.assertEqual(self.setup.run(confirmed=True)['status'], 'COMPLETED')
+        original = copy.deepcopy(self.client.repositories['my-agent-workspace'])
+        writes = list(self.client.writes)
+        rules = self.options['codex_home'] / 'AGENTS.md'
+        original_rules = rules.read_bytes()
+        for changes, code in (
+                ({'private': False}, 'REPO_NOT_PRIVATE'),
+                ({'permissions': {'push': False}}, 'REPO_NOT_PRIVATE'),
+                ({'owner': 'mallory'}, 'OWNER_MISMATCH'),
+                ({'html_url': 'https://example.invalid/work'}, 'OWNER_MISMATCH')):
+            with self.subTest(changes=changes):
+                self.client.repositories['my-agent-workspace'] = {**original, **changes}
+                result = self.setup.run(confirmed=True)
+                self.assertEqual(result['status'], 'STOPPED')
+                self.assertEqual(result['step'], 'repository')
+                self.assertEqual(result['code'], code)
+                self.assertEqual(self.client.writes, writes)
+                self.assertEqual(rules.read_bytes(), original_rules)
+
+    def test_changed_account_cannot_resume_previous_repository(self) -> None:
+        self.assertEqual(self.setup.run(confirmed=True)['status'], 'COMPLETED')
+        writes = list(self.client.writes)
+        self.client.login = 'bob'
+        result = self.setup.run(confirmed=True)
+        self.assertEqual(result['status'], 'STOPPED')
+        self.assertEqual(result['step'], 'repository')
+        self.assertEqual(result['code'], 'OWNER_MISMATCH')
+        self.assertEqual(self.client.writes, writes)
+
     def test_existing_repo_reuses_without_overwrite(self) -> None:
         self.client.create_private_repo('my-agent-workspace', confirmed=True)
         self.client.writes.clear()
