@@ -148,6 +148,8 @@ def orchestrate(kind, prompt, workspace, db_path, timeout=300, *,
             raise ValueError("No verified host runtime adapter")
         if not authorize_inference:
             raise ValueError("Explicit --authorize-inference required for non-Codex hosts")
+        if timeout > 1800:
+            raise ValueError("Non-Codex host runtime timeout must not exceed 1800 seconds")
     if not 1 <= timeout <= 3600:
         raise ValueError("timeout must be 1..3600")
     workspace = Path(workspace).resolve(strict=True)
@@ -249,7 +251,7 @@ def orchestrate(kind, prompt, workspace, db_path, timeout=300, *,
                         _git(target, "-c", "user.name=CHEF proposal", "-c", "user.email=chef@example.invalid",
                              "-c", "core.hooksPath=/dev/null", "-c", "commit.gpgSign=false", "commit", "--quiet", "--allow-empty", "-m", "CHEF isolated proposal")
                         result["snapshot"] = _git(target, "rev-parse", "HEAD").decode().strip()
-            except (OSError, subprocess.SubprocessError) as exc:
+            except (OSError, ValueError, subprocess.SubprocessError) as exc:
                 result = dict(status="FAILED", reason=type(exc).__name__, workspace=str(target))
             results[role] = result
             db.execute("UPDATE attempts SET result=? WHERE task_id=? AND role=? AND attempt=?", (json.dumps(result), task_id, role, attempt))
