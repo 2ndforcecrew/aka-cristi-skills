@@ -176,8 +176,11 @@ def run(host, role, objective, workspace, *, consent=False, allow_risky_host=Fal
         preview["reason"] = spec["reason"]
         return preview
     # No prompt in returned preview; keep sensitive prompts out of command logs.
-    preview["argv_preview"] = [a if a != spec["command"][-1] or len(a) < 80
-                               else "<PROMPT_REDACTED>" for a in spec["command"]]
+    redacted_prompt = _role_prompt(role, objective)
+    preview["argv_preview"] = [
+        "<PROMPT_REDACTED>" if arg == redacted_prompt else arg
+        for arg in spec["command"]
+    ]
     if not consent:
         return preview
     binary = shutil.which(HOSTS[host])
