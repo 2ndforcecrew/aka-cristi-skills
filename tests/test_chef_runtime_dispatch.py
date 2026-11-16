@@ -1,5 +1,6 @@
 """Contract tests for read-only CLI dispatch. Fake results NEVER count as live acceptance."""
 import json
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -114,6 +115,29 @@ class HostRuntimeTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 rt.run("claude", "studio", "Review", self.project,
                        allow_quota=True, out=filepath)
+
+    def test_real_local_subprocess_transport_no_model_invocation(self):
+        """Use an actual Python child, not an AI host. Does not prove AI acceptance."""
+        payload = json.dumps({"result": "Synthetic test only",
+                              "session_id": "synthetic-98765"})
+        script = "import sys; sys.stdout.write(" + repr(payload) + ")"
+        raw = rt._spawn([sys.executable, "-c", script], self.project, 8)
+        self.assertIsNone(raw["error"])
+        parsed = rt._parse_result("claude", raw)
+        self.assertEqual(parsed["status"], "INVOCATION_OBSERVED")
+        self.assertEqual(parsed["session_id"], "synthetic-98765")
+
+    def test_real_local_child_timeout_stops(self):
+        raw = rt._spawn([sys.executable, "-c",
+                         "import time; time.sleep(8)"], self.project, 1)
+        self.assertEqual(raw["error"], "HOST_TIMEOUT")
+
+    def test_bounded_stdout_with_no_model_calls(self):
+        raw = rt._spawn([sys.executable, "-c",
+                         "import sys; sys.stdout.write('x'*1100000)"],
+                        self.project, 10)
+        self.assertEqual(raw["error"], "OUTPUT_TOO_LARGE")
+        self.assertEqual(raw["stdout"], "")
 
     def test_invalid_inputs_fail_before_spawning(self):
         with patch.object(rt, "_spawn") as spawn:
