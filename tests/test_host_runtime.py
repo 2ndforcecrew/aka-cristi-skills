@@ -20,7 +20,8 @@ class HostRuntimeTests(unittest.TestCase):
             preview = hr.run("claude", "qa", "inspect secret TEST_KEY", self.cwd)
         self.assertEqual(preview["status"], "READY_FOR_EXPLICIT_AUTHORIZATION")
         self.assertNotIn("TEST_KEY", json.dumps(preview))
-        self.assertIn("<PROMPT_REDACTED>", preview["argv_preview"])
+        self.assertNotIn("TEST_KEY", " ".join(preview["argv_preview"]))
+        self.assertNotIn("TEST_KEY", str(preview))
         start.assert_not_called()
 
     def test_host_tools_require_separate_permission_approval(self):
@@ -107,6 +108,8 @@ class HostRuntimeTests(unittest.TestCase):
         self.assertEqual(data["sandbox"], "HOST_POLICY_ONLY")
         self.assertFalse(launch.call_args.kwargs.get("shell", False))
         self.assertIn("--permission-mode", launch.call_args.args[0])
+        self.assertNotIn("Read this repository", " ".join(launch.call_args.args[0]))
+        self.assertIn("Read this repository", process.communicate.call_args.kwargs["input"])
 
     def test_invalid_timeout_and_unsafe_workspace(self):
         with self.assertRaises(ValueError):
