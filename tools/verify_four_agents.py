@@ -327,13 +327,27 @@ def run(timeout=600, codex_bin="codex", codex_home=None, role_source=None):
                    "-c", "features.multi_agent=true",
                    "-c", "features.unified_exec=false", *overrides, prompt]
         result["invoked"] = True
-        try:
-            proc = subprocess.run(command, cwd=wd, capture_output=True,
-                                  timeout=timeout, check=False)
-        except subprocess.TimeoutExpired:
-            return {**result, "status": "FAIL", "reason": "Codex session timed out"}
-        except OSError:
-            return {**result, "status": "FAIL", "reason": "Codex failed to start"}
+        if os.name == "nt":
+            try:
+                from aka_windows_job_runner import JobError, JobTimeout, run_in_job
+                proc = run_in_job(command, wd, timeout)
+            except JobTimeout:
+                return {**result, "status": "FAIL",
+                        "reason": "Codex session timed out; Windows Job Object closed",
+                        "descendants_verified_terminated": False}
+            except (OSError, JobError) as exc:
+                return {**result, "status": "FAIL",
+                        "reason": "Windows Job Object setup or process launch failed",
+                        "failure_type": type(exc).__name__}
+        else:
+            try:
+                proc = subprocess.run(command, cwd=wd, capture_output=True,
+                                      timeout=timeout, check=False)
+            except subprocess.TimeoutExpired:
+                return {**result, "status": "FAIL",
+                        "reason": "Codex session timed out (POSIX tree unverified)"}
+            except OSError:
+                return {**result, "status": "FAIL", "reason": "Codex failed to start"}
         events = json_lines(proc.stdout)
         root_thread = next((x.get("thread_id") for x in events
                             if x.get("type") == "thread.started"), None)
