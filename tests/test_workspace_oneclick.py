@@ -184,6 +184,19 @@ class OneClickTests(unittest.TestCase):
         self.assertEqual(self.client.writes, [])
         # Existing private repositories require separate consent in the manual wizard.
 
+    def test_previous_selection_of_different_repository_cannot_reuse_default(self) -> None:
+        first = self.setup.run(confirmed=True)
+        self.assertEqual(first['status'], 'COMPLETED')
+        self.client.create_private_repo('different-workspace', confirmed=True)
+        explicit = self.controller.select_repository('different-workspace', confirmed=True, reuse=True)
+        self.assertEqual(explicit['status'], 'SELECTED')
+        before = list(self.client.writes)
+        again = self.setup.run(confirmed=True)
+        self.assertEqual(again['status'], 'STOPPED')
+        self.assertEqual(again['step'], 'repository')
+        self.assertEqual(again['code'], 'REUSE_REQUIRED')
+        self.assertEqual(before, self.client.writes)
+
     def test_initialize_mismatch_stops_before_sync(self) -> None:
         self.client.fail_initialize_code = 'INITIALIZATION_CONFLICT'
         result = self.setup.run(confirmed=True)
