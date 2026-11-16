@@ -58,7 +58,7 @@ def validate_skill(root: Path) -> dict[str, object]:
             name = fields.get("name", "")
             if not NAME_RE.fullmatch(name) or len(name) > 64:
                 finding("INVALID_NAME", "name must be lowercase kebab-case, up to 64 characters.")
-            if not fields.get("description"):
+            if not fields.get("description") or fields.get("description") in (">", "|", ">-", "|-"):
                 # Multiline YAML descriptions require a real parser; flag for review, not false PASS.
                 finding("DESCRIPTION_REVIEW", "description missing or multiline; manually review YAML.", "warning")
             if not any(line.strip() for line in lines[closing + 1:]):
