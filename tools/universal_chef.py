@@ -323,9 +323,69 @@ def verify(host, project=None, hermes_skills_root=None, scope="project"):
             "next": "Restart the host and verify native role selection and actual threads."}
 
 
+
+def uninstall(host, project=None, apply=False, hermes_skills_root=None,
+              scope="project"):
+    """Remove only our verified files and managed rule block; archive owned Skills."""
+    if host == "codex":
+        raise InstallError("Use existing Codex component uninstall commands")
+    plan = inspect(host, project, hermes_skills_root, scope)
+    if plan["conflicts"]:
+        return {"host": host, "status": "CONFLICT", "conflicts": plan["conflicts"]}
+    if any(x["action"] != "ALREADY_INSTALLED" for x in plan["files"].values()):
+        return {"host": host, "status": "NOT_INSTALLED"}
+    if plan["skills_root"] and any(x["action"] != "already_installed"
+                                    for x in plan["skills"].values()):
+        return {"host": host, "status": "NOT_INSTALLED"}
+    if not apply:
+        return {"host": host, "status": "UNINSTALL_PREVIEW",
+                "managed_paths": list(plan["files"]), "skills": list(plan["skills"])}
+    root = Path(plan["project"])
+    state_path = _state_file(root, host)
+    rule_rel, _, _ = USER_FILES[host] if scope == "user" else FILES[host]
+    before_state = state_path.read_bytes()
+    changed = []
+    uninstalled_skills = []
+    try:
+        for rel in plan["files"]:
+            target = _safe(root / rel)
+            before = target.read_bytes()
+            if rel == rule_rel and host in APPEND_RULES:
+                left, segment, right = _split_rule(before, host)
+                after = left + right
+                if not after:
+                    target.unlink()
+                else:
+                    _atomic_write(target, after)
+            else:
+                target.unlink()
+            changed.append((target, before))
+        if plan["skills_root"]:
+            for skill in SKILLS:
+                skill_installer.remove(skill, target="directory",
+                                       root=plan["skills_root"], apply=True)
+                uninstalled_skills.append(skill)
+        state_path.unlink()
+    except Exception:
+        for target, before in reversed(changed):
+            _atomic_write(target, before)
+        for skill in uninstalled_skills:
+            try:
+                skill_installer.install(ROOT / "skills" / skill, target="directory",
+                                        root=plan["skills_root"], apply=True)
+            except (OSError, ValueError):
+                pass
+        _atomic_write(state_path, before_state)
+        raise
+    return {"host": host, "status": "UNINSTALLED",
+            "removed_managed_files": len(changed),
+            "archived_skills": uninstalled_skills,
+            "host_activation": "NOT_RUN"}
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description="AKA.CRISTI universal host project adapter")
-    p.add_argument("action", choices=("preview", "install", "verify"))
+    p.add_argument("action", choices=("preview", "install", "verify", "uninstall"))
     p.add_argument("--host", choices=HOSTS, required=True)
     p.add_argument("--scope", choices=("project", "user"), default="project")
     p.add_argument("--project", type=Path)
@@ -337,7 +397,26 @@ def main(argv=None):
     if args.interactive and args.apply:
         p.error("Choose --apply or --interactive")
     try:
-        if args.action == "verify":
+        if args.action == "uninstall":
+            preview = uninstall(args.host, args.project,
+                                hermes_skills_root=args.hermes_skills_root,
+                                scope=args.scope)
+            if preview["status"] != "UNINSTALL_PREVIEW":
+                report = preview
+            elif args.apply or args.interactive:
+                consent = args.apply
+                if args.interactive:
+                    print(json.dumps(preview, ensure_ascii=True, indent=2), flush=True)
+                    try:
+                        consent = input("Type UNINSTALL to remove CHEF managed config: ").strip() == "UNINSTALL"
+                    except (EOFError, KeyboardInterrupt):
+                        consent = False
+                report = (uninstall(args.host, args.project, apply=True,
+                                    hermes_skills_root=args.hermes_skills_root,
+                                    scope=args.scope) if consent else {"status": "CANCELLED"})
+            else:
+                report = preview
+        elif args.action == "verify":
             report = verify(args.host, args.project, args.hermes_skills_root,
                             scope=args.scope)
         else:
