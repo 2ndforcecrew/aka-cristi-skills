@@ -114,7 +114,7 @@ git clone --depth 1 https://github.com/2ndforcecrew/aka-cristi-skills.git && cd 
 
 没有终端访问权限的 Agent 只能指导安装，不能直接操作你的电脑。
 
-**更保守的安装方式：** 仅安装 Codex 核心配置，可运行 `python3 -m tools.quick_install --interactive`（Windows 用 `py -3`）。`v1.0.0-beta.2` 是历史 Codex-first Beta；新版 `v1.0.0-beta.3` 将通用宿主源码安装器一起打包。
+**更保守的安装方式：** 仅安装 Codex 核心配置，可运行 `python3 -m tools.quick_install --interactive`（Windows 用 `py -3`）。`v1.0.0-beta.2` 是历史 Codex-first Beta；新版 `v1.0.0-beta.3` 已把通用宿主源码安装器一起打包并公开发布。
 
 <a id="vision"></a>
 ## 02 / CORE CONCEPT — CHEF、Skills、Agents 与双引擎
@@ -308,7 +308,7 @@ python3 -m tools.chef_dual_engine --kind hybrid --prompt "修复一个小问题�
 
 | 类别 | 状态 | 说明 |
 | --- | --- | --- |
-| **公开发布** | **已完成 Beta** | [`v1.0.0-beta.3`](https://github.com/2ndforcecrew/aka-cristi-skills/releases/tag/v1.0.0-beta.3) 将提供 Windows EXE、源码 ZIP、SHA-256、GitHub provenance |
+| **公开发布** | **已完成 Beta** | [`v1.0.0-beta.3`](https://github.com/2ndforcecrew/aka-cristi-skills/releases/tag/v1.0.0-beta.3) 已提供 Windows EXE、源码 ZIP、SHA-256、GitHub provenance |
 | **CHEF + 4 Skills + 4 角色配置** | **已实现** | 可本地预览、安装、校验；不是自动启动所有 Agent |
 | **跨平台 CI** | **已通过相应测试** | Windows、macOS、Ubuntu；不代表所有外部用户环境 |
 | **Dual-Engine Factory / Studio** | **实验性运行时** | 隔离执行、SQLite、恢复、QA；尚无完整真实 Codex E2E |
