@@ -118,7 +118,8 @@ def run(name, codex="codex", timeout=180, root=None):
                 except ModuleNotFoundError:
                     from aka_windows_job_runner import JobError, JobTimeout, run_in_job
                 proc = run_in_job(args, workspace, timeout, env=probe_env)
-                proc.stdout = proc.stdout.decode("utf-8", errors="replace")
+                proc.stdout = (proc.stdout.decode("utf-8", errors="replace")
+                               if isinstance(proc.stdout, bytes) else proc.stdout)
             except JobTimeout:
                 return {**result, "status": "FAIL", "reason": "Agent timed out; Job Object closed",
                         "descendants_verified_terminated": False}
