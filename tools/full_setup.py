@@ -14,7 +14,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from tools import quick_install
+from tools import quick_install, universal_chef
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKSPACE_REQ = ROOT / "requirements-workspace.txt"
@@ -47,10 +47,58 @@ def _approve(question, input_fn):
         return False
 
 
+def _run_portable_host(*, host, project, apply, interactive, workspace,
+                       test_agents, hermes_skills_root, input_fn):
+    """Install native project rules + Skills + roles, never fake runtime activation."""
+    plan = universal_chef.inspect(host, project, hermes_skills_root)
+    report = {
+        "host": host,
+        "preflight": dependency_status(),
+        "preview": plan,
+        "core_install": "PREVIEW_ONLY",
+        "workspace": "NOT_RUN",
+        "live_agents": "NOT_RUN",
+        "dual_engine": "CODEX_CLI_BACKEND_ONLY",
+    }
+    if plan["status"] == "CONFLICT":
+        report["core_install"] = "CONFLICT"
+        return report
+    if not (apply or interactive):
+        return report
+    if interactive and not _approve(
+        "Install native CHEF project rules, four role definitions and four Skills?",
+        input_fn,
+    ):
+        report["core_install"] = "CANCELLED"
+        return report
+    installed = universal_chef.install(
+        host, project, apply=True, hermes_skills_root=hermes_skills_root
+    )
+    report["core_install"] = installed["status"]
+    report["host_file_verification"] = installed
+    if workspace:
+        report["workspace"] = "CODEX_ONBOARDING_ONLY"
+    if test_agents:
+        report["live_agents"] = "HOST_NATIVE_RUNTIME_NOT_VERIFIED"
+    report["next_action"] = (
+        "Open a NEW host session in the selected project; inspect its loaded "
+        "rules/Skills/roles and perform a separately authorized real subagent "
+        "handoff test. File installation is not runtime activation."
+    )
+    return report
+
+
 def run(*, apply=False, interactive=False, workspace=False, test_agents=False,
-        codex_home=None, skills_root=None, input_fn=input):
+        codex_home=None, skills_root=None, input_fn=input, host="codex",
+        project=None, hermes_skills_root=None):
     if apply and interactive:
         raise ValueError("Choose --interactive or --apply, not both")
+    if host != "codex":
+        return _run_portable_host(
+            host=host, project=project, apply=apply, interactive=interactive,
+            workspace=workspace, test_agents=test_agents,
+            hermes_skills_root=hermes_skills_root, input_fn=input_fn,
+        )
     before = dependency_status()
     preview = quick_install.execute(codex_home=codex_home, skills_root=skills_root)
     report = {
@@ -161,13 +209,21 @@ def main(argv=None):
                         help="optionally prepare private workspace; cloud changes require interactive approval")
     parser.add_argument("--test-agents", action="store_true",
                         help="optionally test real four-role invocation with separate consent")
+    parser.add_argument("--host", choices=universal_chef.HOSTS, default="codex",
+                        help="host-specific native configuration; Codex remains user-scoped")
+    parser.add_argument("--project", type=Path,
+                        help="existing target project required for non-Codex hosts")
+    parser.add_argument("--hermes-skills-root", type=Path,
+                        help="explicit user Hermes Skills directory when authorized")
     parser.add_argument("--codex-home", type=Path)
     parser.add_argument("--skills-root", type=Path)
     args = parser.parse_args(argv)
     try:
         result = run(apply=args.apply, interactive=args.interactive,
                      workspace=args.workspace, test_agents=args.test_agents,
-                     codex_home=args.codex_home, skills_root=args.skills_root)
+                     codex_home=args.codex_home, skills_root=args.skills_root,
+                     host=args.host, project=args.project,
+                     hermes_skills_root=args.hermes_skills_root)
         print(json.dumps(result, ensure_ascii=True, indent=2))
         return 1 if result.get("core_install") not in (
             "PREVIEW_ONLY", "CANCELLED", "FILES_VERIFIED",
