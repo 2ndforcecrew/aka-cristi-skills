@@ -147,7 +147,7 @@ def inspect(host, project=None, hermes_skills_root=None):
                 "codex": quick_install.execute(), "activation": "NOT_RUN"}
     if project is None:
         raise InstallError("Non-Codex hosts require --project")
-    project = _safe(Path(project).expanduser().resolve(strict=True))
+    project = _safe(Path(project).expanduser().absolute()).resolve(strict=True)
     if not project.is_dir():
         raise InstallError("Project must be a directory")
     rule_rel, agent_dir, skills_dir = FILES[host]
