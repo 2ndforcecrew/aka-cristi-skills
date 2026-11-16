@@ -1,4 +1,4 @@
-name: Publish verified Codex-first Windows beta v1.0.0-beta.1
+name: Publish verified Codex-first Windows beta v1.0.0-beta.2
 
 on:
   push:
@@ -28,19 +28,31 @@ jobs:
           python-version: '3.11'
       - name: Source regression tests
         run: python -m unittest discover -s tests -v
+      - name: Assert unified one-command installer is present and executable
+        run: |
+          git ls-files --error-unmatch tools/quick_install.py tests/test_quick_install.py
+          python -m unittest discover -s tests -p 'test_quick_install.py' -v
+          python -m tools.quick_install --help
       - name: Deterministic archive twice
         shell: bash
         run: |
-          python -m tools.release_package --commit "$GITHUB_SHA" --version 1.0.0-beta.1 --out candidate
-          python -m tools.release_package --commit "$GITHUB_SHA" --version 1.0.0-beta.1 --out comparison
-          cmp candidate/aka-cristi-skills-1.0.0-beta.1.zip comparison/aka-cristi-skills-1.0.0-beta.1.zip
+          python -m tools.release_package --commit "$GITHUB_SHA" --version 1.0.0-beta.2 --out candidate
+          python -m tools.release_package --commit "$GITHUB_SHA" --version 1.0.0-beta.2 --out comparison
+          cmp candidate/aka-cristi-skills-1.0.0-beta.2.zip comparison/aka-cristi-skills-1.0.0-beta.2.zip
+          python - <<'PY'
+          import os, zipfile
+          with zipfile.ZipFile('candidate/aka-cristi-skills-1.0.0-beta.2.zip') as archive:
+              names = archive.namelist()
+              assert any(n.endswith('/tools/quick_install.py') for n in names), 'Missing unified CLI installer'
+              assert any(n.endswith('/tests/test_quick_install.py') for n in names), 'Missing quick installer tests'
+          PY
       - name: GitHub provenance for exact source files
         id: attest
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
         with:
           create-storage-record: false
           subject-path: |
-            candidate/aka-cristi-skills-1.0.0-beta.1.zip
+            candidate/aka-cristi-skills-1.0.0-beta.2.zip
             candidate/release-manifest.json
       - name: Preserve source proof
         env:
@@ -110,7 +122,7 @@ jobs:
           from pathlib import Path
           names = ('AKA-CRISTI-CHEF-Setup.exe','bundled-public-data.json','exe-smoke-evidence.txt')
           files = {name: hashlib.sha256((Path('dist')/name).read_bytes()).hexdigest() for name in names}
-          manifest = {'source_commit':os.environ['GITHUB_SHA'],'source_ref':os.environ['GITHUB_REF'],'version':'v1.0.0-beta.1','files':files,'authenticode':'NOT_SIGNED','external_windows_uat':'NOT_RUN','agent_activation':'NOT_RUN','workflow':'.github/workflows/beta-release.yml'}
+          manifest = {'source_commit':os.environ['GITHUB_SHA'],'source_ref':os.environ['GITHUB_REF'],'version':'v1.0.0-beta.2','files':files,'authenticode':'NOT_SIGNED','external_windows_uat':'NOT_RUN','agent_activation':'NOT_RUN','workflow':'.github/workflows/beta-release.yml'}
           Path('dist/gui-candidate-manifest.json').write_text(json.dumps(manifest,indent=2,sort_keys=True),encoding='utf-8')
           '@ | python -
           if ($LASTEXITCODE -ne 0) { throw 'Manifest generation failed' }
@@ -182,7 +194,7 @@ jobs:
           m=re.search(r'gh version (\d+)\.(\d+)\.(\d+)',result.stdout)
           assert m and tuple(map(int,m.groups())) >= (2,102,0),'gh 2.102.0+ required'
           PY
-          for f in publish/source/aka-cristi-skills-1.0.0-beta.1.zip publish/source/release-manifest.json; do
+          for f in publish/source/aka-cristi-skills-1.0.0-beta.2.zip publish/source/release-manifest.json; do
             gh attestation verify "$f" --bundle publish/source/provenance.sigstore.json --repo 2ndforcecrew/aka-cristi-skills --signer-workflow 2ndforcecrew/aka-cristi-skills/.github/workflows/beta-release.yml --signer-digest "$GITHUB_SHA" --source-digest "$GITHUB_SHA" --source-ref "$GITHUB_REF" --predicate-type https://slsa.dev/provenance/v1
           done
           for f in publish/gui/AKA-CRISTI-CHEF-Setup.exe publish/gui/gui-candidate-manifest.json publish/gui/bundled-public-data.json publish/gui/exe-smoke-evidence.txt; do
@@ -194,16 +206,30 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if gh release view v1.0.0-beta.1 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+          if gh release view v1.0.0-beta.2 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo "Beta release already exists; refusing overwrite"
             exit 1
           fi
           cat > release-notes.md <<'EOF'
-          # AKA.CRISTI Skills v1.0.0-beta.1 — Windows public beta
+          # AKA.CRISTI Skills v1.0.0-beta.2 — Windows public beta
 
           **公开测试版，不是稳定版。仅建议在隔离的 Windows 11 测试用户配置或虚拟机中使用。**
 
           包含 Codex-first CHEF 工作规则、四个方法论 Skills、四个 Codex 角色定义、受控本地安装器与 Windows GUI。
+
+          **本版本新增：一条命令安装 Codex 核心配置（Windows / macOS / Ubuntu）**。准备 Git 与 Python 3.11+，打开终端执行：
+
+          Windows PowerShell：
+          ```powershell
+          git clone https://github.com/2ndforcecrew/aka-cristi-skills.git; if ($LASTEXITCODE -ne 0) { throw 'Clone failed' }; cd aka-cristi-skills; git checkout v1.0.0-beta.2; if ($LASTEXITCODE -ne 0) { throw 'Tag checkout failed' }; py -3 -m tools.quick_install --interactive
+          ```
+
+          macOS / Ubuntu / Linux：
+          ```bash
+          git clone https://github.com/2ndforcecrew/aka-cristi-skills.git && cd aka-cristi-skills && git checkout v1.0.0-beta.2 && python3 -m tools.quick_install --interactive
+          ```
+
+          安装器先显示完整预览；**用户必须输入 `INSTALL`** 才会安装 CHEF 全局 AGENTS.md、4 个 Skills 和 4 个 Codex 自定义角色，并执行文件完整性校验。只会调用本地安装逻辑，不会自动登录 Codex 或使用推理额度。安装前检查仓库来源及文件变更；如果已有同名目录，请先备份并阅读差异。
 
           **下载前核验：** 附件包括 Windows EXE、源码 ZIP、对应 SHA-256 manifest 以及 GitHub OIDC / Sigstore 来源证明。GitHub 来源证明不等于 Windows Authenticode 证书；此 EXE **没有 Authenticode 签名**，可能出现 Windows 安全警告。不要绕过组织安全策略或忽略来源校验。
 
@@ -213,8 +239,8 @@ jobs:
 
           参考 [Windows GUI 限制](https://github.com/2ndforcecrew/aka-cristi-skills/blob/main/docs/WINDOWS_GUI.md)、[Beta 验收说明](https://github.com/2ndforcecrew/aka-cristi-skills/blob/main/docs/CODEX_V1_RELEASE_ACCEPTANCE.md)。
           EOF
-          gh release create v1.0.0-beta.1 \
-            publish/source/aka-cristi-skills-1.0.0-beta.1.zip \
+          gh release create v1.0.0-beta.2 \
+            publish/source/aka-cristi-skills-1.0.0-beta.2.zip \
             publish/source/release-manifest.json \
             publish/source/provenance.sigstore.json \
             publish/gui/AKA-CRISTI-CHEF-Setup.exe \
@@ -223,5 +249,5 @@ jobs:
             publish/gui/bundled-public-data.json \
             publish/gui/exe-smoke-evidence.txt \
             --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
-            --prerelease --title 'AKA.CRISTI Skills v1.0.0-beta.1 (Windows Beta)' \
+            --prerelease --title 'AKA.CRISTI Skills v1.0.0-beta.2 (Windows Beta)' \
             --notes-file release-notes.md
