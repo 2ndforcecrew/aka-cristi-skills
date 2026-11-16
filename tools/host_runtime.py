@@ -65,15 +65,15 @@ def build(host, role, objective, workspace, *, allow_risky_host=False):
                 "executable": HOSTS[host], "cwd": str(project),
                 "command": None, "mode": "NOT_RUN"}
     if host == "workbuddy":
-        cmd = ["codebuddy", "--print", prompt, "--output-format", "json",
+        cmd = ["codebuddy", "--print", "--output-format", "json",
                "--permission-mode", "plan",
                "--disallowedTools", "Bash,Write,Edit,MultiEdit,NotebookEdit",
                "-y"]
-        stdin = None
+        stdin = prompt
     elif host == "claude":
-        cmd = ["claude", "--print", prompt, "--output-format", "json",
+        cmd = ["claude", "--print", "--output-format", "json",
                "--permission-mode", "plan", "--max-turns", "6"]
-        stdin = None
+        stdin = prompt
     elif host == "gemini":
         cmd = ["gemini", "--prompt", prompt, "--output-format", "stream-json",
                "--approval-mode", "plan"]
@@ -197,6 +197,8 @@ def run(host, role, objective, workspace, *, consent=False, allow_risky_host=Fal
             env={**os.environ, "CODEBUDDY_CODE_DISABLE_BACKGROUND_TASKS": "1"},
         )
         stdout, stderr = process.communicate(input=spec["stdin"], timeout=timeout)
+        if not isinstance(stdout, str):
+            return {**preview, "status": "INCONCLUSIVE", "reason": "HOST_STDOUT_UNREADABLE"}
         if len(stdout.encode("utf-8", errors="replace")) > MAX_OUTPUT:
             return {**preview, "status": "FAIL", "reason": "HOST_OUTPUT_TOO_LARGE"}
         parsed = _structured(stdout, host, process.returncode)
