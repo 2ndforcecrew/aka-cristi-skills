@@ -12,27 +12,25 @@ AKA.CRISTI Skills 是一套公開、可審查、可在本地安裝的 **AI Agent
 
 本倉庫是公開發行版，與 AKA.CRISTI 的私有開發倉庫分離；不會發布私有工作規則、賬號信息、客戶數據、私有歷史記錄。
 
-## 六項發佈門禁：整體仍未通過
+## 最新公開狀態：Codex Beta 已正式發佈
 
-Issues #8–#13 的六項工作已通過 PR #14 合入 main，但整體狀態仍爲 **BLOCKED**，**不是已批准的正式版本，也不是安全安裝建議**。詳見[六項驗收狀態](docs/SIX_GATE_STATUS.md)。原始“67 分、24 項”掃描報告缺失；本次固定基線重新執行 SkillSpector 2.12.0 `--no-llm`，得到 **56 分、23 項、DO_NOT_INSTALL**，兩者不能混爲一次掃描。詳見[安全複覈](docs/SECURITY_REVIEW_2026-11-15.md)。
+**[v1.0.0-beta.2 公開測試版](https://github.com/2ndforcecrew/aka-cristi-skills/releases/tag/v1.0.0-beta.2)** 已發佈，提供 CHEF 工作規則、四個 Skills、四個 Codex 角色設定，以及 Windows 圖形安裝器和跨平台命令安裝。**Windows / macOS / Ubuntu CI、Windows EXE 建置和 GitHub 來源證明已通過。** 這是 Beta，仍需獨立用戶驗收，並非所有 Agent 已完成真實調用驗證。
 
-舊版自動獲取 main ZIP 的 bootstrap 已改爲默認阻塞。固定 commit 的下載不等於驗籤；遠程來源必須先用獨立確認的 commit、SHA256、工作流身份與 provenance 驗證。不會自動執行未驗籤的 Codex 安裝腳本。前置依賴和來源審查仍需完成。
-
-已有 Python 3.11+、審查過完整本地源碼後，可在 main 上測試真實圖形窗口：
+Windows PowerShell（Git + Python 3.11+）：
 
 ```powershell
-python -m tools.gui_installer
+git clone https://github.com/2ndforcecrew/aka-cristi-skills.git; if ($LASTEXITCODE -ne 0) { throw 'Clone failed' }; cd aka-cristi-skills; git checkout v1.0.0-beta.2; if ($LASTEXITCODE -ne 0) { throw 'Tag checkout failed' }; py -3 -m tools.quick_install --interactive
 ```
 
-本地源碼可雙擊 `start-gui.cmd`。另新增 [Windows 獨立 EXE 候選構建](.github/workflows/windows-gui-candidate.yml)，僅打包 9 個公開數據文件，並進行真實控件/EXE 啓動測試及 GitHub 來源驗籤；不包含 Authenticode 證書。界面提供差異預覽、同意勾選、進度、文件校驗及受保護撤銷；缺依賴自動安裝、乾淨 Windows 11 與朋友首次安裝驗收仍爲 BLOCKED。安裝文件成功始終與真實 Agent 激活分開。
+macOS / Ubuntu / Linux（Git + Python 3.11+）：
 
-- [Windows GUI 與恢復](docs/WINDOWS_GUI.md)
-- [簽名候選、身份固定與驗籤](docs/RELEASE_VERIFICATION.md)
-- [Codex / Claude / Hermes / ChatGPT 能力矩陣](docs/HOST_CAPABILITY_MATRIX.md)
-- [獨立外部用戶驗收計劃](docs/EXTERNAL_UAT.md)
-- [嚴格四角色線程關聯](docs/FOUR_AGENT_EVIDENCE_V03.md)
+```bash
+git clone https://github.com/2ndforcecrew/aka-cristi-skills.git && cd aka-cristi-skills && git checkout v1.0.0-beta.2 && python3 -m tools.quick_install --interactive
+```
 
-Claude 目前只實現項目級 Skill 文件適配，真實調用 NOT_RUN；Hermes/ChatGPT BLOCKED。雲端實際嘗試過一次 Codex 調用，退出碼 1，未取得可歸屬線程，不能宣佈四角色通過。
+先檢查變更預覽，只有明確輸入 `INSTALL` 才會修改檔案；`FILES_VERIFIED` 指檔案驗證，**不是實際啟動四個 Agent 的證據**。Windows EXE 尚未有 Authenticode 簽名，請驗證 GitHub 來源並在獨立測試環境使用。
+
+**關於歷史掃描：** 舊版第三方 SkillSpector 的 `DO_NOT_INSTALL` 標記和檢測項目是當時固定快照的歷史資料，不是針對當前 `beta.2` 的即時安全判斷。它不是本專案安裝或發佈所必須的工具。歷史結果保留於 [審核記錄](docs/SECURITY_REVIEW_2026-11-15.md)，不能將「檢測項目」一概斷言為漏洞，也不能在沒有證據的情況下稱它們全部無風險。
 
 ## 一、核心功能
 
