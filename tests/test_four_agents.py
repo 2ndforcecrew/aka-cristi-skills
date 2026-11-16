@@ -17,7 +17,8 @@ def _mock_job_runner(fake_cli):
     """Synthetic mock for the Windows branch; NEVER runs a real Codex agent."""
     return patch.dict("sys.modules", {
         "tools.aka_windows_job_runner": SimpleNamespace(
-            JobError=RuntimeError, JobTimeout=TimeoutError, run_in_job=fake_cli)
+            JobError=RuntimeError, JobTimeout=TimeoutError,
+            run_in_job=lambda command, cwd, timeout, env=None: fake_cli(command, cwd=cwd, env=env))
     })
 
 
