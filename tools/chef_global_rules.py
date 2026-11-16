@@ -116,6 +116,13 @@ def apply(action, template, home=None, confirmed=False):
     old = read_old(path)
     span = locate(old)
     block = managed_block(template)
+    # The destination may change after preview. Recheck ownership on these bytes.
+    if span and not same_block(old[span[0]:span[1]], block):
+        raise GlobalRulesError("managed block modified; refusing overwrite")
+    if action == "install" and span:
+        return {**info, "state": "already_installed"}
+    if action == "uninstall" and not span:
+        return {**info, "state": "NOT_INSTALLED"}
     if action == "install":
         # Do not alter a pre-existing project/user policy; append a clearly owned section.
         new = append_block(old, block)
@@ -129,12 +136,10 @@ def apply(action, template, home=None, confirmed=False):
         stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
         backup = backup_folder / ("AGENTS-" + stamp + "-" + os.urandom(4).hex() + ".md")
         shutil.copy2(path, backup)
-    try:
-        write_atomic(path, new)
-    except Exception:
-        if backup is not None and backup.exists():
-            shutil.copy2(backup, path)
-        raise
+    # Atomic replacement either commits the new bytes or leaves the destination.
+    # A failed write must not restore over concurrent user edits or deletions.
+    # Retain the backup for explicit recovery after inspecting current ownership.
+    write_atomic(path, new)
     return {**info, "applied": True,
             "backup": str(backup) if backup else None,
             "post_state": plan("verify", template, home)["state"]}

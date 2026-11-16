@@ -23,3 +23,10 @@
 - Isolated Skill probes failed before model execution because a non-Git temporary directory lacked --skip-git-repo-check; explicit UTF-8 decoding also avoids the Windows ANSI-code-page assumption. The read-only sandbox remains enforced.
 - Live four-role calls in Codex 0.169.0 returned canonical task_name, not UUID. Preserve the initial INCONCLUSIVE result; official app activities map the exact call_id/path to UUID, and existing strict child metadata/completion checks corroborate the actual parent/role/reply. Never treat a task label alone as proof.
 - Verification: 265 local tests (253 passed, 12 privilege skips), expanded lint/type/compile checks and independent QA; actual scanned feature-journey-map and native four-role executions passed within synthetic read-only scope. Formal release and external UAT remain separate.
+
+## 2026-11-16 — Issue #31 rules recovery and ownership
+- Symptom: failed atomic write blindly restored backup over concurrent edits/deletion; independent QA reproduced uninstall deleting a block edited between preview and second read.
+- Cause: blind copy2 recovery and ownership decision based on earlier bytes.
+- Repair: retain backup without automatic restoration; revalidate second-read ownership/idempotent state.
+- Proof: RED two failures then one failure; final Windows10/Python3.13.11 full regression 270 total, 12 symlink skips; independent QA replay preserves edits.
+- Limit: no lock/CAS between final read and replace; real disk failures/DACL not tested.
