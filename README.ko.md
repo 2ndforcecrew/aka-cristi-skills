@@ -12,27 +12,27 @@ AKA.CRISTI Skills는 공개되고, 검토 가능하며, 로컬에 설치할 수 
 
 이 저장소는 공개 배포판이며, AKA.CRISTI의 비공개 개발 저장소와 분리되어 있습니다. 비공개 작업 규칙, 계정 정보, 고객 데이터, 비공개 기록은 공개하지 않습니다.
 
-## 6개 릴리스 게이트: 전체적으로 아직 통과하지 못함
+## 현재 공개 상태: Codex Beta 출시됨
 
-Issues #8–#13의 6개 작업은 PR #14를 통해 main에 병합되었지만, 전체 상태는 여전히 **BLOCKED**이며, **승인된 정식 버전도, 안전한 설치 권장도 아닙니다**. 자세한 내용은 [6개 수락 현황](docs/SIX_GATE_STATUS.md)을 참조하십시오. 원래의 "67점, 24건" 스캔 보고서는 누락되었습니다. 이번에 고정된 기준선으로 SkillSpector 2.12.0 `--no-llm`을 다시 실행한 결과 **56점, 23건, DO_NOT_INSTALL**이 나왔습니다. 두 결과를 한 번의 스캔으로 혼동해서는 안 됩니다. 자세한 내용은 [보안 검토](docs/SECURITY_REVIEW_2026-11-15.md)를 참조하십시오.
+**[v1.0.0-beta.2](https://github.com/2ndforcecrew/aka-cristi-skills/releases/tag/v1.0.0-beta.2)**는 공개 테스트 버전입니다. CHEF 규칙, Skills 4개, Codex 역할 설정 4개, Windows GUI 및 Windows / macOS / Ubuntu 통합 설치 명령을 제공합니다. **세 운영체제의 CI, Windows EXE 빌드, GitHub 출처 증명이 성공했습니다.** 외부 사용자 설치 검증과 실제 4 Agent 실행은 별도로 검증해야 합니다.
 
-이전 버전의 main ZIP 자동 다운로드 bootstrap은 기본적으로 차단되도록 변경되었습니다. commit을 고정한 다운로드는 서명과 같지 않습니다. 원격 소스는 독립적으로 확인한 commit, SHA256, 워크플로 식별 정보 및 provenance 검증을 먼저 거쳐야 합니다. 서명되지 않은 Codex 설치 스크립트를 자동으로 실행하지 않습니다. 사전 종속성과 소스 검토는 여전히 완료되어야 합니다.
+Git과 Python 3.11+가 필요합니다. 변경사항 미리보기를 보여주고 사용자가 `INSTALL`을 입력한 후에만 파일을 수정합니다.
 
-Python 3.11 이상을 사용하고 로컬 소스 전체를 검토했다면 main에서 실제 그래픽 창을 테스트할 수 있습니다.
+Windows PowerShell:
 
 ```powershell
-python -m tools.gui_installer
+git clone https://github.com/2ndforcecrew/aka-cristi-skills.git; if ($LASTEXITCODE -ne 0) { throw 'Clone failed' }; cd aka-cristi-skills; git checkout v1.0.0-beta.2; if ($LASTEXITCODE -ne 0) { throw 'Tag checkout failed' }; py -3 -m tools.quick_install --interactive
 ```
 
-로컬 소스는 `start-gui.cmd`를 더블 클릭해도 실행할 수 있습니다. [Windows 독립 실행 EXE 후보 빌드](.github/workflows/windows-gui-candidate.yml)도 새로 추가했습니다. 9개의 공개 데이터 파일만 패키징하고, 실제 위젯/EXE 시작 테스트와 GitHub 소스 검증을 수행합니다. Authenticode 인증서는 포함하지 않습니다. 인터페이스는 차이 미리 보기, 동의 체크, 진행률, 파일 검증 및 보호된 되돌리기를 제공합니다. 종속성 자동 설치, 깨끗한 Windows 11 및 친구의 첫 설치 수락은 여전히 BLOCKED입니다. 파일 설치 성공은 실제 Agent 활성화와 항상 별개입니다.
+macOS / Ubuntu / Linux:
 
-- [Windows GUI 및 복구](docs/WINDOWS_GUI.md)
-- [서명 후보, 식별 정보 고정 및 검증](docs/RELEASE_VERIFICATION.md)
-- [Codex / Claude / Hermes / ChatGPT 기능 매트릭스](docs/HOST_CAPABILITY_MATRIX.md)
-- [독립적인 외부 사용자 수락 계획](docs/EXTERNAL_UAT.md)
-- [엄격한 4개 역할 스레드 연결](docs/FOUR_AGENT_EVIDENCE_V03.md)
+```bash
+git clone https://github.com/2ndforcecrew/aka-cristi-skills.git && cd aka-cristi-skills && git checkout v1.0.0-beta.2 && python3 -m tools.quick_install --interactive
+```
 
-Claude는 현재 프로젝트 단위 Skill 파일 적용만 구현되어 있으며, 실제 호출은 NOT_RUN입니다. Hermes/ChatGPT는 BLOCKED입니다. 클라우드에서 Codex 호출을 실제로 한 번 시도했지만 종료 코드 1로 끝났고, 귀속 가능한 스레드를 얻지 못해 4개 역할이 통과했다고 선언할 수 없습니다.
+`FILES_VERIFIED`는 파일 무결성 확인 결과이며 실제 Agent 시작을 보증하지 않습니다. Windows EXE에는 Authenticode 서명이 없습니다. 격리 환경에서 출처를 검증하세요.
+
+**과거 검사에 관하여:** 이전 SkillSpector `DO_NOT_INSTALL` 및 검출 항목은 당시 특정 소스 버전의 기록이며 현재 Beta의 실시간 보안 판정이 아닙니다. 필수 설치/배포 도구가 아닙니다. [역사적 감사 기록](docs/SECURITY_REVIEW_2026-11-15.md)은 보존하되 검출 항목을 모두 실제 취약점 혹은 오탐이라 단정하지 않습니다.
 
 ## 1. 핵심 기능
 
