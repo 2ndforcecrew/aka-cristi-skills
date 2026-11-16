@@ -146,6 +146,8 @@ def orchestrate(kind, prompt, workspace, db_path, timeout=300, *, task_id=None):
     head = _git(workspace, "rev-parse", "HEAD").decode().strip()
     if _git(workspace, "status", "--porcelain"):
         raise ValueError("commit or preserve workspace changes before isolated execution")
+    if Path(db_path).is_symlink():
+        raise ValueError("database symlink is not allowed")
     db_path = Path(db_path).resolve()
     if db_path.is_relative_to(workspace):
         raise ValueError("database and artifacts must be outside the source workspace")

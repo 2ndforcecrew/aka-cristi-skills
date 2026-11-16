@@ -84,11 +84,11 @@ acceptance remain human review steps.
 ## Verification, evidence and limits
 
 - Baseline: 128 tests, 3 skips.
-- Final local Linux suite: 139 tests, 3 skips; compileall and diff whitespace
+- Final local Linux suite: 140 tests, 3 skips; compileall and diff whitespace
   checks passed. [Executed test log](evidence/chef-dual-engine-v03-unittest.txt).
-- Eleven added offline tests cover snapshots, role separation, input handoff,
+- Twelve added offline tests cover snapshots, role separation, input handoff,
   read-only mutations, explicit recovery, crash accounting, retry exhaustion,
-  evidence tampering, reused QA identity and private log permissions under umask 022. The actual local CLI /
+  evidence tampering, reused QA identity and private log permissions under umask 022 and database symlink rejection. The actual local CLI /
   Git / SQLite E2E uses a **scripted host**, including a failed Studio attempt,
   resume and separate QA. A real local subprocess test verifies a timed-out
   descendant cannot write afterward. Neither test is live AI acceptance.

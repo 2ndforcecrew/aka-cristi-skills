@@ -184,3 +184,11 @@ print(json.dumps({"type": "turn.completed"}))
             os.umask(previous)
         for path in (self.db, Path(str(self.db) + '.lock')):
             self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o600)
+
+    @unittest.skipUnless(__import__('os').name == 'posix', 'POSIX symlink regression')
+    def test_database_symlink_is_rejected_before_resolving(self):
+        target = self.root / 'private.db'
+        runtime.init_db(target).close()
+        self.db.symlink_to(target)
+        with self.assertRaises(ValueError):
+            runtime.orchestrate('factory', 'inspect', self.repo, self.db)

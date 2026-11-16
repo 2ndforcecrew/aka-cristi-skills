@@ -24,6 +24,7 @@ test_actual_subprocess_timeout_kills_descendant (test_chef_runtime.IsolatedRunti
 test_cli_e2e_scripted_host_failure_resume_and_qa (test_chef_runtime.IsolatedRuntimeTests.test_cli_e2e_scripted_host_failure_resume_and_qa)
 Real local CLI/Git/SQLite pipeline, SCRIPTED host, not live AI acceptance. ... ok
 test_completed_snapshot_mutation_prevents_resume (test_chef_runtime.IsolatedRuntimeTests.test_completed_snapshot_mutation_prevents_resume) ... ok
+test_database_symlink_is_rejected_before_resolving (test_chef_runtime.IsolatedRuntimeTests.test_database_symlink_is_rejected_before_resolving) ... ok
 test_interruption_counts_attempt_and_is_resumable (test_chef_runtime.IsolatedRuntimeTests.test_interruption_counts_attempt_and_is_resumable) ... ok
 test_invalid_timeout_rejected_before_launch (test_chef_runtime.IsolatedRuntimeTests.test_invalid_timeout_rejected_before_launch) ... ok
 test_isolation_handoff_and_separate_qa (test_chef_runtime.IsolatedRuntimeTests.test_isolation_handoff_and_separate_qa) ... ok
@@ -140,13 +141,13 @@ test_upgrade_and_rollback (test_skill_installer.InstallerTests.test_upgrade_and_
 test_all_three_public_skills_install_and_verify (test_skill_installer.PublishedSkillSmokeTests.test_all_three_public_skills_install_and_verify) ... ok
 
 ----------------------------------------------------------------------
-Ran 139 tests in 7.464s
+Ran 140 tests in 4.570s
 
 OK (skipped=3)
 {
   "action": "install",
   "name": "sample-skill",
-  "root": "/tmp/tmpv1f137ye/installed",
+  "root": "/tmp/tmpuju4gd5n/installed",
   "sha256": "4ae4ecce1d2787fb69f7378522cd1cefb089315df5c401d552600772d8b7bf9f",
   "files": 1
 }
