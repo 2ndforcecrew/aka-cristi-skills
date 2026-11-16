@@ -9,25 +9,39 @@ import json
 import os
 from pathlib import Path
 
+from tools.fs_safety import checked_path
 from tools.skill_validator import validate_skill
 
 EXCLUDED = {".git", "__pycache__", ".aka-skill-installer"}
 
 
+def _raise_walk_error(error: OSError) -> None:
+    raise error
+
+
 def inventory(root: Path) -> dict[str, object]:
-    root = Path(root)
+    try:
+        return _inventory_checked(checked_path(root))
+    except (OSError, ValueError) as exc:
+        # Never publish a partial digest or private filesystem exception text.
+        return {"status": "BLOCKED", "reason": "unsafe or unreadable filesystem",
+                "error_type": type(exc).__name__, "runtime_verified": False}
+
+
+def _inventory_checked(root: Path) -> dict[str, object]:
     preflight = validate_skill(root)
     if preflight["status"] == "FAILED":
         return {"status": "BLOCKED", "preflight": preflight, "runtime_verified": False}
     digest = hashlib.sha256()
     files: list[str] = []
-    for folder, dirs, names in os.walk(root, followlinks=False):
+    for folder, dirs, names in os.walk(root, followlinks=False, onerror=_raise_walk_error):
         dirs[:] = sorted(d for d in dirs if d not in EXCLUDED)
         for dirname in dirs:
-            if (Path(folder) / dirname).is_symlink():
+            directory = checked_path(Path(folder) / dirname)
+            if directory.is_symlink():
                 return {"status": "BLOCKED", "reason": "symlink directory", "runtime_verified": False}
         for name in sorted(names):
-            path = Path(folder) / name
+            path = checked_path(Path(folder) / name)
             if path.is_symlink() or not path.is_file():
                 return {"status": "BLOCKED", "reason": "non-regular file", "runtime_verified": False}
             rel = path.relative_to(root).as_posix()

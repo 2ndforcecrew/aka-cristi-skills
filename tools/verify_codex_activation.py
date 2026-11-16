@@ -97,12 +97,12 @@ def run(name, codex="codex", timeout=180, root=None):
             "Quote the exact Case ID from CASE.md in your final answer. Mark "
             "unperformed live behavior as NOT_RUN. Provide actionable verification "
             "steps. Do not modify files, use network, or invent test results.")
-        args = [exe, "exec", "--json", "--ephemeral", "--sandbox", "read-only",
+        args = [exe, "exec", "--json", "--ephemeral", "--sandbox", "read-only", "--skip-git-repo-check",
                 "--cd", str(workspace), prompt]
         result["invoked"] = True
         try:
             proc = subprocess.run(args, cwd=workspace, capture_output=True,
-                                  text=True, timeout=timeout, check=False)
+                                  text=True, encoding="utf-8", errors="replace", timeout=timeout, check=False)
         except subprocess.TimeoutExpired:
             return {**result, "status": "FAIL", "reason": "Agent timed out"}
         except OSError:
