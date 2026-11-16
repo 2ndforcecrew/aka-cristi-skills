@@ -52,7 +52,7 @@ gh attestation verify .\AKA-CRISTI-CHEF-Setup.exe --bundle .\gui-provenance.sigs
 先安装 Git、Python 3.11+；把下面**整行**复制到 PowerShell。命令会下载并切换到固定的 Beta 版本，然后**只预览**：
 
 ```powershell
-git clone https://github.com/2ndforcecrew/aka-cristi-skills.git; if ($LASTEXITCODE -ne 0) { throw "下载失败" }; cd aka-cristi-skills; git checkout main; if ($LASTEXITCODE -ne 0) { throw "版本校验失败" }; py -3 -m tools.quick_install
+git clone https://github.com/2ndforcecrew/aka-cristi-skills.git; if ($LASTEXITCODE -ne 0) { throw "下载失败" }; cd aka-cristi-skills; git checkout main; if ($LASTEXITCODE -ne 0) { throw "版本校验失败" }; py -3 -m tools.quick_install --interactive
 ```
 
 仔细查看预览并确认没有冲突，才执行**一条安装命令**：
@@ -70,10 +70,10 @@ py -3 -m tools.quick_install --apply
 **① 下载并预览：**
 
 ```bash
-git clone https://github.com/2ndforcecrew/aka-cristi-skills.git && cd aka-cristi-skills && git checkout main && python3 -m tools.quick_install
+git clone https://github.com/2ndforcecrew/aka-cristi-skills.git && cd aka-cristi-skills && git checkout main && python3 -m tools.quick_install --interactive
 ```
 
-**② 检查预览后，一条命令完成安装及文件校验：**
+**② 如想分开执行，先预览，再明确授权安装：**
 
 ```bash
 python3 -m tools.quick_install --apply
@@ -94,10 +94,10 @@ Mac 安装的是 **Codex Skills + AGENTS.md + 自定义角色配置**；Windows 
 **① 下载并预览：**
 
 ```bash
-git clone https://github.com/2ndforcecrew/aka-cristi-skills.git && cd aka-cristi-skills && git checkout main && python3 -m tools.quick_install
+git clone https://github.com/2ndforcecrew/aka-cristi-skills.git && cd aka-cristi-skills && git checkout main && python3 -m tools.quick_install --interactive
 ```
 
-**② 明确同意后安装：**
+**② 也可以分开执行明确授权安装：**
 
 ```bash
 python3 -m tools.quick_install --apply
