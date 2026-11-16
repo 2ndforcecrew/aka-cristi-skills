@@ -58,14 +58,34 @@ class FullSetupTests(unittest.TestCase):
                                          "conflicts": []}
         adapter.install.return_value = {"host": "workbuddy",
                                          "status": "FILES_VERIFIED"}
+        replies = iter(["YES", "NO"])
         result = full_setup.run(host="workbuddy", project="/tmp/example",
                                 interactive=True, workspace=True,
-                                test_agents=True, input_fn=lambda _: "YES")
+                                test_agents=True, input_fn=lambda _: next(replies))
         self.assertEqual(result["core_install"], "FILES_VERIFIED")
         self.assertEqual(result["workspace"], "CODEX_ONBOARDING_ONLY")
-        self.assertEqual(result["live_agents"], "HOST_NATIVE_RUNTIME_NOT_VERIFIED")
+        self.assertEqual(result["live_agents"], "CANCELLED")
         self.assertEqual(self.pre.call_count, 0)
         adapter.install.assert_called_once()
+
+    @patch("tools.full_setup.chef_runtime_dispatch.run",
+           return_value={"status": "REVIEW_REQUIRED",
+                         "native_subagent": "NOT_VERIFIED"})
+    @patch("tools.full_setup.dependency_status")
+    @patch("tools.full_setup.universal_chef")
+    def test_workbuddy_real_host_probe_requires_second_consent(
+            self, adapter, status, runtime):
+        status.return_value = self.status
+        adapter.inspect.return_value = {"status": "PREVIEW", "conflicts": []}
+        adapter.install.return_value = {"status": "FILES_VERIFIED"}
+        replies = iter(["YES", "YES"])
+        outcome = full_setup.run(host="workbuddy", project="/tmp/example",
+                                 interactive=True, test_agents=True,
+                                 input_fn=lambda _: next(replies))
+        self.assertEqual(outcome["live_agents"], "REVIEW_REQUIRED")
+        self.assertEqual(outcome["native_subagents"], "NOT_VERIFIED")
+        runtime.assert_called_once()
+        self.assertTrue(runtime.call_args.kwargs["allow_quota"])
 
     @patch("tools.full_setup._call", return_value=True)
     @patch("tools.full_setup.dependency_status")
