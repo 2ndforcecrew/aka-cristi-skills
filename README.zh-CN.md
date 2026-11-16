@@ -18,7 +18,7 @@
 
 ****注意：** 以下跨平台统一命令属于即将合入 `main` 的新增功能，**不是 `v1.0.0-beta.1` 的现有功能**。
 
-统一安装入口：** `python -m tools.quick_install`。不带 `--apply` 仅预览；用户明确同意后加 `--apply`，会安装 CHEF 全局规则、4 个角色和 4 个 Skills，并自动校验文件。该命令**不启动或连接模型、不调用 MCP、不使用 Codex 推理额度**。
+统一安装入口：`python -m tools.quick_install --interactive`。**先展示全部变更，用户输入 `INSTALL` 后才安装并验证** CHEF 全局规则、4 个角色和 4 个 Skills。默认不带参数时仅预览；也支持手动使用 `--apply`。这个安装器不会启动模型或消耗 Codex 推理额度。
 
 ### Windows 11 · 图形安装（最适合朋友）
 
@@ -113,7 +113,7 @@ python3 -m tools.quick_install --codex-home /tmp/aka-chef-test-codex --skills-ro
 
 ### 给 Agent 的安装指令（可复制到 Codex）
 
-> 请检查本机是否安装 Git、Python 3.11+ 及 Codex CLI；确认操作系统。阅读 https://github.com/2ndforcecrew/aka-cristi-skills 的 README，检出 `v1.0.0-beta.1`，先执行 `python3 -m tools.quick_install`（Windows 使用 `py -3`），展示预览和可能修改的文件；**征得我批准后**执行 `python3 -m tools.quick_install --apply` 并检查 `FILES_VERIFIED`。若有冲突或来源异常，停止，不覆盖我的现有 `AGENTS.md`、Skills、凭据或 Agent 文件。记录版本、修改和校验结果，不把文件安装成功冒充真实 Agent 调用。
+> 请检查本机是否安装 Git、Python 3.11+ 及 Codex CLI；确认操作系统。阅读 https://github.com/2ndforcecrew/aka-cristi-skills 的 README，检出当前已审查的 `main`（**旧版 `v1.0.0-beta.1` 不包含新安装入口**），执行 `python3 -m tools.quick_install --interactive`（Windows 使用 `py -3`），展示完整预览；**我输入 `INSTALL` 同意后**再自动安装和验证，并检查 `FILES_VERIFIED`。若有冲突或来源异常，停止，不覆盖我的现有 `AGENTS.md`、Skills、凭据或 Agent 文件。记录版本、修改和校验结果，不把文件安装成功冒充真实 Agent 调用。
 
 **不支持的安装捷径：** 目前尚未验证 `npx skills add 2ndforcecrew/aka-cristi-skills` 是可用的官方入口。**粘贴仓库链接给 Agent 不等于自动安装成功**，必须验证真实文件与运行环境。
 
