@@ -32,6 +32,21 @@ MAX_EXCERPT = 3_000
 MAX_TIMEOUT = 600
 SESSION = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_-]{5,127}$")
 
+FOUR_ROLES = (
+    ("research", "aka_research", "Investigate the objective; identify sources and unknowns. Do not edit."),
+    ("coding", "aka_coding", "Propose a small implementation strategy and test plan; do not edit."),
+    ("qa", "aka_qa", "Independently check evidence, edge cases and regressions; do not self-certify."),
+    ("automation", "aka_automation", "Recommend bounded automation with retries, timeouts and safe rollback; do not deploy."),
+)
+
+
+def role_sequence(kind, objective, host, project):
+    if kind == "four-roles":
+        return [{"role": role, "preferred_agent": agent, "instructions": instructions}
+                for role, agent, instructions in FOUR_ROLES]
+    spec = plan(kind, objective, "workbuddy" if host == "codebuddy" else host, project)
+    return spec["sequence"]
+
 
 def _sha(data: str) -> str:
     return hashlib.sha256(data.encode("utf-8")).hexdigest()
@@ -169,10 +184,9 @@ def run(host: str, kind: str, objective: str, project, *, allow_quota=False,
     project = checked_path(Path(project).expanduser().absolute())
     if not project.is_dir():
         raise ValueError("Project not found")
-    spec = plan(kind, objective, "workbuddy" if host == "codebuddy" else host,
-                project)
+    tasks = role_sequence(kind, objective, host, project)
     preview = {"host": host, "engine": kind, "objective_sha256": _sha(objective),
-               "sequence": [x["role"] for x in spec["sequence"]],
+               "sequence": [x["role"] for x in tasks],
                "status": "NOT_RUN", "native_subagent": "NOT_VERIFIED",
                "consent": "REQUIRES_EXPLICIT_ALLOW_QUOTA"}
     if not allow_quota:
@@ -196,7 +210,7 @@ def run(host: str, kind: str, objective: str, project, *, allow_quota=False,
     previous = []
     sessions = set()
     status = "REVIEW_REQUIRED"
-    for role in spec["sequence"]:
+    for role in tasks:
         prompt = _role_prompt(role, objective, previous)
         raw = _spawn(command(host, prompt), project, timeout)
         parsed = _parse_result(host, raw)
@@ -236,7 +250,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description="CHEF v0.4 read-only real CLI session dispatcher")
     parser.add_argument("action", choices=("inspect", "run"))
     parser.add_argument("--host", choices=tuple(HOSTS), required=True)
-    parser.add_argument("--kind", choices=("factory", "studio", "hybrid"),
+    parser.add_argument("--kind", choices=("factory", "studio", "hybrid", "four-roles"),
                         default="hybrid")
     parser.add_argument("--objective", default="Review the CHEF host integration design")
     parser.add_argument("--project", type=Path, default=Path.cwd())
