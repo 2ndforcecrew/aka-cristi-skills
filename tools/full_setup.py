@@ -126,13 +126,23 @@ def run(*, apply=False, interactive=False, workspace=False, test_agents=False,
             "Run real four-agent Codex acceptance? This consumes Codex quota.",
             input_fn,
         ):
-            report["live_agents"] = (
-                "REPORT_WRITTEN" if _call([
-                    sys.executable, "-m", "tools.verify_four_agents",
-                    "--timeout", "600", "--out", "four-agent-report.json",
-                ]) else "PROBE_FAILED_OR_INCONCLUSIVE"
-            )
-            report["agent_evidence"] = "four-agent-report.json"
+            _call([
+                sys.executable, "-m", "tools.verify_four_agents",
+                "--timeout", "600", "--out", "four-agent-report.json",
+            ])
+            evidence = ROOT / "four-agent-report.json"
+            if evidence.is_file():
+                try:
+                    payload = json.loads(evidence.read_text(encoding="utf-8"))
+                    state = payload.get("status", "INCONCLUSIVE")
+                    report["live_agents"] = state if state in (
+                        "PASS", "FAIL", "INCONCLUSIVE", "NOT_RUN"
+                    ) else "INCONCLUSIVE"
+                except (OSError, ValueError, UnicodeError):
+                    report["live_agents"] = "INCONCLUSIVE"
+                report["agent_evidence"] = str(evidence)
+            else:
+                report["live_agents"] = "PROBE_FAILED_NO_REPORT"
         else:
             report["live_agents"] = "SEPARATE_CONSENT_REQUIRED"
     return report
