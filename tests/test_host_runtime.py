@@ -1,5 +1,6 @@
 """Synthetic protocol and safe host CLI tests, never model inference."""
 import json
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -115,6 +116,18 @@ class HostRuntimeTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             rt.run("claude", "qa", "x", self.project / "missing",
                    authorized=True)
+
+    def test_real_local_subprocess_completes_without_model(self):
+        output = rt._launch([sys.executable, "-c", 'print("OFFLINE_FIXTURE")'],
+                            self.project, 5)
+        self.assertEqual(output["status"], "EXITED")
+        self.assertEqual(output["code"], 0)
+        self.assertIn(b"OFFLINE_FIXTURE", output["stdout"])
+
+    def test_real_local_subprocess_timeout_is_bounded(self):
+        output = rt._launch([sys.executable, "-c", "import time; time.sleep(5)"],
+                            self.project, 0.1)
+        self.assertEqual(output["status"], "TIMEOUT")
 
     def test_oversized_log_is_never_a_pass(self):
         self.assertEqual(rt.parse("claude", b"x" * (rt.MAX_LOG + 1), 0)["status"],
