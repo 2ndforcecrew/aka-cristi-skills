@@ -5,7 +5,7 @@
 新增 `tools.chef_host_runtime`。它把安装配置与真正执行分开：
 
 - `probe`：只检查本机 CLI 是否存在，最多运行 5 秒的 `--version`。不会登录、读 Token、调用模型或花费额度。
-- `invoke`：仅在明确传入 `--allow-paid-inference` 后，允许**一次**只读 CLI 调用。当前支持 Codex 原有受控 `codex exec`，以及 Claude Code 的 `claude -p --output-format json --permission-mode plan`。所有请求均禁止编辑、发布、安装依赖和访问密钥。
+- `invoke`：仅在明确传入 `--allow-paid-inference` 后，允许**一次**只读 CLI 调用。当前支持 Codex 原有受控 `codex exec`，以及 Claude Code 的 `claude -p --output-format json --permission-mode plan`。提示词明确禁止编辑、发布、安装依赖和访问密钥；Claude 的 plan 模式属于宿主权限控制，**不等于操作系统强制隔离沙箱**。真实调用必须在用户信任的项目中运行，并按宿主权限设置进行独立验收。
 - Claude 必须返回具有 `type=result`、`is_error=false`、非空 `session_id` 与 `result` 的结构，才标记 `HOST_COMPLETED`。**这只证明父会话有结果，不证明四个原生子 Agent 已启动**。
 - Codex 使用现有 JSON 事件解析器及 `read-only` 沙箱；即使有线程 ID，也不能将父会话算作真实子 Agent 验收。
 - WorkBuddy / Gemini / OpenCode / Hermes / Generic 目前**没有在本仓库验证过的安全 CLI 调度命令**，因此返回 `UNSUPPORTED`，不会猜测 CLI 参数或执行任意命令。
