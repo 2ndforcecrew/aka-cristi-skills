@@ -9,7 +9,7 @@ from tools.quick_install import SKILLS, execute
 class QuickInstallTests(unittest.TestCase):
     def test_preview_has_no_writes(self):
         with tempfile.TemporaryDirectory() as d:
-            home, skills = Path(d) / "codex", Path(d) / "skills"
+            home, skills = Path(d).resolve() / "codex", Path(d).resolve() / "skills"
             result = execute(codex_home=home, skills_root=skills)
             self.assertEqual(result["status"], "PREVIEW")
             self.assertFalse(home.exists())
@@ -17,7 +17,7 @@ class QuickInstallTests(unittest.TestCase):
 
     def test_install_verify_reinstall_preserves_existing_rules(self):
         with tempfile.TemporaryDirectory() as d:
-            home, skills = Path(d) / "codex", Path(d) / "skills"
+            home, skills = Path(d).resolve() / "codex", Path(d).resolve() / "skills"
             home.mkdir()
             original = "# 私有规则，禁止覆盖\r\n\r\n"
             (home / "AGENTS.md").write_bytes(original.encode("utf-8"))
@@ -32,7 +32,7 @@ class QuickInstallTests(unittest.TestCase):
 
     def test_conflict_rejects_all_writes(self):
         with tempfile.TemporaryDirectory() as d:
-            home, skills = Path(d) / "codex", Path(d) / "skills"
+            home, skills = Path(d).resolve() / "codex", Path(d).resolve() / "skills"
             role_folder = home / "agents"
             role_folder.mkdir(parents=True)
             untouched = role_folder / "research.toml"
