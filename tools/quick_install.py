@@ -61,13 +61,28 @@ def execute(*, apply=False, codex_home=None, skills_root=None):
 
 def main(argv=None):
     p = argparse.ArgumentParser(description="AKA.CRISTI CHEF 一键本地安装（默认预览）")
-    p.add_argument("--apply", action="store_true", help="明确同意安装到当前用户")
+    mode = p.add_mutually_exclusive_group()
+    mode.add_argument("--apply", action="store_true", help="明确同意安装到当前用户")
+    mode.add_argument("--interactive", action="store_true", help="先预览所有变更，再询问是否安装")
     p.add_argument("--codex-home", type=Path, help="可选：独立 Codex 测试目录")
     p.add_argument("--skills-root", type=Path, help="可选：独立 Skills 测试目录")
     args = p.parse_args(argv)
     try:
-        result = execute(apply=args.apply, codex_home=args.codex_home,
-                         skills_root=args.skills_root)
+        if args.interactive:
+            preview = execute(codex_home=args.codex_home, skills_root=args.skills_root)
+            print(json.dumps(preview, indent=2, ensure_ascii=False))
+            print("请检查全部计划。输入 INSTALL 才会修改本地文件；其他输入均取消。", flush=True)
+            try:
+                consent = input("确认安装（输入 INSTALL）：").strip()
+            except (EOFError, KeyboardInterrupt):
+                consent = ""
+            if consent != "INSTALL":
+                print(json.dumps({"status": "CANCELLED", "applied": False}, ensure_ascii=False))
+                return 0
+            result = execute(apply=True, codex_home=args.codex_home, skills_root=args.skills_root)
+        else:
+            result = execute(apply=args.apply, codex_home=args.codex_home,
+                             skills_root=args.skills_root)
         print(json.dumps(result, indent=2, ensure_ascii=False))
         return 0 if result["status"] != "FAIL" else 1
     except (OSError, ValueError, UnicodeError, KeyError) as exc:
