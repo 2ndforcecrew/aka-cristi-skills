@@ -197,6 +197,12 @@ python3 -m tools.chef_dual_engine --kind hybrid \
 [跨宿主安装/验收手册](UNIVERSAL_CHEF_SETUP.md) · [安装源码](../tools/universal_chef.py) · [交接源码](../tools/chef_handoff.py)
 
 
+## 研发中｜CHEF Runtime V0.4 真正的跨宿主执行入口
+
+**状态：已实现并正在审查的代码候选，不属于已发布的 beta.3。** `tools.host_runtime` 为 CodeBuddy/WorkBuddy CLI、Claude、Gemini、OpenCode、Hermes 提供需要明确授权的 CLI 调用探针，要求独立会话标识、结构化结束证据与清楚的权限界限。Dual-Engine 的 Studio 和 QA 可在不同 Git 克隆内通过这些 CLI 工作；Factory 仍沿用 Codex 实验性隔离执行。**没有实际用户宿主账号的 Live E2E，CI 的 Mock 结果不计入真实激活验证。**
+
+[Runtime V0.4 完整说明](HOST_RUNTIME_V04.md) · [运行时代码](../tools/host_runtime.py) · [回归测试](../tests/test_chef_cross_host.py)
+
 ## 当前安装究竟会部署哪些模块？
 
 | 模块 | 运行 `tools.full_setup` 后的行为 |

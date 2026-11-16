@@ -132,7 +132,9 @@ def _git(workspace, *args):
                           capture_output=True, timeout=60).stdout
 
 
-def orchestrate(kind, prompt, workspace, db_path, timeout=300, *, task_id=None):
+def orchestrate(kind, prompt, workspace, db_path, timeout=300, *, task_id=None,
+                studio_host="codex", qa_host="codex", consent_live=False,
+                allow_host_permissions=False):
     """Durable isolated proposals; never grants release or QA acceptance.
 
     Recovery is explicit, limited to three attempts per role, and starts failed
@@ -140,6 +142,17 @@ def orchestrate(kind, prompt, workspace, db_path, timeout=300, *, task_id=None):
     Artifact directories are private; callers must retain them with the database.
     """
     roles = route(kind) + ["qa"]
+    # Factory remains the guarded Codex workspace-write implementation.
+    # Studio/QA may use separate authorized host CLI sessions in isolated clones.
+    from tools import host_runtime
+    host_map = {"factory": "codex", "studio": studio_host, "qa": qa_host}
+    if studio_host not in ("codex", *host_runtime.HOSTS) or qa_host not in (
+        "codex", *host_runtime.HOSTS
+    ):
+        raise ValueError("Unknown host; no unsafe fallback")
+    if (studio_host != "codex" or qa_host != "codex") and not consent_live:
+        return {"status": "NOT_RUN", "reason": "EXPLICIT_LIVE_HOST_CONSENT_REQUIRED",
+                "qa": "NOT_RUN", "release": "BLOCKED"}
     if not 1 <= timeout <= 3600:
         raise ValueError("timeout must be 1..3600")
     workspace = Path(workspace).resolve(strict=True)
@@ -155,7 +168,12 @@ def orchestrate(kind, prompt, workspace, db_path, timeout=300, *, task_id=None):
     db.execute("CREATE TABLE IF NOT EXISTS tasks (task_id TEXT PRIMARY KEY, config TEXT, status TEXT)")
     db.execute("CREATE TABLE IF NOT EXISTS attempts (task_id TEXT, role TEXT, attempt INTEGER, result TEXT, PRIMARY KEY(task_id, role, attempt))")
     db.commit()
-    config = json.dumps(dict(kind=kind, prompt=prompt, workspace=str(workspace), head=head, timeout=timeout), sort_keys=True)
+    settings = dict(kind=kind, prompt=prompt, workspace=str(workspace), head=head, timeout=timeout)
+    # Keep legacy Codex task fingerprints exactly stable for existing resume IDs.
+    if studio_host != "codex" or qa_host != "codex":
+        settings.update(studio_host=studio_host, qa_host=qa_host,
+                        allow_host_permissions=bool(allow_host_permissions))
+    config = json.dumps(settings, sort_keys=True)
     # Separate SQLite mutex permits durable checkpoints without duplicate dispatch.
     lock = None
     try:
@@ -210,8 +228,29 @@ def orchestrate(kind, prompt, workspace, db_path, timeout=300, *, task_id=None):
                 _git(target, "checkout", "--detach", "--quiet")
                 baseline = _git(target, "rev-parse", "HEAD").decode().strip()
                 text = json.dumps(handoff, ensure_ascii=False) + "\nInspect prior deliverables. " + prompt
-                result = run_codex(role, text, target, timeout,
-                                   sandbox="workspace-write" if role == "factory" else "read-only")
+                selected_host = host_map[role]
+                if selected_host == "codex":
+                    result = run_codex(
+                        role, text, target, timeout,
+                        sandbox="workspace-write" if role == "factory" else "read-only",
+                    )
+                else:
+                    probe = host_runtime.run(
+                        selected_host, role, text, target,
+                        consent=consent_live,
+                        allow_risky_host=allow_host_permissions,
+                        timeout=min(timeout, 900),
+                    )
+                    session_id = probe.get("session_id")
+                    result = {
+                        "status": probe["status"],
+                        "output": probe.get("output", ""),
+                        "thread_ids": [session_id] if session_id else [],
+                        "host": selected_host,
+                        "evidence_kind": "INDEPENDENT_HOST_CLI_SESSION_NOT_NATIVE_SUBAGENT",
+                        "reason": probe.get("reason"),
+                        "runtime_evidence": probe.get("runtime_evidence"),
+                    }
                 result["workspace"] = str(target)
                 # Preserve untracked files and modifications in this private proposal clone.
                 _git(target, "add", "--all")
@@ -245,7 +284,9 @@ def orchestrate(kind, prompt, workspace, db_path, timeout=300, *, task_id=None):
         db.commit()
         return dict(task_id=task_id, status=status, results=results,
                     qa=results.get("qa", "NOT_RUN"), release="BLOCKED",
-                    evidence_kind="agent_invocation_requires_independent_acceptance")
+                    evidence_kind=("independent_sequential_host_sessions_NOT_native_subagents"
+                                   if studio_host != "codex" or qa_host != "codex"
+                                   else "agent_invocation_requires_independent_acceptance"))
     except BaseException:
         db.rollback()
         raise
@@ -263,11 +304,24 @@ def main():
     parser.add_argument("--db", type=Path, default=None)
     parser.add_argument("--timeout", type=int, default=300)
     parser.add_argument("--resume", help="Explicitly retry a durable task ID (maximum 3 attempts per role)")
+    parser.add_argument("--studio-host", default="codex",
+                        choices=("codex", "workbuddy", "claude", "gemini", "opencode", "hermes"))
+    parser.add_argument("--qa-host", default="codex",
+                        choices=("codex", "workbuddy", "claude", "gemini", "opencode", "hermes"))
+    parser.add_argument("--allow-live", action="store_true",
+                        help="authorize cross-provider model usage for this invocation")
+    parser.add_argument("--allow-host-permissions", action="store_true",
+                        help="separate high-risk host permission authorization for WorkBuddy/Hermes")
     args = parser.parse_args()
     if not 1 <= args.timeout <= 3600:
         parser.error("timeout must be 1..3600")
     db_path = args.db or args.workspace.resolve().parent / (args.workspace.resolve().name + ".chef-runtime.sqlite3")
-    result = orchestrate(args.kind, args.prompt, args.workspace, db_path, args.timeout, task_id=args.resume)
+    result = orchestrate(
+        args.kind, args.prompt, args.workspace, db_path, args.timeout,
+        task_id=args.resume, studio_host=args.studio_host, qa_host=args.qa_host,
+        consent_live=args.allow_live,
+        allow_host_permissions=args.allow_host_permissions,
+    )
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0 if result["status"] == "REVIEW_REQUIRED" else 2
 

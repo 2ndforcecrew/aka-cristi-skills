@@ -67,7 +67,9 @@ git clone --depth 1 https://github.com/2ndforcecrew/aka-cristi-skills.git && cd 
 
 **只改当前项目**可使用 `--scope project --project /path/to/your-project`；换成其他宿主则将 `--host workbuddy` 改成 `--host claude`、`gemini`、`opencode` 等。Hermes 的用户级身份文件 `SOUL.md` 不会被覆盖。安装成功后要**新开宿主会话**，再验证角色是否真正被加载。
 
-> **哪些没有自动完成？** Dual-Engine 有通用 Factory/Studio/QA JSON Handoff 生成器，但目前能自动执行的实验性引擎仍使用 Codex CLI；不同厂商的真实子 Agent 调度需要经过单独适配和验收，不能因文件安装成功而宣传已全平台打通。
+> **Runtime V0.4 开发候选（暂未发布）：** 已加入 WorkBuddy/CodeBuddy、Claude、Gemini、OpenCode、Hermes 的**真实 CLI 调用适配器**，并允许在 Dual-Engine 的独立 Git 克隆中，用 Codex 执行 Factory、指定其他宿主执行 Studio / QA。默认不调用模型；只有明确 `--allow-live` 才会尝试真实调用，WorkBuddy / Hermes 还需额外权限确认。**目前仅有合成 CLI 输出与本地 Git/SQLite 测试，不等于真实外部宿主已完成验收，也不是原生父子 Agent 自动调度的全部实现。**
+
+[Runtime V0.4 开发与真实验证说明](docs/HOST_RUNTIME_V04.md) · [跨宿主真实 CLI 适配代码](tools/host_runtime.py) · [开发任务 #44](https://github.com/2ndforcecrew/aka-cristi-skills/issues/44)
 
 **[完整跨宿主安装与验收说明](docs/UNIVERSAL_CHEF_SETUP.md)** · [宿主适配安装器源码](tools/universal_chef.py) · [双引擎通用任务交接](tools/chef_handoff.py)
 
