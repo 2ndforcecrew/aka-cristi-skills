@@ -66,7 +66,10 @@ def run(name, codex="codex", timeout=180, root=None):
     source = (root / "skills" / name / "SKILL.md").resolve(strict=True)
     result = {"timestamp": datetime.now(timezone.utc).isoformat(),
               "skill": name, "status": "NOT_RUN", "invoked": False}
-    from codex_probe_isolation import IsolationError, probe_environment
+    try:
+        from tools.codex_probe_isolation import IsolationError, probe_environment
+    except ModuleNotFoundError:
+        from codex_probe_isolation import IsolationError, probe_environment
     try:
         probe_home, probe_env = probe_environment(Path.cwd().resolve())
     except IsolationError as exc:
@@ -110,7 +113,10 @@ def run(name, codex="codex", timeout=180, root=None):
         result["invoked"] = True
         if os.name == "nt":
             try:
-                from aka_windows_job_runner import JobError, JobTimeout, run_in_job
+                try:
+                    from tools.aka_windows_job_runner import JobError, JobTimeout, run_in_job
+                except ModuleNotFoundError:
+                    from aka_windows_job_runner import JobError, JobTimeout, run_in_job
                 proc = run_in_job(args, workspace, timeout, env=probe_env)
                 proc.stdout = proc.stdout.decode("utf-8", errors="replace")
             except JobTimeout:
