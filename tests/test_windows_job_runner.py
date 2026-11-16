@@ -10,7 +10,6 @@ import sys
 import tempfile
 import threading
 import time
-import unittest
 from ctypes import wintypes
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "tools"))
@@ -66,11 +65,17 @@ class JobObjectTests(unittest.TestCase):
                 thread = threading.Thread(target=worker, daemon=True)
                 thread.start()
                 deadline = time.monotonic() + 4
-                while not marker.is_file() and thread.is_alive() and time.monotonic() < deadline:
+                pids = []
+                while thread.is_alive() and time.monotonic() < deadline:
+                    if marker.is_file():
+                        try:
+                            pids = marker.read_text(encoding="ascii").splitlines()
+                        except (OSError, UnicodeError):
+                            pass
+                        if len(pids) == 2:
+                            break
                     time.sleep(.025)
-                self.assertTrue(marker.is_file(), state)
-                pids = marker.read_text(encoding="ascii").splitlines()
-                self.assertEqual(len(pids), 2)
+                self.assertEqual(len(pids), 2, state)
                 for pid in pids:
                     handle = kernel.OpenProcess(SYNCHRONIZE, False, int(pid))
                     self.assertTrue(handle)
@@ -84,6 +89,8 @@ class JobObjectTests(unittest.TestCase):
                     self.assertEqual(kernel.WaitForSingleObject(handle, 2000), WAIT_OBJECT_0)
                 self.assertIsNone(unrelated.poll())
             finally:
+                if "thread" in locals() and thread.is_alive():
+                    thread.join(timeout=8)
                 for handle in handles:
                     kernel.CloseHandle(handle)
                 if unrelated.poll() is None:
