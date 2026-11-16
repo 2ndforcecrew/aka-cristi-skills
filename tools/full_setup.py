@@ -93,7 +93,7 @@ def _run_portable_host(*, host, project, apply, interactive, workspace,
             cli = "codebuddy" if host == "workbuddy" else "claude"
             active_project = project if project is not None else Path.cwd()
             result = chef_runtime_dispatch.run(
-                cli, "four-roles", "Review the CHEF Research/Coding/QA/Automation collaboration methodology. 
+                cli, "four-roles", "Review the CHEF Research/Coding/QA/Automation collaboration methodology. "
                 "Do not inspect private data, run tools, or modify files.",
                 active_project, allow_quota=True, timeout=180,
             )
