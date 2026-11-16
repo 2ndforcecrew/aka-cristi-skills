@@ -14,6 +14,7 @@ import shutil
 import signal
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 from tools.fs_safety import checked_path
@@ -80,6 +81,10 @@ def parse(host: str, raw: bytes, exit_code: int) -> dict:
         ended = result.get("subtype") == "success" and result.get("is_error") is False
         rejected = result.get("is_error") is True
     elif host == "gemini":
+        init_ids = {e.get("session_id") for e in events
+                    if e.get("type") == "init" and e.get("session_id")}
+        if len(init_ids) > 1:
+            return {"status": "INCONCLUSIVE", "reason": "CONFLICTING_SESSION_IDS"}
         for event in events:
             if event.get("type") == "init":
                 session = event.get("session_id")
@@ -91,6 +96,9 @@ def parse(host: str, raw: bytes, exit_code: int) -> dict:
             if event.get("type") == "error":
                 rejected = True
     elif host == "opencode":
+        ids = {e.get("sessionID") for e in events if e.get("sessionID")}
+        if len(ids) > 1:
+            return {"status": "INCONCLUSIVE", "reason": "CONFLICTING_SESSION_IDS"}
         parts = []
         for event in events:
             session = session or event.get("sessionID")
@@ -125,40 +133,46 @@ def parse(host: str, raw: bytes, exit_code: int) -> dict:
 
 
 def _launch(argv: list[str], workspace: Path, timeout: int):
-    """Kill whole process tree on timeout, including non-tty child workers."""
+    """Bound stdout memory and terminate the full process tree on timeout."""
     process = None
-    try:
-        process = subprocess.Popen(
-            argv, cwd=workspace, stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            start_new_session=os.name != "nt",
-            creationflags=(subprocess.CREATE_NEW_PROCESS_GROUP
-                           if os.name == "nt" else 0),
-        )
-        out, err = process.communicate(timeout=timeout)
-        return {"status": "EXITED", "code": process.returncode, "stdout": out, "stderr": err}
-    except subprocess.TimeoutExpired:
-        if process is not None:
-            if os.name == "nt":
-                try:
-                    subprocess.run(["taskkill", "/PID", str(process.pid), "/T", "/F"],
-                                   capture_output=True, timeout=10, check=False)
-                except (OSError, subprocess.TimeoutExpired):
+    # stdout/stderr never pass to shared stdout, and never remain as raw temp files.
+    with tempfile.TemporaryFile() as output, tempfile.TemporaryFile() as errors:
+        try:
+            process = subprocess.Popen(
+                argv, cwd=workspace, stdin=subprocess.DEVNULL,
+                stdout=output, stderr=errors,
+                start_new_session=os.name != "nt",
+                creationflags=(subprocess.CREATE_NEW_PROCESS_GROUP
+                               if os.name == "nt" else 0),
+            )
+            process.wait(timeout=timeout)
+            output.seek(0)
+            errors.seek(0)
+            return {"status": "EXITED", "code": process.returncode,
+                    "stdout": output.read(MAX_LOG + 1), "stderr": errors.read(4096)}
+        except subprocess.TimeoutExpired:
+            if process is not None:
+                if os.name == "nt":
+                    try:
+                        subprocess.run(["taskkill", "/PID", str(process.pid),
+                                        "/T", "/F"], capture_output=True,
+                                       timeout=10, check=False)
+                    except (OSError, subprocess.TimeoutExpired):
+                        process.kill()
+                else:
+                    try:
+                        os.killpg(process.pid, signal.SIGKILL)
+                    except ProcessLookupError:
+                        pass
+                if process.poll() is None:
                     process.kill()
-            else:
-                try:
-                    os.killpg(process.pid, signal.SIGKILL)
-                except ProcessLookupError:
-                    pass
-            if process.poll() is None:
+                process.wait()
+            return {"status": "TIMEOUT"}
+        except OSError:
+            if process is not None and process.poll() is None:
                 process.kill()
-            process.communicate()
-        return {"status": "TIMEOUT"}
-    except OSError:
-        if process is not None and process.poll() is None:
-            process.kill()
-            process.communicate()
-        return {"status": "SPAWN_ERROR"}
+                process.wait()
+            return {"status": "SPAWN_ERROR"}
 
 
 def run(host: str, role: str, prompt: str, workspace: Path, timeout=300,
