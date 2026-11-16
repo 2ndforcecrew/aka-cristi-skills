@@ -23,8 +23,8 @@ class ProbeIsolationTests(unittest.TestCase):
                 environ={"AKA_CODEX_PROBE_HOME": str(home),
                          "SECRET_TOKEN": "do-not-copy", "PATH": "safe"},
             )
-            self.assertEqual(resolved, home)
-            self.assertEqual(env["CODEX_HOME"], str(home))
+            self.assertEqual(resolved, home.resolve())
+            self.assertEqual(env["CODEX_HOME"], str(home.resolve()))
             self.assertNotIn("SECRET_TOKEN", env)
 
     def test_mcp_registration_rejected(self):
