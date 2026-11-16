@@ -6,7 +6,7 @@
 
 *DESIGN × CODE × AI × AUTOMATION*
 
-**CODEX FIRST** &nbsp; | &nbsp; **CHEF ORCHESTRATOR** &nbsp; | &nbsp; **DUAL-ENGINE** &nbsp; | &nbsp; **AGENT COLLABORATION**
+**UNIVERSAL HOST FILES** &nbsp; | &nbsp; **CHEF ORCHESTRATOR** &nbsp; | &nbsp; **DUAL-ENGINE** &nbsp; | &nbsp; **AGENT COLLABORATION**
 
 [一键安装](#quick-start) · [项目理念](#vision) · [全部功能](#features) · [双引擎架构](#dual-engine) · [当前状态](#status) · [功能手册](docs/FEATURE_CATALOG.md) · [GitHub Release](https://github.com/2ndforcecrew/aka-cristi-skills/releases)
 
@@ -33,9 +33,46 @@
 | 换电脑或换 Agent 就重新配置 | 个人 Workspace 与跨宿主适配逐步实现 |
 | AI 说「完成了」，却没有可核查结果 | 记录实际变更、测试、线程和验收状态 |
 
-**项目定位：** 现在是面向 **OpenAI Codex** 的公开 Beta。部分能力已经有本地实现与跨平台 CI；完整的跨厂商、全自动、长期运行 Agent OS 仍在发展中。**不把规划写成已完成，也不把安装成功写成真实 Agent 已激活。**
+**项目定位：** CHEF Core 已可安装到多个宿主的原生规则 / Skills / 角色目录；真实自动执行运行时目前仍以 Codex 为先。部分能力已经有本地实现与跨平台 CI；完整的跨厂商、全自动、长期运行 Agent OS 仍在发展中。**不把规划写成已完成，也不把安装成功写成真实 Agent 已激活。**
 
 <a id="quick-start"></a>
+
+## UNIVERSAL CHEF / 不再只支持 Codex
+
+**同一套 CHEF Core 规则、四个 Skills、四个专业角色，根据宿主转换为原生配置。**
+
+现在除了 Codex，还可为 **WorkBuddy / CodeBuddy、Claude Code、Gemini CLI、OpenCode、Hermes** 及支持 `AGENTS.md` 的其他 Agent 安装项目级能力。WorkBuddy、Claude、Gemini、OpenCode 还支持**明确选择用户全局范围**。安装器默认只预览；安装前会检查已有文件，避免破坏原来的工作规则。
+
+| 目标 Agent | 可安装的内容 | 真实 Agent 调用 |
+| --- | --- | --- |
+| **Codex** | 全局 `AGENTS.md` + 四 Skills + 四原生 TOML 角色 | 有 Codex CLI 验证器；具体用户环境需实测 |
+| **WorkBuddy** | `.codebuddy/rules` + Skills + 四原生 Markdown 角色 | 需要 WorkBuddy 实际会话验收 |
+| **Claude Code** | `.claude/rules` + Skills + 四原生 Markdown 角色 | 需要 Claude Code 实际会话验收 |
+| **Gemini CLI** | `GEMINI.md` + Skills + 四原生 Markdown 角色 | 需要 Gemini CLI 实际会话验收 |
+| **OpenCode** | `AGENTS.md` + Skills + 四原生 Markdown 角色 | 需要 OpenCode 实际会话验收 |
+| **Hermes** | 项目 `AGENTS.md`、可选用户 Skills、角色交接模板 | 尚无四角色原生调度适配 |
+| **其他 Agent** | 通用 `AGENTS.md` / Skills / 手动交接模板 | 依各宿主实际兼容性 |
+
+### 一条命令安装到 WorkBuddy（Windows / PowerShell）
+
+~~~powershell
+git clone --depth 1 https://github.com/2ndforcecrew/aka-cristi-skills.git; if ($LASTEXITCODE -ne 0) { throw "Git clone failed" }; Set-Location aka-cristi-skills; py -3 -m tools.full_setup --host workbuddy --scope user --interactive
+~~~
+
+### macOS / Ubuntu / Linux · WorkBuddy 全局规则示例
+
+~~~bash
+git clone --depth 1 https://github.com/2ndforcecrew/aka-cristi-skills.git && cd aka-cristi-skills && python3 -m tools.full_setup --host workbuddy --scope user --interactive
+~~~
+
+**只改当前项目**可使用 `--scope project --project /path/to/your-project`；换成其他宿主则将 `--host workbuddy` 改成 `--host claude`、`gemini`、`opencode` 等。Hermes 的用户级身份文件 `SOUL.md` 不会被覆盖。安装成功后要**新开宿主会话**，再验证角色是否真正被加载。
+
+> **哪些没有自动完成？** Dual-Engine 有通用 Factory/Studio/QA JSON Handoff 生成器，但目前能自动执行的实验性引擎仍使用 Codex CLI；不同厂商的真实子 Agent 调度需要经过单独适配和验收，不能因文件安装成功而宣传已全平台打通。
+
+**[完整跨宿主安装与验收说明](docs/UNIVERSAL_CHEF_SETUP.md)** · [宿主适配安装器源码](tools/universal_chef.py) · [双引擎通用任务交接](tools/chef_handoff.py)
+
+---
+
 ## 01 / QUICK START — 一条命令，启动完整安装向导
 
 用户打开 GitHub `main` 首页，复制对应操作系统的整行命令即可进入引导。它先检查环境、已有配置和冲突，再由用户授权安装。
@@ -77,7 +114,7 @@ git clone --depth 1 https://github.com/2ndforcecrew/aka-cristi-skills.git && cd 
 
 没有终端访问权限的 Agent 只能指导安装，不能直接操作你的电脑。
 
-**更保守的安装方式：** 仅安装 CHEF + 四 Skills + 四角色配置，可以在已下载仓库内运行 `python3 -m tools.quick_install --interactive`（Windows 用 `py -3`）。已公开的 [`v1.0.0-beta.2`](https://github.com/2ndforcecrew/aka-cristi-skills/releases/tag/v1.0.0-beta.2) 包含这个核心安装入口，但**不包含之后才合入 `main` 的 `tools.full_setup`**。
+**更保守的安装方式：** 仅安装 Codex 核心配置，可运行 `python3 -m tools.quick_install --interactive`（Windows 用 `py -3`）。`v1.0.0-beta.2` 是历史 Codex-first Beta；新版 `v1.0.0-beta.3` 将通用宿主源码安装器一起打包。
 
 <a id="vision"></a>
 ## 02 / CORE CONCEPT — CHEF、Skills、Agents 与双引擎
@@ -237,7 +274,7 @@ python3 -m tools.chef_dual_engine --kind hybrid --prompt "修复一个小问题�
 **已有可用的本地安装工程与跨平台测试。**
 
 - [`tools.full_setup`](tools/full_setup.py)：`main` 的统一安装引导，连接核心配置、可选 Workspace、可选真实 Agent 测试。
-- [`tools.quick_install`](tools/quick_install.py)：`beta.2` 包含的核心配置快速安装。
+- [`tools.quick_install`](tools/quick_install.py)：早期 `beta.2` 已包含的 Codex 核心配置快速安装。
 - [Windows GUI](tools/gui_installer.py)：预览、确认、进度、取消、验证、受保护恢复。
 - [Install Transaction](tools/install_transaction.py)：记录受管理的文件变化、检查冲突与回滚条件。
 - [Windows Job Object](tools/aka_windows_job_runner.py)：管理超时子进程的生命周期；**不是权限沙盒**。
@@ -271,7 +308,7 @@ python3 -m tools.chef_dual_engine --kind hybrid --prompt "修复一个小问题�
 
 | 类别 | 状态 | 说明 |
 | --- | --- | --- |
-| **公开发布** | **已完成 Beta** | [`v1.0.0-beta.2`](https://github.com/2ndforcecrew/aka-cristi-skills/releases/tag/v1.0.0-beta.2) 提供 Windows EXE、源码 ZIP、SHA-256、GitHub provenance |
+| **公开发布** | **已完成 Beta** | [`v1.0.0-beta.3`](https://github.com/2ndforcecrew/aka-cristi-skills/releases/tag/v1.0.0-beta.3) 将提供 Windows EXE、源码 ZIP、SHA-256、GitHub provenance |
 | **CHEF + 4 Skills + 4 角色配置** | **已实现** | 可本地预览、安装、校验；不是自动启动所有 Agent |
 | **跨平台 CI** | **已通过相应测试** | Windows、macOS、Ubuntu；不代表所有外部用户环境 |
 | **Dual-Engine Factory / Studio** | **实验性运行时** | 隔离执行、SQLite、恢复、QA；尚无完整真实 Codex E2E |
@@ -282,7 +319,7 @@ python3 -m tools.chef_dual_engine --kind hybrid --prompt "修复一个小问题�
 | **Windows Authenticode 签名** | **尚未签署** | GitHub OIDC 来源证明不能代替代码签名证书 |
 | **外部用户验收 / Stable** | **未完成** | Beta 可供独立用户测试，不等于稳定版 |
 
-**开发分支与正式 Beta 请分清：** `main` 上的一键完整引导器 `tools.full_setup` 是在 `beta.2` 发布之后新增的；`beta.2` 只包含 `quick_install` 核心安装入口。安装一次也不会自动常驻启动 `Dual-Engine`。
+**版本区别：** `v1.0.0-beta.2` 只包含 Codex 核心 `quick_install`；`v1.0.0-beta.3` 新增 `full_setup` 的跨宿主适配、全局/项目级安装、受管理卸载和 Dual-Engine 通用交接协议。安装一次仍不会自动启动任何宿主的真实 Agent 或 Dual-Engine 后台进程。
 
 <a id="verify"></a>
 ## 05 / VERIFY — 如何验证安装与真实 Agent 调用？

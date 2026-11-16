@@ -50,6 +50,23 @@ class FullSetupTests(unittest.TestCase):
         self.assertEqual(result["live_agents"], "CODEX_CLI_MISSING")
         self.assertEqual(call.call_count, 1)
 
+    @patch("tools.full_setup.dependency_status")
+    @patch("tools.full_setup.universal_chef")
+    def test_workbuddy_routes_to_native_project_adapter(self, adapter, status):
+        status.return_value = self.status
+        adapter.inspect.return_value = {"host": "workbuddy", "status": "PREVIEW",
+                                         "conflicts": []}
+        adapter.install.return_value = {"host": "workbuddy",
+                                         "status": "FILES_VERIFIED"}
+        result = full_setup.run(host="workbuddy", project="/tmp/example",
+                                interactive=True, workspace=True,
+                                test_agents=True, input_fn=lambda _: "YES")
+        self.assertEqual(result["core_install"], "FILES_VERIFIED")
+        self.assertEqual(result["workspace"], "CODEX_ONBOARDING_ONLY")
+        self.assertEqual(result["live_agents"], "HOST_NATIVE_RUNTIME_NOT_VERIFIED")
+        self.assertEqual(self.pre.call_count, 0)
+        adapter.install.assert_called_once()
+
     @patch("tools.full_setup._call", return_value=True)
     @patch("tools.full_setup.dependency_status")
     def test_optional_agent_probe_separate_confirmation(self, status, call):

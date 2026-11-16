@@ -181,6 +181,22 @@ python3 -m tools.chef_dual_engine --kind hybrid \
 
 ---
 
+## 新增｜Universal CHEF 跨 Agent 平台安装（Beta.3）
+
+**状态：原生配置转换、预览、文件校验与受管理撤销已实现；各厂商真实 Agent 线程联动仍需独立实测。**
+
+- WorkBuddy / CodeBuddy：项目 `.codebuddy/rules`、`agents`、`skills`；或用户全局 `~/.codebuddy/`，不覆盖内置 WorkBuddy 规则。
+- Claude Code：项目/用户级 `.claude/rules`、`agents`、`skills`。
+- Gemini CLI：`GEMINI.md` / `~/.gemini/GEMINI.md`、`.gemini/agents`、`.gemini/skills`。
+- OpenCode：`AGENTS.md` / `~/.config/opencode/AGENTS.md`、`.opencode/agents`、`.opencode/skills`。
+- Hermes：项目 `AGENTS.md`，可选实际用户 `~/.hermes/skills`；四角色模板仅供交接，尚不是 Hermes 原生子 Agent。
+- 通用 Agent：`AGENTS.md` 与 `.agents/skills`，是否真实加载由具体宿主决定。
+
+项目级、用户级需要用户显式选择 `--scope`；保护既有规则和角色，不在未经确认时修改权限/账号。Dual-Engine 的通用 Factory/Studio/QA 交接 JSON 可以安全生成和检查，但非 Codex 宿主的自动 CLI Runner **未实现**。原有 Codex 运行时保留不变。
+
+[跨宿主安装/验收手册](UNIVERSAL_CHEF_SETUP.md) · [安装源码](../tools/universal_chef.py) · [交接源码](../tools/chef_handoff.py)
+
+
 ## 当前安装究竟会部署哪些模块？
 
 | 模块 | 运行 `tools.full_setup` 后的行为 |
