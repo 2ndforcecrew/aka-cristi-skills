@@ -136,8 +136,7 @@ class FourAgentEvidenceTests(unittest.TestCase):
                     return SimpleNamespace(returncode=0, stdout=b"", stderr=b"")
                 return SimpleNamespace(returncode=0, stdout=events + b"\\xff",
                                        stderr=b"\\xff")
-            with patch("tools.codex_probe_isolation.probe_environment",
-                       return_value=(home, {"CODEX_HOME": str(home)})), \
+            with patch.dict("os.environ", {"AKA_CODEX_PROBE_HOME": str(home)}), \
                  patch("tools.verify_four_agents.shutil.which", return_value="codex.exe"), \
                  patch("tools.verify_four_agents.subprocess.run", side_effect=fake_cli), \
                  _mock_job_runner(fake_cli):
@@ -276,8 +275,7 @@ class IsolatedRoleSourceTests(unittest.TestCase):
                     path = Path(json.loads(override.split("=", 1)[1]))
                     self.assertTrue(path.is_file())
                 return SimpleNamespace(returncode=0, stdout=b"", stderr=b"")
-            with patch("tools.codex_probe_isolation.probe_environment",
-                       return_value=(home, {"CODEX_HOME": str(home)})), \
+            with patch.dict("os.environ", {"AKA_CODEX_PROBE_HOME": str(home)}), \
                  patch("tools.verify_four_agents.shutil.which", return_value="codex"), \
                  patch("tools.verify_four_agents.subprocess.run", side_effect=cli), \
                  _mock_job_runner(cli):
@@ -303,8 +301,7 @@ class CliFailureTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             home = Path(temp) / "codex"
             home.mkdir()
-            with patch("tools.codex_probe_isolation.probe_environment",
-                       return_value=(home, {"CODEX_HOME": str(home)})), \
+            with patch.dict("os.environ", {"AKA_CODEX_PROBE_HOME": str(home)}), \
                  patch("tools.verify_four_agents.shutil.which", return_value="codex"), \
                  patch("tools.verify_four_agents.subprocess.run", side_effect=cli), \
                  _mock_job_runner(cli):
