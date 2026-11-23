@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tools.chef_control_api import task_summary
+from tools.chef_control_api import task_summary, task_detail
 
 
 class ControlApiTests(unittest.TestCase):
@@ -34,6 +34,35 @@ class ControlApiTests(unittest.TestCase):
             with sqlite3.connect(path) as db:
                 db.execute("CREATE TABLE events (task_id TEXT, role TEXT, status TEXT, timestamp REAL, evidence TEXT)")
             self.assertEqual(task_summary(path), [])
+
+
+    def test_timeline_redacts_agent_output_and_paths(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "chef.sqlite3"
+            with sqlite3.connect(path) as db:
+                db.execute("CREATE TABLE tasks (task_id TEXT PRIMARY KEY, config TEXT, status TEXT)")
+                db.execute("CREATE TABLE events (task_id TEXT, role TEXT, status TEXT, timestamp REAL, evidence TEXT)")
+                db.execute("CREATE TABLE attempts (task_id TEXT, role TEXT, attempt INTEGER, result TEXT)")
+                db.execute("INSERT INTO tasks VALUES (?,?,?)", ("safe-task", '{"prompt":"SECRET"}', "BLOCKED"))
+                db.execute("INSERT INTO events VALUES (?,?,?,?,?)",
+                           ("safe-task", "factory", "STARTED", 100.0, "SECRET PRIVATE"))
+                db.execute("INSERT INTO events VALUES (?,?,?,?,?)",
+                           ("safe-task", "factory", "FAILED", 105.0, "SECRET PRIVATE"))
+                db.execute("INSERT INTO attempts VALUES (?,?,?,?)",
+                           ("safe-task", "factory", 1,
+                            '{"status":"FAILED","reason":"timeout","output":"SECRET","workspace":"/secret"}'))
+                db.commit()
+            detail = task_detail(path, "safe-task")
+            self.assertEqual(detail["elapsed_seconds"], 5.0)
+            self.assertEqual(detail["attempts"][0]["reason"], "timeout")
+            self.assertFalse(detail["retry"]["available"])
+            self.assertFalse(detail["approval"]["available"])
+            self.assertNotIn("SECRET", repr(detail))
+            self.assertNotIn("/secret", repr(detail))
+
+    def test_task_detail_rejects_invalid_identifier(self):
+        with self.assertRaises(ValueError):
+            task_detail("/missing", "../secrets")
 
     def test_rejects_invalid_limits(self):
         with self.assertRaises(ValueError):
