@@ -1,4 +1,7 @@
 """Synthetic filesystem tests; none invokes a live agent host."""
+import contextlib
+import io
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -94,3 +97,32 @@ class AdapterTests(unittest.TestCase):
     def test_unknown_host_rejected(self):
         with self.assertRaises(ValueError):
             adapters.HostAdapter('made-up-host', project=self.project)
+
+    def _run_main(self, argv):
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer):
+            code = adapters.main(argv)
+        return code, json.loads(buffer.getvalue())
+
+    def test_main_dispatches_each_action_without_getattr(self):
+        # WP-E AST7 hardening: main() uses an explicit action->method table,
+        # so every action must still reach its method after the refactor.
+        with patch('tools.host_adapters.shutil.which', return_value=None):
+            code, result = self._run_main(['claude', 'inspect', '--project', str(self.project)])
+        self.assertEqual(code, 0)
+        self.assertEqual(result['status'], 'INSPECTED')
+        code, result = self._run_main(['claude', 'live-activation', '--project', str(self.project)])
+        self.assertEqual(code, 2)
+        self.assertEqual(result['status'], 'NOT_RUN')
+        code, result = self._run_main(['claude', 'preview', str(self.source),
+                                       '--project', str(self.project)])
+        self.assertEqual(code, 0)
+        self.assertEqual(result['action'], 'install')
+
+    def test_main_rejects_unknown_action_and_missing_value(self):
+        with self.assertRaises(SystemExit) as caught:
+            adapters.main(['claude', 'bogus-action', '--project', str(self.project)])
+        self.assertEqual(caught.exception.code, 2)
+        with self.assertRaises(SystemExit) as caught:
+            adapters.main(['claude', 'install', '--project', str(self.project)])
+        self.assertEqual(caught.exception.code, 2)

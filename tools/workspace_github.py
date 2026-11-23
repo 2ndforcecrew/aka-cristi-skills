@@ -86,6 +86,16 @@ def validate_manifest(manifest, owner, name):
 
 
 class GhClient:
+    # NOTE (WP-E, 2026-11-24, scan #279/TM3): the `executable` argument is a
+    # dead legacy parameter, retained only for the public controller contract.
+    # It is validated (non-empty str) and stored, but this module imports no
+    # subprocess and never executes it: all transport goes through
+    # tools.workspace_auth.AuthClient over bounded HTTPS (see
+    # docs/PERSONAL_WORKSPACE_GITHUB_SECURITY.md, "The legacy `executable`
+    # argument does not execute a process"). Do not reintroduce an execution
+    # path keyed off this value; remove the parameter instead if the
+    # controller contract is ever revised. Covered by
+    # tests/test_workspace_github.py::test_executable_argument_is_inert.
     def __init__(self, config_dir: Path, executable='gh', timeout=30, auth=None):
         try:
             self.config_dir = checked_path(config_dir)

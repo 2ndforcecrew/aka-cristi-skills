@@ -1,5 +1,7 @@
 """Contract tests: synthetic traces are NOT counted as real Codex invocations."""
 import json
+import os
+import subprocess
 import tempfile
 import time
 import unittest
@@ -20,6 +22,96 @@ def _mock_job_runner(fake_cli):
             JobError=RuntimeError, JobTimeout=TimeoutError,
             run_in_job=lambda command, cwd, timeout, env=None: fake_cli(command, cwd=cwd, env=env))
     })
+
+
+# E-247-2: env allowlist the fake CLI must receive (mirrors
+# tools/codex_probe_isolation.py). Four-agents exec must carry
+# --sandbox read-only and must NOT carry --ephemeral: its acceptance
+# reads persisted rollout sessions (see rooted_sessions).
+_ALLOWED_PROBE_ENV_KEYS = frozenset({
+    "CODEX_HOME", "PATH", "Path", "SystemRoot", "SYSTEMROOT", "WINDIR",
+    "TEMP", "TMP", "TMPDIR", "HOME", "USERPROFILE", "APPDATA",
+    "LOCALAPPDATA", "COMSPEC", "PATHEXT",
+})
+
+
+def _assert_probe_env(testcase, env, home):
+    testcase.assertIsNotNone(env, "CLI was invoked without an env")
+    testcase.assertTrue(set(env) <= _ALLOWED_PROBE_ENV_KEYS,
+                        "CLI env leaked non-allowlist keys: %s"
+                        % sorted(set(env) - _ALLOWED_PROBE_ENV_KEYS))
+    testcase.assertEqual(env.get("CODEX_HOME"), str(Path(home).resolve()))
+    for secret in ("SECRET_TOKEN", "GH_TOKEN", "OPENAI_API_KEY"):
+        testcase.assertNotIn(secret, env)
+
+
+def _assert_exec_argv(testcase, cmd):
+    testcase.assertIn("--sandbox", cmd)
+    testcase.assertEqual(cmd[cmd.index("--sandbox") + 1], "read-only")
+    testcase.assertNotIn("--ephemeral", cmd)
+
+
+def _as_group_runner(fake_cli):
+    """Adapt a (cmd, **kwargs) fake CLI to run_in_process_group's call shape.
+
+    WP-C: the POSIX exec path runs through tools.chef_dual_engine
+    .run_in_process_group (Popen + new process group) instead of
+    subprocess.run; the --version / login probes still use
+    subprocess.run, so both entry points share the same fake.
+    """
+    def group_runner(command, cwd, timeout, env=None, **kwargs):
+        return fake_cli(command, cwd=cwd, timeout=timeout, env=env, **kwargs)
+    return group_runner
+
+
+# WP-C: real fake Codex CLI for POSIX process-group tests. The exec
+# branch records its own pid and its grandchild's pid, spawns a
+# grandchild that would write a marker after 2s, then sleeps. A correct
+# process-group kill on timeout means the marker never appears and
+# both recorded PIDs are gone.
+_FAKE_CODEX_SCRIPT = '''#!/usr/bin/env python3
+import os
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+here = Path(sys.argv[0]).resolve().parent
+if sys.argv[1:2] == ["--version"]:
+    print("codex-cli 0.0.0-test")
+    raise SystemExit(0)
+if sys.argv[1:3] == ["login", "status"]:
+    raise SystemExit(0)
+(here / "child.pid").write_text(str(os.getpid()))
+grandchild = subprocess.Popen([sys.executable, "-c",
+    "import time; from pathlib import Path; time.sleep(2.0); "
+    "Path(" + repr(str(here / "orphan-wrote")) + ").write_text('orphan')"])
+(here / "grandchild.pid").write_text(str(grandchild.pid))
+time.sleep(60)
+'''
+
+
+def _pid_gone(pid, timeout=2.0):
+    """True when *pid* is gone (a Linux zombie awaiting reaping counts as gone)."""
+    deadline = time.monotonic() + timeout
+    while True:
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return True
+        except PermissionError:
+            return False
+        if os.name == "posix":
+            try:
+                state = Path("/proc", str(pid), "stat").read_text(
+                    encoding="utf-8", errors="replace").rsplit(")", 1)[-1].split()[0]
+                if state == "Z":
+                    return True
+            except (OSError, IndexError):
+                return True
+        if time.monotonic() >= deadline:
+            return False
+        time.sleep(0.05)
 
 
 class FourAgentEvidenceTests(unittest.TestCase):
@@ -130,16 +222,25 @@ class FourAgentEvidenceTests(unittest.TestCase):
                                   "thread_id": str(uuid.uuid4())}) + "\n" +
                       json.dumps({"type": "turn.completed"}) + "\n").encode("utf-8")
             def fake_cli(cmd, **kwargs):
+                _assert_probe_env(self, kwargs.get("env"), home)
                 if "--version" in cmd:
                     return SimpleNamespace(returncode=0,
                         stdout=b"codex-cli 0.167.0-alpha.4", stderr=b"")
                 if "login" in cmd:
                     return SimpleNamespace(returncode=0, stdout=b"", stderr=b"")
+                _assert_exec_argv(self, cmd)
+                print("[E-247-2] fake CLI env keys (PATH omitted):",
+                      sorted(k for k in kwargs.get("env", {}) if k != "PATH"))
                 return SimpleNamespace(returncode=0, stdout=events + b"\\xff",
                                        stderr=b"\\xff")
-            with patch.dict("os.environ", {"AKA_CODEX_PROBE_HOME": str(home)}), \
+            with patch.dict("os.environ", {"AKA_CODEX_PROBE_HOME": str(home),
+                                           "SECRET_TOKEN": "sentinel-2472",
+                                           "GH_TOKEN": "sentinel-2472",
+                                           "OPENAI_API_KEY": "sentinel-2472"}), \
                  patch("tools.verify_four_agents.shutil.which", return_value="codex.exe"), \
                  patch("tools.verify_four_agents.subprocess.run", side_effect=fake_cli), \
+                 patch("tools.chef_dual_engine.run_in_process_group",
+                       side_effect=_as_group_runner(fake_cli)), \
                  _mock_job_runner(fake_cli):
                 result = run(codex_home=home)
             self.assertEqual(result["status"], "INCONCLUSIVE")
@@ -264,12 +365,14 @@ class IsolatedRoleSourceTests(unittest.TestCase):
             home.mkdir()
             calls = []
             def cli(command, **kwargs):
+                _assert_probe_env(self, kwargs.get("env"), home)
                 calls.append(command)
                 if "--version" in command:
                     return SimpleNamespace(returncode=0,
                         stdout=b"codex-cli 0.167.0-alpha.4", stderr=b"")
                 if "login" in command:
                     return SimpleNamespace(returncode=0, stdout=b"", stderr=b"")
+                _assert_exec_argv(self, command)
                 for role in ROLES:
                     override = next(x for x in command if x.startswith(
                         "agents." + role + ".config_file="))
@@ -279,6 +382,8 @@ class IsolatedRoleSourceTests(unittest.TestCase):
             with patch.dict("os.environ", {"AKA_CODEX_PROBE_HOME": str(home)}), \
                  patch("tools.verify_four_agents.shutil.which", return_value="codex"), \
                  patch("tools.verify_four_agents.subprocess.run", side_effect=cli), \
+                 patch("tools.chef_dual_engine.run_in_process_group",
+                       side_effect=_as_group_runner(cli)), \
                  _mock_job_runner(cli):
                 result = run(codex_home=home, role_source=public)
             self.assertTrue(result["invoked"])
@@ -292,11 +397,13 @@ class CliFailureTests(unittest.TestCase):
     def test_nonzero_cli_returns_sanitized_failure_without_raw_stderr(self):
         public = Path(__file__).resolve().parents[1] / "agents"
         def cli(command, **kwargs):
+            _assert_probe_env(self, kwargs.get("env"), home)
             if "--version" in command:
                 return SimpleNamespace(returncode=0,
                     stdout=b"codex-cli 0.167.0-alpha.4", stderr=b"")
             if "login" in command:
                 return SimpleNamespace(returncode=0, stdout=b"", stderr=b"")
+            _assert_exec_argv(self, command)
             return SimpleNamespace(returncode=1, stdout=b"",
                 stderr=b"error: unexpected argument --json SECRET_SENTINEL")
         with tempfile.TemporaryDirectory() as temp:
@@ -305,11 +412,200 @@ class CliFailureTests(unittest.TestCase):
             with patch.dict("os.environ", {"AKA_CODEX_PROBE_HOME": str(home)}), \
                  patch("tools.verify_four_agents.shutil.which", return_value="codex"), \
                  patch("tools.verify_four_agents.subprocess.run", side_effect=cli), \
+                 patch("tools.chef_dual_engine.run_in_process_group",
+                       side_effect=_as_group_runner(cli)), \
                  _mock_job_runner(cli):
                 result = run(codex_home=home, role_source=public)
         self.assertEqual(result["status"], "FAIL")
         self.assertEqual(result["failure_category"], "CLI_OPTION_REJECTED")
         self.assertNotIn("SECRET_SENTINEL", json.dumps(result))
+
+
+class TimeoutReportingTests(unittest.TestCase):
+    """E-247-3: a timeout must report descendants as unverified, FAIL."""
+
+    def _stage_home(self, temp):
+        root = Path(__file__).resolve().parents[1]
+        home = Path(temp) / "codex"
+        agents = home / "agents"
+        agents.mkdir(parents=True)
+        for role in ("research", "coding", "qa", "automation"):
+            (agents / (role + ".toml")).write_bytes(
+                (root / "agents" / (role + ".toml")).read_bytes())
+        return home
+
+    def test_job_timeout_reports_descendants_unverified_and_fail(self):
+        class _JobTimeout(Exception):
+            pass
+
+        def raising_job(command, cwd, timeout, env=None):
+            raise _JobTimeout("simulated job timeout")
+
+        def fake_subprocess(cmd, **kwargs):
+            if "--version" in cmd:
+                return SimpleNamespace(returncode=0,
+                    stdout=b"codex-cli 0.167.0-alpha.4", stderr=b"")
+            if "login" in cmd:
+                return SimpleNamespace(returncode=0, stdout=b"", stderr=b"")
+            raise AssertionError("unexpected subprocess.run call: %r" % (cmd,))
+
+        with tempfile.TemporaryDirectory() as temp:
+            home = self._stage_home(temp)
+            with patch.dict("os.environ", {"AKA_CODEX_PROBE_HOME": str(home)}), \
+                 patch("tools.verify_four_agents.shutil.which",
+                       return_value="codex"), \
+                 patch("tools.verify_four_agents.subprocess.run",
+                       side_effect=fake_subprocess), \
+                 patch("tools.verify_four_agents.os",
+                       SimpleNamespace(name="nt")), \
+                 patch.dict("sys.modules", {"tools.aka_windows_job_runner": SimpleNamespace(
+                     JobError=RuntimeError, JobTimeout=_JobTimeout,
+                     run_in_job=raising_job)}):
+                result = run(codex_home=home)
+        self.assertEqual(result["status"], "FAIL")
+        self.assertNotEqual(result["status"], "PASS")
+        self.assertNotEqual(result["status"], "INCONCLUSIVE")
+        self.assertIs(result["descendants_verified_terminated"], False)
+        self.assertTrue(result["invoked"])
+
+    def test_job_timeout_verified_true_propagates(self):
+        # WP-C: WP-B's run_in_job reports True only when the job was
+        # confirmed empty; verify_* must pass that through, not hardcode False.
+        class _JobTimeout(Exception):
+            def __init__(self):
+                super().__init__("simulated job timeout")
+                self.descendants_verified_terminated = True
+                self.alive_pids = []
+
+        def raising_job(command, cwd, timeout, env=None):
+            raise _JobTimeout()
+
+        def fake_subprocess(cmd, **kwargs):
+            if "--version" in cmd:
+                return SimpleNamespace(returncode=0,
+                    stdout=b"codex-cli 0.167.0-alpha.4", stderr=b"")
+            if "login" in cmd:
+                return SimpleNamespace(returncode=0, stdout=b"", stderr=b"")
+            raise AssertionError("unexpected subprocess.run call: %r" % (cmd,))
+
+        with tempfile.TemporaryDirectory() as temp:
+            home = self._stage_home(temp)
+            with patch.dict("os.environ", {"AKA_CODEX_PROBE_HOME": str(home)}), \
+                 patch("tools.verify_four_agents.shutil.which",
+                       return_value="codex"), \
+                 patch("tools.verify_four_agents.subprocess.run",
+                       side_effect=fake_subprocess), \
+                 patch("tools.verify_four_agents.os",
+                       SimpleNamespace(name="nt")), \
+                 patch.dict("sys.modules", {"tools.aka_windows_job_runner": SimpleNamespace(
+                     JobError=RuntimeError, JobTimeout=_JobTimeout,
+                     run_in_job=raising_job)}):
+                result = run(codex_home=home)
+        self.assertEqual(result["status"], "FAIL")
+        self.assertIs(result["descendants_verified_terminated"], True)
+        self.assertEqual(result.get("alive_pids"), [])
+        self.assertTrue(result["invoked"])
+
+    def test_job_timeout_verification_failure_reports_alive_pids(self):
+        # WP-C: a failed verification must stay False and echo alive_pids.
+        class _JobTimeout(Exception):
+            def __init__(self):
+                super().__init__("simulated job timeout")
+                self.descendants_verified_terminated = False
+                self.alive_pids = [424242]
+
+        def raising_job(command, cwd, timeout, env=None):
+            raise _JobTimeout()
+
+        def fake_subprocess(cmd, **kwargs):
+            if "--version" in cmd:
+                return SimpleNamespace(returncode=0,
+                    stdout=b"codex-cli 0.167.0-alpha.4", stderr=b"")
+            if "login" in cmd:
+                return SimpleNamespace(returncode=0, stdout=b"", stderr=b"")
+            raise AssertionError("unexpected subprocess.run call: %r" % (cmd,))
+
+        with tempfile.TemporaryDirectory() as temp:
+            home = self._stage_home(temp)
+            with patch.dict("os.environ", {"AKA_CODEX_PROBE_HOME": str(home)}), \
+                 patch("tools.verify_four_agents.shutil.which",
+                       return_value="codex"), \
+                 patch("tools.verify_four_agents.subprocess.run",
+                       side_effect=fake_subprocess), \
+                 patch("tools.verify_four_agents.os",
+                       SimpleNamespace(name="nt")), \
+                 patch.dict("sys.modules", {"tools.aka_windows_job_runner": SimpleNamespace(
+                     JobError=RuntimeError, JobTimeout=_JobTimeout,
+                     run_in_job=raising_job)}):
+                result = run(codex_home=home)
+        self.assertEqual(result["status"], "FAIL")
+        self.assertIs(result["descendants_verified_terminated"], False)
+        self.assertEqual(result.get("alive_pids"), [424242])
+        self.assertTrue(result["invoked"])
+
+    def test_posix_timeout_verification_failure_reports_tree_unverified_and_fail(self):
+        # WP-C update of the WP-D mock test: the POSIX exec path now
+        # runs through run_in_process_group, so the failure is mocked
+        # there instead of on subprocess.run. Intent unchanged: FAIL,
+        # tree unverified, field not True.
+        from tools.chef_dual_engine import ProcessGroupTimeout
+
+        def raising_group(command, cwd, timeout, env=None, **kwargs):
+            raise ProcessGroupTimeout(command, timeout,
+                                      descendants_verified_terminated=False,
+                                      alive_pids=[424242])
+
+        def fake_subprocess(cmd, **kwargs):
+            if "--version" in cmd:
+                return SimpleNamespace(returncode=0,
+                    stdout=b"codex-cli 0.167.0-alpha.4", stderr=b"")
+            if "login" in cmd:
+                return SimpleNamespace(returncode=0, stdout=b"", stderr=b"")
+            raise AssertionError("unexpected subprocess.run call: %r" % (cmd,))
+
+        with tempfile.TemporaryDirectory() as temp:
+            home = self._stage_home(temp)
+            with patch.dict("os.environ", {"AKA_CODEX_PROBE_HOME": str(home)}), \
+                 patch("tools.verify_four_agents.shutil.which",
+                       return_value="codex"), \
+                 patch("tools.verify_four_agents.subprocess.run",
+                       side_effect=fake_subprocess), \
+                 patch("tools.chef_dual_engine.run_in_process_group",
+                       side_effect=raising_group):
+                result = run(codex_home=home)
+        self.assertEqual(result["status"], "FAIL")
+        self.assertIn("POSIX tree unverified", result["reason"])
+        self.assertIs(result["descendants_verified_terminated"], False)
+        self.assertEqual(result.get("alive_pids"), [424242])
+
+    @unittest.skipUnless(os.name == "posix", "POSIX process group regression")
+    def test_posix_timeout_kills_process_group_and_verifies(self):
+        # WP-C: real fake CLI (not a subprocess.run mock). The exec
+        # spawns a grandchild that would write a marker after 2s; the
+        # run times out after 1s, so a correct process-group kill means
+        # the marker never appears, both recorded PIDs are gone, and
+        # the report carries descendants_verified_terminated True.
+        with tempfile.TemporaryDirectory() as temp:
+            home = self._stage_home(temp)
+            bin_dir = Path(temp) / "bin"
+            bin_dir.mkdir()
+            fake = bin_dir / "codex"
+            fake.write_text(_FAKE_CODEX_SCRIPT, encoding="utf-8")
+            fake.chmod(0o700)
+            with patch.dict("os.environ", {
+                    "AKA_CODEX_PROBE_HOME": str(home),
+                    "PATH": str(bin_dir) + os.pathsep + os.environ["PATH"]}):
+                result = run(timeout=1, codex_home=home)
+            self.assertEqual(result["status"], "FAIL")
+            self.assertIs(result["descendants_verified_terminated"], True)
+            self.assertEqual(result.get("alive_pids"), [])
+            self.assertTrue(result["invoked"])
+            time.sleep(2.5)  # Past the grandchild's 2s marker delay.
+            self.assertFalse((bin_dir / "orphan-wrote").exists(),
+                             "timed-out grandchild survived and wrote output")
+            for name in ("child.pid", "grandchild.pid"):
+                pid = int((bin_dir / name).read_text(encoding="utf-8"))
+                self.assertTrue(_pid_gone(pid), "%s %d still alive" % (name, pid))
 
 
 if __name__ == "__main__":

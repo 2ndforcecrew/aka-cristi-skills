@@ -46,6 +46,134 @@ def record(db, task_id, role, status, evidence=""):
 def codex_available():
     return shutil.which("codex") is not None
 
+class ProcessGroupTimeout(subprocess.TimeoutExpired):
+    """TimeoutExpired carrying POSIX descendant verification (WP-C).
+
+    ``descendants_verified_terminated`` is True only when the whole
+    process group was observed empty after SIGKILL (two consecutive
+    empty polls, mirroring WP-B's wait_for_job_empty on Windows);
+    ``alive_pids`` lists PIDs still observed at the end of the
+    verification window (best effort: the direct child pid when it is
+    still alive -- individual grandchild PIDs are not enumerated
+    without psutil).
+    """
+
+    def __init__(self, cmd, timeout, *, descendants_verified_terminated=False, alive_pids=()):
+        super().__init__(cmd, timeout)
+        self.descendants_verified_terminated = bool(descendants_verified_terminated)
+        self.alive_pids = list(alive_pids)
+
+def _process_group_empty(pgid):
+    """True when no live process remains in *pgid*.
+
+    On Linux /proc is consulted so a zombie awaiting reaping does not
+    count as alive; elsewhere killpg(pgid, 0) is the check (ESRCH
+    means the group is gone).
+    """
+    procfs = Path("/proc")
+    if procfs.is_dir():
+        try:
+            entries = list(procfs.iterdir())
+        except OSError:
+            return False
+        for entry in entries:
+            if not entry.name.isdigit():
+                continue
+            try:
+                text = (entry / "stat").read_text(encoding="utf-8", errors="replace")
+            except (OSError, ValueError):
+                continue
+            rparen = text.rfind(")")
+            fields = text[rparen + 2:].split()
+            if len(fields) < 3:
+                continue
+            try:
+                pgrp = int(fields[2])
+            except ValueError:
+                continue
+            if pgrp == pgid and fields[0] != "Z":
+                return False
+        return True
+    try:
+        os.killpg(pgid, 0)
+    except ProcessLookupError:
+        return True
+    except PermissionError:
+        return False
+    return False
+
+def _alive_pids(proc):
+    try:
+        return [] if proc.poll() is not None else [proc.pid]
+    except OSError:
+        return [proc.pid]
+
+def _kill_and_verify_process_group(proc, *, verify_timeout=5.0, poll_interval=0.05):
+    """SIGKILL *proc*'s process group and verify it emptied.
+
+    Returns (verified, alive_pids). verified is True only after two
+    consecutive empty polls (mirroring WP-B wait_for_job_empty); a
+    failed poll counts as not-verified, never as empty. Never raises.
+    """
+    pgid = proc.pid  # start_new_session=True makes pgid == child pid
+    try:
+        os.killpg(pgid, signal.SIGKILL)
+    except ProcessLookupError:
+        pass
+    except PermissionError:
+        pass  # Group exists but is not ours; polls below report alive.
+    deadline = time.monotonic() + verify_timeout
+    empty_streak = 0
+    while True:
+        try:
+            reaped = proc.poll() is not None
+            empty = _process_group_empty(pgid)
+        except OSError:
+            return False, _alive_pids(proc)
+        if reaped and empty:
+            empty_streak += 1
+            if empty_streak >= 2:
+                return True, []
+        else:
+            empty_streak = 0
+        if time.monotonic() >= deadline:
+            return False, _alive_pids(proc)
+        time.sleep(poll_interval)
+
+def run_in_process_group(command, cwd, timeout, env=None, *, text=False,
+                         encoding=None, errors=None, verify_timeout=5.0,
+                         poll_interval=0.05):
+    """Run *command* in its own POSIX process group; return CompletedProcess.
+
+    POSIX counterpart of WP-B's run_in_job: the child gets a fresh
+    session (start_new_session=True), so its process-group id equals
+    its pid. On timeout the whole group is SIGKILLed and polled until
+    empty, then a ProcessGroupTimeout is raised carrying
+    descendants_verified_terminated (True only when the group was
+    observed empty) and alive_pids. Raises OSError if the child
+    cannot start. POSIX only; Windows callers must use run_in_job.
+    """
+    if os.name != "posix":
+        raise ValueError("run_in_process_group is POSIX-only")
+    proc = subprocess.Popen(command, cwd=cwd, stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE, text=text, encoding=encoding,
+                            errors=errors, env=env, start_new_session=True)
+    try:
+        stdout, stderr = proc.communicate(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        verified, alive = _kill_and_verify_process_group(
+            proc, verify_timeout=verify_timeout, poll_interval=poll_interval)
+        try:
+            # Reap and drain like subprocess.run does after a timeout;
+            # also closes the pipes (no ResourceWarning on the caller).
+            proc.communicate()
+        except (OSError, ValueError):
+            pass
+        raise ProcessGroupTimeout(command, timeout,
+                                  descendants_verified_terminated=verified,
+                                  alive_pids=alive) from None
+    return subprocess.CompletedProcess(command, proc.returncode, stdout, stderr)
+
 def run_codex(role, prompt, workspace, timeout=300, *, sandbox="read-only"):
     if role not in ROLES:
         raise ValueError("unknown role")

@@ -257,6 +257,19 @@ class GitHubTests(unittest.TestCase):
             raise
         self.assert_code('CONFIG_UNSAFE', lambda: GhClient(link, auth=Mock()))
 
+    def test_executable_argument_is_inert(self):
+        # WP-E U2 (#279/TM3): `executable` is a dead legacy parameter. Even a
+        # bogus value must not break construction or be executed: this module
+        # imports no subprocess, and transport goes through AuthClient.
+        auth = Mock()
+        auth.inspect_account.return_value = {'login': 'alice', 'secure_storage': True}
+        client = GhClient(self.base / 'inert', executable='/definitely/not/a/real/gh', auth=auth)
+        self.assertEqual(client.executable, '/definitely/not/a/real/gh')
+        self.assertEqual(client.inspect_account()['login'], 'alice')
+        # Default value is likewise accepted and inert.
+        defaulted = GhClient(self.base / 'inert-default', auth=auth)
+        self.assertEqual(defaulted.executable, 'gh')
+
     def test_auth_adapter_success_cancel_failure_timeout(self):
         auth = Mock()
         client = GhClient(self.base / 'other', auth=auth)
