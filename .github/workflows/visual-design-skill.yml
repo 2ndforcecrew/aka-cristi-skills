@@ -1,0 +1,43 @@
+name: Visual Design Skill V0.1 gates
+
+on:
+  pull_request:
+    paths:
+      - 'skills/visual-design/**'
+      - 'tests/test_visual_design_skill.py'
+      - '.github/workflows/visual-design-skill.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  visual-skill-contract:
+    name: visual-skill-contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Compile contract test
+        run: python -m py_compile tests/test_visual_design_skill.py
+      - name: Run visual design skill contract tests
+        run: python -m unittest discover -s tests -p 'test_visual_design_skill.py' -v
+      - name: Run existing structural and safety preflight
+        run: python -m tools.skill_validator skills/visual-design
+      - name: Check accidental secret material and unsafe links
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+          root = Path("skills/visual-design")
+          files = [p for p in root.rglob("*") if p.is_file()]
+          assert files, "Skill files missing"
+          for path in files:
+              content = path.read_text(encoding="utf-8")
+              assert not re.search(r"-----BEGIN (?:RSA |OPENSSH |EC )?PRIVATE KEY-----", content), path
+              assert not re.search(r"(?i)(?:api[_-]?key|secret|token)\s*[:=]\s*['\"][A-Za-z0-9_\-]{20,}", content), path
+              assert not path.is_symlink(), path
+          print("PASS: limited static secret/symlink checks; NOT a comprehensive security audit")
