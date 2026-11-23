@@ -11,6 +11,7 @@ SKILLS = (
     "verified-change-loop",
     "feature-journey-map",
     "skill-evaluation-gate",
+    "chef-control-center",
 )
 ROOT = Path(__file__).resolve().parents[1]
 TEMPLATE = ROOT / "templates" / "AGENTS.global.md"
