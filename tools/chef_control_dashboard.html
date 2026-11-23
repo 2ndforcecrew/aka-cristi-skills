@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CHEF — CONTROL CENTER</title>
+<style>
+:root{color-scheme:dark;font-family:Inter,Arial,sans-serif;background:#0a0a0a;color:#eee}
+*{box-sizing:border-box}body{margin:0}header{padding:28px 5%;border-bottom:1px solid #333;display:flex;justify-content:space-between;align-items:center;gap:15px}
+.brand{font-weight:800;letter-spacing:.12em;font-size:24px}.muted{color:#8d8d8d}.mono{font-family:ui-monospace,monospace}main{padding:35px 5%;max-width:1450px;margin:auto}
+h1{font-size:clamp(32px,5vw,66px);letter-spacing:-.06em;margin:0 0 12px}.eyebrow{letter-spacing:.2em;font-size:11px;color:#a0a0a0}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:28px 0}
+.stat,.panel{background:#141414;border:1px solid #333;border-radius:8px;padding:20px}.stat strong{display:block;font-size:34px;margin-top:8px}
+.layout{display:grid;grid-template-columns:minmax(260px,1fr) minmax(330px,1.5fr);gap:14px}.panel h2{font-size:15px;letter-spacing:.06em}
+button{cursor:pointer;background:#222;border:1px solid #454545;border-radius:5px;padding:12px;color:#eee;text-align:left;font:inherit}
+button:hover,button:focus-visible{border-color:#fff}button:disabled{opacity:.4;cursor:not-allowed}
+.task{display:block;width:100%;margin:9px 0;word-break:break-all}.task.selected{background:#303030;border-color:#fff}
+.pill{font-size:10px;letter-spacing:.06em;padding:4px 7px;border:1px solid #555;border-radius:12px;display:inline-block}
+.event{border-left:2px solid #777;margin:0 0 0 8px;padding:5px 0 18px 18px}.event b{font-size:13px}.event small{display:block;margin-top:7px;color:#888}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:10px}.info{border:1px solid #303030;padding:12px;border-radius:6px}
+.info strong{display:block;margin-top:8px}#notice{color:#ddd;margin-top:15px}
+@media(max-width:850px){.stats{grid-template-columns:repeat(2,1fr)}.layout{grid-template-columns:1fr}header{padding:18px}main{padding:22px 16px}}
+@media(prefers-reduced-motion:no-preference){button{transition:border-color .15s}}
+</style></head>
+<body><header><div class="brand">AKA.CRISTI <span class="muted">/ CHEF</span></div><span class="eyebrow">LOCAL / READ ONLY</span></header>
+<main><div class="eyebrow">AGENT OPERATIONS / 001</div><h1>CONTROL CENTER<span class="muted">.</span></h1>
+<p class="muted">真实 Runtime 状态 · 任务执行 · 独立 QA · 证据摘要</p>
+<section class="stats" aria-label="任务统计"><div class="stat"><span class="muted">TOTAL TASKS</span><strong id="total">—</strong></div><div class="stat"><span class="muted">IN PROGRESS</span><strong id="active">—</strong></div><div class="stat"><span class="muted">BLOCKED</span><strong id="blocked">—</strong></div><div class="stat"><span class="muted">REVIEW</span><strong id="review">—</strong></div></section>
+<div class="layout"><section class="panel"><h2>01 / TASK QUEUE</h2><p class="muted" id="updated">等待连接</p><div id="tasks" aria-live="polite"></div><button id="refresh" type="button">刷新真实状态</button></section>
+<section class="panel"><h2>02 / EXECUTION DETAIL</h2><div id="detail" aria-live="polite"><p class="muted">选择左侧任务，查看执行时间线。</p></div></section></div>
+<p id="notice" role="status">安全模式：本页面不会执行 Agent、重试任务或批准操作。</p></main>
+<script>
+const $=id=>document.getElementById(id);let selected=null;let known=[];
+function el(tag,text,cls){const node=document.createElement(tag);if(text!==undefined)node.textContent=String(text);if(cls)node.className=cls;return node}
+function fmtTime(value){if(typeof value!=='number')return '未知时间';return new Date(value*1000).toLocaleString()}
+async function load(){
+ try{
+  const response=await fetch('/api/tasks',{cache:'no-store'});if(!response.ok)throw Error('API unavailable');
+  const data=await response.json();known=data.tasks||[];
+  $('total').textContent=known.length;$('active').textContent=known.filter(x=>x.status==='IN_PROGRESS').length;
+  $('blocked').textContent=known.filter(x=>x.status==='BLOCKED').length;
+  $('review').textContent=known.filter(x=>x.status==='REVIEW_REQUIRED').length;
+  $('updated').textContent='更新于 '+new Date().toLocaleTimeString();
+  $('tasks').replaceChildren();
+  if(!known.length)$('tasks').append(el('p','暂无已记录的任务','muted'));
+  for(const task of known){
+   const button=el('button',undefined,'task'+(selected===task.task_id?' selected':''));button.type='button';
+   button.append(el('span',task.task_id,'mono'),el('span','  '+task.status,'pill'));
+   button.addEventListener('click',()=>select(task.task_id));$('tasks').append(button);
+  }
+  if(selected&&known.some(x=>x.task_id===selected))await select(selected);
+ }catch(e){$('updated').textContent='连接失败';$('tasks').replaceChildren(el('p','无法读取本地 Runtime 数据库','muted'))}
+}
+async function select(id){
+ selected=id;
+ try{
+  const response=await fetch('/api/tasks/'+encodeURIComponent(id),{cache:'no-store'});if(!response.ok)throw Error();
+  const d=await response.json();const root=$('detail');root.replaceChildren();
+  root.append(el('p',d.task_id,'mono'),el('h3',d.status));
+  const info=el('div',undefined,'cols');
+  const duration=el('div',undefined,'info');duration.append(el('span','已记录事件跨度','muted'),el('strong',d.elapsed_seconds===null?'未知':d.elapsed_seconds+' s'));
+  const attempts=el('div',undefined,'info');attempts.append(el('span','执行尝试','muted'),el('strong',d.attempts.length));
+  info.append(duration,attempts);root.append(info,el('h2','EVENT TIMELINE'));
+  if(!d.events.length)root.append(el('p','没有事件记录','muted'));
+  for(const event of d.events){const item=el('div',undefined,'event');item.append(el('b',event.role+' / '+event.status),el('small',fmtTime(event.timestamp)));root.append(item)}
+  root.append(el('h2','ATTEMPTS / EVIDENCE'));
+  for(const a of d.attempts){const item=el('div',undefined,'info');item.append(el('b',a.role+' #'+a.attempt+' · '+a.status),el('p',a.reason||'未提供公开错误原因','muted'),el('small',a.has_patch_hash?'已记录补丁哈希':'无补丁哈希'));root.append(item)}
+  if(!d.attempts.length)root.append(el('p','暂无尝试记录','muted'));
+  root.append(el('h2','RECOVERY & APPROVAL'));
+  const retry=el('button','重试 · 尚未启用');retry.disabled=true;
+  const approve=el('button','审批 · 尚未启用');approve.disabled=true;
+  root.append(retry,document.createTextNode(' '),approve,el('p','需要独立授权的 Runtime 执行与审批后端；当前仅展示状态。','muted'));
+  document.querySelectorAll('.task').forEach(b=>b.classList.toggle('selected',b.textContent.includes(id)));
+ }catch(e){$('detail').replaceChildren(el('p','任务详情暂不可用','muted'))}
+}
+$('refresh').addEventListener('click',load);load();setInterval(load,10000);
+</script></body></html>
