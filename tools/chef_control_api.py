@@ -20,8 +20,8 @@ def task_summary(db_path, limit=50):
     path = Path(db_path).expanduser()
     if not path.is_file() or path.is_symlink():
         raise FileNotFoundError("existing regular SQLite database required")
-    # SQLite URI mode=ro is read-only; immutable avoids sidecar writes.
-    uri = path.resolve().as_uri() + "?mode=ro&immutable=1"
+    # SQLite URI mode=ro prevents database writes; live updates remain visible.
+    uri = path.resolve().as_uri() + "?mode=ro"
     with sqlite3.connect(uri, uri=True, timeout=2) as db:
         db.execute("PRAGMA query_only=ON")
         tables = {r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
