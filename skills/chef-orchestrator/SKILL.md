@@ -61,3 +61,8 @@ For genuinely independent work, ask the host to spawn these configured agents wi
 To reduce conflicts, **do not assign overlapping file edits to parallel workers**; let CHEF coordinate sequence and ownership. Read-only research can run independently; QA must review the actual final revision, not an intermediate edit. When multi-agent tools or custom roles are missing, fall back to a single agent and mark delegation `NOT_RUN` rather than faking success.
 
 The existence of an installed TOML and a passing local unit test is not a verified agent spawn. Actual runtime acceptance requires an observed spawned thread and evidence for its completed task.
+
+
+## Bundled shared training / 共享训练规则
+
+When this Skill is invoked, read the applicable sections of [TRAINING.md](references/TRAINING.md) and [GLOBAL_WORK_RULES.md](references/GLOBAL_WORK_RULES.md) relative to the installed Skill directory. These are the bundled 22 shared training rules and 12 global work chapters. Use them for design, engineering, automation, commercial and verification decisions; they supplement existing user and project rules without changing authorization. No network access or additional account is needed to read these files. Do not claim a host actually loaded the Skill without direct evidence. If references are missing, report the installation as incomplete; never invent their contents.
