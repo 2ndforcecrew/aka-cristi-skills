@@ -19,12 +19,14 @@ Use this Markdown template per design task; omit irrelevant medium-specific chec
 | Gate | Status: PASS / FAIL / NOT_RUN | Method | Evidence / limitation |
 | --- | --- | --- | --- |
 | Required content | | | |
-| Responsive layout | | | |
-| Contrast / accessibility | | | |
-| Keyboard / focus (interactive) | | | |
-| Reduced motion (animated) | | | |
-| Broken assets / links | | | |
+| Responsive overflow | | | |
+| Text contrast (WCAG AA) | | | |
+| Keyboard navigation | | | |
+| Focus visibility | | | |
+| Image alt text | | | |
+| Reduced-motion behavior | | | |
 | Build / lint / typecheck (code) | | | |
+| Broken media / links | | | |
 | Identity and brand preservation | | | |
 
 ## Aesthetic critique (subjective)

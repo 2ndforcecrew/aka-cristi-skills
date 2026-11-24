@@ -14,7 +14,7 @@ class VisualDesignSkillContract(unittest.TestCase):
         self.assertIn("name: visual-design", text)
         self.assertIn("description:", text)
 
-    def test_three_core_engines_and_honest_qa(self):
+    def test_workflow_stages_and_honest_qa(self):
         text = SKILL.read_text(encoding="utf-8").lower()
         for item in ("perceive", "reason", "execute", "verify", "style dna", "not_run", "reduced-motion", "brand-neutral"):
             with self.subTest(item=item):

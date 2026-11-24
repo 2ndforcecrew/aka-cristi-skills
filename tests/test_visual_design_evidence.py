@@ -6,7 +6,7 @@ from tools.visual_design_evidence import validate
 class EvidenceLedgerTests(unittest.TestCase):
     def base(self):
         return {
-            "artifact": "examples/site/index.html",
+            "artifact": "fixtures/site/index.html",  # synthetic fixture path; no such file in the repo
             "medium": "web",
             "checks": [
                 {"name": name, "status": "NOT_RUN", "method": "Browser inspection", "limitation": "Browser not available"}
