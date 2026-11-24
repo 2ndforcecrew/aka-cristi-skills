@@ -4,11 +4,11 @@
 
 **把人与 AI 的成功协作，转化为可安装、可验证、可持续进化的工作能力。**
 
-*DESIGN × CODE × AI × AUTOMATION*
+*DESIGN × CODE × AI × AUTOMATION × BUSINESS*
 
 **UNIVERSAL HOST FILES** &nbsp; | &nbsp; **CHEF ORCHESTRATOR** &nbsp; | &nbsp; **DUAL-ENGINE** &nbsp; | &nbsp; **AGENT COLLABORATION**
 
-[一键安装](#quick-start) · [项目理念](#vision) · [全部功能](#features) · [双引擎架构](#dual-engine) · [当前状态](#status) · [功能手册](docs/FEATURE_CATALOG.md) · [GitHub Release](https://github.com/2ndforcecrew/aka-cristi-skills/releases)
+[一键安装](#install) · [共享训练规则](#shared-training) · [跨宿主安装](#quick-start) · [项目理念](#vision) · [全部功能](#features) · [双引擎架构](#dual-engine) · [当前状态](#status) · [功能手册](docs/FEATURE_CATALOG.md) · [GitHub Release](https://github.com/2ndforcecrew/aka-cristi-skills/releases)
 
 </div>
 
@@ -34,6 +34,51 @@
 | AI 说「完成了」，却没有可核查结果 | 记录实际变更、测试、线程和验收状态 |
 
 **项目定位：** CHEF Core 已可安装到多个宿主的原生规则 / Skills / 角色目录；真实自动执行运行时目前仍以 Codex 为先。部分能力已经有本地实现与跨平台 CI；完整的跨厂商、全自动、长期运行 Agent OS 仍在发展中。**不把规划写成已完成，也不把安装成功写成真实 Agent 已激活。**
+
+<a id="install"></a>
+
+## START HERE / 一键安装
+
+**一个公开仓库，一套可安装的 CHEF 工作能力与共享训练规则。** 无需申请额外训练仓库权限。
+
+新用户先确认 Git、Python 3.11+ 和目标 Agent 已安装。审查源码后，在空闲目录复制对应系统的一行命令；若同名目录已经存在，clone 会失败而不是覆盖。
+
+**Codex · Windows PowerShell**
+
+~~~powershell
+git clone --depth 1 https://github.com/2ndforcecrew/aka-cristi-skills.git; if ($LASTEXITCODE -ne 0) { throw "Git clone failed" }; Set-Location aka-cristi-skills; py -3 -m tools.quick_install --interactive
+~~~
+
+**Codex · macOS / Linux**
+
+~~~bash
+git clone --depth 1 https://github.com/2ndforcecrew/aka-cristi-skills.git && cd aka-cristi-skills && python3 -m tools.quick_install --interactive
+~~~
+
+上述命令启动预览式核心安装器，审查计划后输入 `INSTALL`。其他宿主及可选个人 Workspace、真实 Agent 验收请使用 [跨宿主安装与完整向导](#quick-start)，不默认执行付费模型调用或云端写入。
+
+**直接交给你的 Agent（需本地终端权限）：**
+
+> 请阅读 https://github.com/2ndforcecrew/aka-cristi-skills 的 Main 首页及共享训练规则，识别你的宿主和操作系统，检查 Git、Python、既有配置与冲突；使用仓库提供的相应安装命令，先展示变更计划并取得我的确认。安装后验证受管理文件及 CHEF Skill 内共享训练参考文件，重新开启会话并验证实际加载。禁止覆盖私人规则或伪造验收；没有终端权限时只提供指导。
+
+<a id="shared-training"></a>
+
+## SHARED TRAINING / 共享训练规则
+
+**34个规则章节：22项共享训练规则 + 12章全局工作规范。** 两份文档有部分主题重叠，不表示34项独立可执行功能。
+
+| 训练内容 | 阅读入口 |
+| --- | --- |
+| CHEF 总指挥、独立判断、设计与工程工作流 | [22项训练规则](shared-training/rules/TRAINING.md) |
+| 摄影、视频、电商、自动化、工程安全与验收 | [12章全局工作规范](shared-training/rules/GLOBAL_WORK_RULES.md) |
+| Agent 阅读指引 | [共享 AGENTS.md](shared-training/AGENTS.md) |
+| Visual Design 设计方法、参考库与 Creative Web Toolkit 规划 | [设计训练章节](shared-training/rules/TRAINING.md) |
+| 单向同步、权限隔离与版本管理规划 | [同步协议](shared-training/docs/SYNC_PROTOCOL.md) |
+
+共享规则已作为 [CHEF Orchestrator 的参考资料](skills/chef-orchestrator/references/shared-training) 随现有 Skill 安装器分发；支持复制该 Skill 的宿主可获得本地参考文件，Agent 调用 CHEF 时按入口阅读适用规则。文件复制并不等于每个宿主已实际加载或具备完整 Visual Design 技术模块。自动后台同步尚未实现；当前更新方式是审查新版源码后，使用受管理安装器升级，保留用户原有配置并拒绝冲突。历史 Beta Release 文件不自动包含本次 Main 变更。
+
+---
+
 
 <a id="quick-start"></a>
 
@@ -77,7 +122,7 @@ git clone --depth 1 https://github.com/2ndforcecrew/aka-cristi-skills.git && cd 
 
 用户打开 GitHub `main` 首页，复制对应操作系统的整行命令即可进入引导。它先检查环境、已有配置和冲突，再由用户授权安装。
 
-### Windows 11 — PowerShell
+### Windows — PowerShell
 
 ~~~powershell
 git clone --depth 1 https://github.com/2ndforcecrew/aka-cristi-skills.git; if ($LASTEXITCODE -ne 0) { throw "Git clone failed" }; Set-Location aka-cristi-skills; py -3 -m tools.full_setup --interactive --workspace --test-agents
@@ -394,19 +439,6 @@ python3 -m unittest discover -s tests -p 'test_chef_dual_engine.py' -v
 
 *CREATE BEAUTIFULLY. BUILD INTELLIGENTLY. AUTOMATE EVERYTHING REASONABLE.*
 
-[返回一键安装](#quick-start) · [完整功能手册](docs/FEATURE_CATALOG.md) · [查看发布版本](https://github.com/2ndforcecrew/aka-cristi-skills/releases) · [反馈问题](https://github.com/2ndforcecrew/aka-cristi-skills/issues)
+[返回一键安装](#install) · [完整功能手册](docs/FEATURE_CATALOG.md) · [查看发布版本](https://github.com/2ndforcecrew/aka-cristi-skills/releases) · [反馈问题](https://github.com/2ndforcecrew/aka-cristi-skills/issues)
 
 </div>
-
-
-## SHARED TRAINING / 共享训练规则
-
-**统一公开入口：** 本 Skills 仓库随源码提供 [共享训练规则](shared-training/README.md)，无需访问独立私人维护仓库或提供额外凭据。
-
-- [CHEF 与22项训练规则](shared-training/rules/TRAINING.md)
-- [12章全局工作规范](shared-training/rules/GLOBAL_WORK_RULES.md)
-- [Agent 阅读入口](shared-training/AGENTS.md)
-- [单向同步协议](shared-training/docs/SYNC_PROTOCOL.md)
-- [版本清单](shared-training/manifest.json)
-
-当前是文档候选快照，可由用户或 Agent 自行阅读；现有安装器尚未自动安装、加载或更新此规则目录，不能宣称真实跨宿主同步已完成。无需另一个仓库链接；后续由维护者审核后向本目录单向更新，不回传用户个人记忆。
