@@ -397,3 +397,16 @@ python3 -m unittest discover -s tests -p 'test_chef_dual_engine.py' -v
 [返回一键安装](#quick-start) · [完整功能手册](docs/FEATURE_CATALOG.md) · [查看发布版本](https://github.com/2ndforcecrew/aka-cristi-skills/releases) · [反馈问题](https://github.com/2ndforcecrew/aka-cristi-skills/issues)
 
 </div>
+
+
+## SHARED TRAINING / 共享训练规则
+
+**统一公开入口：** 本 Skills 仓库随源码提供 [共享训练规则](shared-training/README.md)，无需访问独立私人维护仓库或提供额外凭据。
+
+- [CHEF 与22项训练规则](shared-training/rules/TRAINING.md)
+- [12章全局工作规范](shared-training/rules/GLOBAL_WORK_RULES.md)
+- [Agent 阅读入口](shared-training/AGENTS.md)
+- [单向同步协议](shared-training/docs/SYNC_PROTOCOL.md)
+- [版本清单](shared-training/manifest.json)
+
+当前是文档候选快照，可由用户或 Agent 自行阅读；现有安装器尚未自动安装、加载或更新此规则目录，不能宣称真实跨宿主同步已完成。无需另一个仓库链接；后续由维护者审核后向本目录单向更新，不回传用户个人记忆。
