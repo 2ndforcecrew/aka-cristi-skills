@@ -8,7 +8,7 @@
 
 **UNIVERSAL HOST FILES** &nbsp; | &nbsp; **CHEF ORCHESTRATOR** &nbsp; | &nbsp; **DUAL-ENGINE** &nbsp; | &nbsp; **AGENT COLLABORATION**
 
-[一键安装](#quick-start) · [项目理念](#vision) · [全部功能](#features) · [双引擎架构](#dual-engine) · [当前状态](#status) · [功能手册](docs/FEATURE_CATALOG.md) · [GitHub Release](https://github.com/2ndforcecrew/aka-cristi-skills/releases)
+[一键安装](#one-command-install) · [共享训练规则](#shared-training) · [项目理念](#vision) · [全部功能](#features) · [双引擎架构](#dual-engine) · [当前状态](#status) · [功能手册](docs/FEATURE_CATALOG.md) · [GitHub Release](https://github.com/2ndforcecrew/aka-cristi-skills/releases)
 
 </div>
 
@@ -34,6 +34,34 @@
 | AI 说「完成了」，却没有可核查结果 | 记录实际变更、测试、线程和验收状态 |
 
 **项目定位：** CHEF Core 已可安装到多个宿主的原生规则 / Skills / 角色目录；真实自动执行运行时目前仍以 Codex 为先。部分能力已经有本地实现与跨平台 CI；完整的跨厂商、全自动、长期运行 Agent OS 仍在发展中。**不把规划写成已完成，也不把安装成功写成真实 Agent 已激活。**
+
+<a id="one-command-install"></a>
+
+## ONE COMMAND / 一条命令安装
+
+**一个公开仓库，内含 CHEF、四个 Skills、角色配置与共享训练规则。** 22项训练规则及12章全局工作规范随 CHEF Skill 的 references 目录安装；无需另一个仓库、额外 GitHub 授权或私人 Token。Visual Design 训练规则不是已完成的独立高级动效工具箱。
+
+前提：已安装 Git 和 Python 3.11+，在新目录中执行。先审查公开源码；安装器预览并要求明确批准，不强制覆盖个人配置。不需要额外 GitHub 登录。
+
+**Windows / PowerShell（Codex）**
+
+~~~powershell
+git clone --depth 1 https://github.com/2ndforcecrew/aka-cristi-skills.git; if ($LASTEXITCODE -ne 0) { throw "Git clone failed" }; Set-Location aka-cristi-skills; py -3 -m tools.full_setup --interactive
+~~~
+
+**macOS / Linux（Codex）**
+
+~~~bash
+git clone --depth 1 https://github.com/2ndforcecrew/aka-cristi-skills.git && cd aka-cristi-skills && python3 -m tools.full_setup --interactive
+~~~
+
+其他宿主请使用下方跨宿主安装指引中的对应 --host 与 --scope（Hermes 需要明确 Skills 目录）；不宣称所有宿主已真实激活。现有用户在确认干净工作树、审查更新并更新源码后可重新运行安装器，受管理 Skill 支持升级，用户修改冲突则停止。无需强制重装。
+
+[直接阅读共享训练规则](shared-training/rules/TRAINING.md) · [12章全局工作规范](shared-training/rules/GLOBAL_WORK_RULES.md) · [查看安装器](tools/full_setup.py)
+
+安装文件校验不等于实际宿主调用；新开宿主会话验证 CHEF Skill 是否被读取。后台自动同步及完整 Visual Design Toolkit 仍待开发。旧 Beta Release 压缩包尚未包含本次源码更新。
+
+---
 
 <a id="quick-start"></a>
 
@@ -399,6 +427,8 @@ python3 -m unittest discover -s tests -p 'test_chef_dual_engine.py' -v
 </div>
 
 
+<a id="shared-training"></a>
+
 ## SHARED TRAINING / 共享训练规则
 
 **统一公开入口：** 本 Skills 仓库随源码提供 [共享训练规则](shared-training/README.md)，无需访问独立私人维护仓库或提供额外凭据。
@@ -409,4 +439,4 @@ python3 -m unittest discover -s tests -p 'test_chef_dual_engine.py' -v
 - [单向同步协议](shared-training/docs/SYNC_PROTOCOL.md)
 - [版本清单](shared-training/manifest.json)
 
-当前是文档候选快照，可由用户或 Agent 自行阅读；现有安装器尚未自动安装、加载或更新此规则目录，不能宣称真实跨宿主同步已完成。无需另一个仓库链接；后续由维护者审核后向本目录单向更新，不回传用户个人记忆。
+共享规则保留公开阅读入口，并随 CHEF Skill 的 references 目录打包安装；两份规则文本由一致性测试检查。CHEF 被调用时读取适用章节，宿主真实加载与后台自动同步仍需独立验收。维护者审核后单向更新，不回传用户个人记忆。
