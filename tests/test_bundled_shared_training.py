@@ -23,7 +23,9 @@ class BundledSharedTrainingTest(unittest.TestCase):
 
     def test_install_and_verify_in_isolated_directory(self):
         with tempfile.TemporaryDirectory() as folder:
-            dest = Path(folder) / "skills"
+            # macOS tempfile may use /var, a symlink to /private/var.
+            # Resolve only our freshly created test directory; retain installer guards.
+            dest = Path(folder).resolve(strict=True) / "skills"
             preview = skill_installer.inspect(CHEF, "directory", dest)
             self.assertEqual(preview["action"], "install")
             self.assertFalse(dest.exists())
