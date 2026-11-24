@@ -61,3 +61,11 @@ On failure: diagnose once, retry only reversible operations with bounded attempt
 A passing local Skill validation proves file structure only. Real acceptance requires at least three varied briefs (website, poster/editorial, brand system), side-by-side comparison with/without this skill, reproducible evidence, and an independent reviewer. Until then, report V0.1 as implemented but NOT FIELD-VALIDATED.
 
 Track field validation separately for each additional medium. A passing web case supplies no evidence for illustration continuity, a packaging proof or a motion export.
+
+## Visual language and aesthetic judgment
+For visual direction, consult [visual language research batches 1–2](references/visual-language-batches-01-02.md) when relevant. Apply the following rules across media without imposing a house style:
+- Minimal and expressive designs can both be compelling. Less Is More means purposeful reduction, not blandness; effects must serve the concept rather than accumulate.
+- Establish hierarchy, spatial depth, typography and color roles before choosing filters or textures. Use intentional occlusion, scale, negative space and foreground/background relationships where appropriate.
+- Select grading and effects by subject, audience and medium; preserve identity, material fidelity and legibility. Compare clean and effect-led alternatives when useful.
+- Review actual output at thumbnail and full size; document focal clarity, depth, typographic craft, grading, effect restraint and brand fit as subjective judgments with reasons. Keep existing hard gates unchanged.
+- Expand the research index incrementally as new references arrive. Do not claim unstudied categories are complete or redistribute third-party originals.
