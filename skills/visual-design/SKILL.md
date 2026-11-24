@@ -90,3 +90,22 @@ For web briefs, when useful and permitted, independently select relevant referen
 Evaluate eight dimensions: layout, motion, spatial depth, typography, adaptive color, components, materials/effects, and user experience. Derive palette and grading from actual assets, product, audience and mood; do not default to orange or any fixed house style. Choose minimal or expressive composition based on the brief. Respect consistent English capitalization and intentional typography. Select effects (masking, parallax, shader, blur, grain, fluid or 3D) only when justified by concept, readability and performance. Do not infer animation behavior from static screenshots as fact.
 
 Translate observed principles into original components using the existing stack. Document component states, responsive layout, keyboard/focus behavior, reduced-motion fallback and performance trade-offs. Verify actual running behavior before claiming success; distinguish reference observations, proposed implementations and verified tests. Research Agent, design, implementation and QA are logical roles, not proof of actual multi-agent execution. Promote only validated reusable methods; keep untested techniques as candidates. Preserve all existing quality and release gates.
+
+### Web research extension: motion, components and creative engineering
+
+Additional user-curated research leads (capabilities, counts, pricing and licensing not independently verified):
+
+| Source | Research focus |
+| --- | --- |
+| https://scrolltide.co | Scroll-driven and 3D website examples, prompts and source-code patterns |
+| https://www.awwwards.com | Award-winning website references and creative direction |
+| https://21st.dev | Community UI components |
+| https://ui.aceternity.com | Expressive animated components |
+| https://magicui.design | Landing-page motion components |
+| https://threejs.org | Web 3D rendering and scene implementation |
+| https://www.shadertoy.com | Shader experiments and procedural visual effects |
+| https://lovable.dev | AI-assisted application prototyping |
+
+Godly and 60fps are already indexed above; reuse those entries rather than duplicating them.
+
+Before the next relevant web project, consult a targeted subset of the combined library: galleries for art direction, component libraries for implementation patterns, motion references for timing, and Three.js or shader references only when the brief warrants them. Inspect actual examples and applicable licenses before reuse; do not assume code is free to redistribute. Treat AI-generated code as untrusted until reviewed. Prefer native CSS and lightweight motion when sufficient; use WebGL only when justified, with fallback, reduced motion and mobile performance checks. Never publish or install paid dependencies without authorization. Record source, adaptation, and actual verification evidence. Do not equate awards or visual novelty with usability.
