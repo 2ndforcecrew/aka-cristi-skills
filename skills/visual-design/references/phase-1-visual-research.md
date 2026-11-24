@@ -20,7 +20,7 @@ Record source URL, creator (when known), date accessed, screenshot or asset perm
 
 ## Art direction constraints
 - Preserve the strongest cinematic/fashion-editorial tension of first-round concepts.
-- User rejected second-round outcome as inferior; **Less Is More** means remove visual noise, not flatten personality.
+- User found the second-round direction workable but asked for further optimization — less content, fewer words; **Less Is More** means remove visual noise, not flatten personality.
 - Do not invent or alter the canonical AKA.CRISTI A logo; use the supplied source asset when available, otherwise a text-only placeholder.
 - References are for analysis, **not** for direct copying, scraping copyrighted assets, or representing third-party work as original.
 - Default palette: black/white/silver/gray, unless the brief or reference evidence supports a deliberate exception.
@@ -29,7 +29,7 @@ Record source URL, creator (when known), date accessed, screenshot or asset perm
 ## Phase 1 acceptance
 - [x] Source categories and discovery keywords captured
 - [x] Style DNA analysis rubric documented
-- [x] First-round preferred / second-round rejected distinction captured
+- [x] First-round preferred / second-round needs-reduction distinction captured
 - [ ] User-curated references received and individually analyzed
 - [ ] Real Agent loaded this Skill and generated three independently evaluated outputs
 - [ ] Cross-Agent Codex/Claude/Hermes compatibility verified
