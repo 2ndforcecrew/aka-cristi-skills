@@ -109,3 +109,30 @@ Additional user-curated research leads (capabilities, counts, pricing and licens
 Godly and 60fps are already indexed above; reuse those entries rather than duplicating them.
 
 Before the next relevant web project, consult a targeted subset of the combined library: galleries for art direction, component libraries for implementation patterns, motion references for timing, and Three.js or shader references only when the brief warrants them. Inspect actual examples and applicable licenses before reuse; do not assume code is free to redistribute. Treat AI-generated code as untrusted until reviewed. Prefer native CSS and lightweight motion when sufficient; use WebGL only when justified, with fallback, reduced motion and mobile performance checks. Never publish or install paid dependencies without authorization. Record source, adaptation, and actual verification evidence. Do not equate awards or visual novelty with usability.
+
+## Creative Web Toolkit — reproducible development environment
+
+Required target structure (implementation roadmap, not evidence of installed dependencies):
+
+```text
+creative-web-toolkit/
+├── AGENTS.md
+├── package.json
+├── package-lock.json
+├── scripts/
+│   ├── bootstrap.mjs
+│   ├── check-environment.mjs
+│   ├── resolve-dependencies.mjs
+│   └── verify-build.mjs
+├── effects/
+│   ├── scroll-animation/
+│   ├── exploded-view/
+│   ├── cinematic-transition/
+│   ├── shader-effects/
+│   └── kinetic-typography/
+├── templates/
+├── tests/
+└── references/
+```
+
+Agents own dependency setup in their available development environment, not the user's browsing device. Inspect existing project and instructions first; preserve existing files. Bootstrap checks Node.js, npm, browser availability and project manifests; use a verified lockfile and npm ci when available, otherwise resolve compatible dependencies and generate the lockfile through npm. Never fabricate a lockfile. Select GSAP/ScrollTrigger, Lenis, Three.js, Motion, Lottie, React, Tailwind, Vite, TypeScript and Playwright as needed; evaluate Aceternity UI and Magic UI components individually for licensing and compatibility. Do not load every library into every website. Resolve missing dependencies with bounded retries, timeout, logs and safe fallbacks; do not bypass security or silently incur charges. Reconstruct the environment after session resets. Verify build, browser errors, responsive layout, scroll progress in both directions, reduced motion and performance. For exploded views, test assembled → separated → reassembled states with independently movable geometry; distinguish procedural models from photorealistic assets. Record actual evidence and blockers. Promote tested effects into reusable modules; mark unimplemented modules as planned. Deliver a browser-ready build; users should not need developer dependencies to view it. Public deployment requires authorization and verified access. Preserve all existing release gates.
