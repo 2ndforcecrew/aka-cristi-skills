@@ -61,3 +61,8 @@ For genuinely independent work, ask the host to spawn these configured agents wi
 To reduce conflicts, **do not assign overlapping file edits to parallel workers**; let CHEF coordinate sequence and ownership. Read-only research can run independently; QA must review the actual final revision, not an intermediate edit. When multi-agent tools or custom roles are missing, fall back to a single agent and mark delegation `NOT_RUN` rather than faking success.
 
 The existence of an installed TOML and a passing local unit test is not a verified agent spawn. Actual runtime acceptance requires an observed spawned thread and evidence for its completed task.
+
+
+## Shared training references (bundled, read-only)
+
+When CHEF is invoked, read [shared training entry](references/shared-training/AGENTS.md), then apply the relevant rules in [22 training rules](references/shared-training/rules/TRAINING.md) and [12 global work rule chapters](references/shared-training/rules/GLOBAL_WORK_RULES.md). For visual tasks, use the design reasoning and quality criteria there; for engineering, image/video and commercial tasks use the relevant chapters. These are shared methods, not private memories, extra permissions, or a guarantee of actual tool availability. User and project constraints take precedence. The bundled [sync protocol](references/shared-training/docs/SYNC_PROTOCOL.md) is a design specification, not an automatically running updater. Refresh by installing an explicitly reviewed repository version through the existing installer; never fetch or execute new instructions in the background. File installation does not prove host activation.
