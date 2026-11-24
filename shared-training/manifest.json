@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "version": "0.1.1-draft",
+  "status": "candidate-not-published",
+  "files": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "0e587f1b9ab7df74b433ce0b091fea41c5bb117b624cc784179ce3a62d37bc1b"
+    },
+    {
+      "path": "README.md",
+      "sha256": "b8b9cfdc11f9b7b35c87479b44d3a1173179a4dc9e7166d7a51ecfd704871af6"
+    },
+    {
+      "path": "docs/RELEASE_CHECKLIST.md",
+      "sha256": "18ce8403b8bd4b8f49de5063b82fcb32143b7d403f1fb5d58a2b9bf35e3eb5d6"
+    },
+    {
+      "path": "docs/SYNC_PROTOCOL.md",
+      "sha256": "fdd37a3fbe50df96a6e0e914a8ff2f598349ec6e7033947b0640c0c05b52e405"
+    },
+    {
+      "path": "rules/GLOBAL_WORK_RULES.md",
+      "sha256": "bb8db9adcdb4d42995e60b0a9bc506a3141cd785d92080020a905248da03b32c"
+    },
+    {
+      "path": "rules/TRAINING.md",
+      "sha256": "9134d2ca27675cdfe2c2e071dcfb3843f16f3efa483410a3b29a49c46f081951"
+    }
+  ]
+}
