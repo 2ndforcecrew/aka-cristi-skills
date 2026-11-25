@@ -8,7 +8,9 @@
 # Skill format standard
 
 Every skill in this repository is one directory,
-`skills/<name>/`, with one file, `SKILL.md`. Every `SKILL.md`
+`skills/<name>/`, built around one file, `SKILL.md`, with
+optional `references/`, `scripts/`, and `assets/` directories
+(see Directory structure below). Every `SKILL.md`
 follows the same shape so that any agent or host can load it, any
 reader can find the same information in the same place, and the
 deterministic evals (`evals/run_evals.py`) can check it without
@@ -19,6 +21,35 @@ literal section titles below. A skill that renames a section, or
 hides a required section under a synonym, fails the structure
 check. If the standard is wrong for a new skill, change the
 standard (and the evals) in the same PR — never silently diverge.
+
+## Directory structure
+
+```text
+skills/<name>/
+├── SKILL.md       # entry: triggers, process, verification
+├── references/    # knowledge the skill loads on demand
+├── scripts/       # executable helpers the skill runs
+└── assets/        # templates, materials, resources
+```
+
+- `SKILL.md` is required — it is the only file an agent loads
+  up front. Everything else is loaded on demand (progressive
+  disclosure): the skill names what it needs, when it needs it.
+- `references/` holds supplementary knowledge: style catalogues,
+  case files, research notes, decision records. Examples:
+  `visual-design/references/` holds the design-style catalogues
+  and case files; `chef-orchestrator/references/` bundles the
+  shared training rules.
+- `scripts/` holds executable helpers the skill runs for
+  deterministic steps. A script must be named from the skill that
+  runs it, and the skill must say when it runs.
+- `assets/` holds templates, materials, and resources the skill
+  uses or produces.
+- A directory exists only when it has content. Do not create
+  empty `references/`, `scripts/`, or `assets/` directories —
+  git does not track them, and an empty placeholder is noise. A
+  new skill starts as `SKILL.md` alone and grows directories as
+  content arrives.
 
 ## Frontmatter
 
