@@ -5,3 +5,4 @@ Candidate knowledge; transfer validation pending. Select by brief, not by fixed 
 - [Giant-Type Event & Fashion Posters](giant-type-posters.md): giant-type posters; one saturated field, giant condensed type over photography, three-layer info hierarchy, event posters.
 - [Experimental Posters](experimental-posters.md): experimental posters; techwear editorial, distortion, surreal collage, fluid, black-and-white with color accent.
 - [Colorful Commercial Posters](colorful-commercial-posters.md): colorful commercial posters and ads; pink beauty ads, flat geometric posters, cyberpunk fashion, magazine covers, pop collage.
+- [Giant-Type Web Design](giant-type-web-design.md): giant-type web design; brutalist agency, minimal fashion, ecommerce product, portfolio, sports club, trends infographic.
