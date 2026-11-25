@@ -29,6 +29,7 @@ EXPECTED_SKILLS = {
     "feature-journey-map",
     "skill-evaluation-gate",
     "visual-design",
+    "interview-me",
 }
 EXPECTED_STYLES = {
     "glassmorphism",
@@ -71,7 +72,7 @@ class ToolFunctionTests(unittest.TestCase):
         else:
             os.environ["AKA_SKILLS_REPO_ROOT"] = self._old_env
 
-    def test_list_skills_returns_five_skills(self):
+    def test_list_skills_returns_six_skills(self):
         result = mcp_server.list_skills()
         self.assertNotIn("status", result)
         names = {s["name"] for s in result["skills"]}

@@ -136,3 +136,23 @@ creative-web-toolkit/
 ```
 
 Agents own dependency setup in their available development environment, not the user's browsing device. Inspect existing project and instructions first; preserve existing files. Bootstrap checks Node.js, npm, browser availability and project manifests; use a verified lockfile and npm ci when available, otherwise resolve compatible dependencies and generate the lockfile through npm. Never fabricate a lockfile. Select GSAP/ScrollTrigger, Lenis, Three.js, Motion, Lottie, React, Tailwind, Vite, TypeScript and Playwright as needed; evaluate Aceternity UI and Magic UI components individually for licensing and compatibility. Do not load every library into every website. Resolve missing dependencies with bounded retries, timeout, logs and safe fallbacks; do not bypass security or silently incur charges. Run dependency installation in an isolated or sandbox environment; never install unreviewed postinstall scripts on a production machine. Reconstruct the environment after session resets. Verify build, browser errors, responsive layout, scroll progress in both directions, reduced motion and performance. For exploded views, test assembled → separated → reassembled states with independently movable geometry; distinguish procedural models from photorealistic assets. Record actual evidence and blockers. Promote tested effects into reusable modules; mark unimplemented modules as planned. Deliver a browser-ready build; users should not need developer dependencies to view it. Public deployment requires authorization and verified access. Preserve all existing release gates.
+
+## Common Rationalizations
+
+| Rationalization | Rebuttal |
+| --- | --- |
+| "The brief is clear enough; no need to ask." | Ask only for essential missing details — but a missing deliverable, audience or platform is essential. |
+| "I like this direction; the user will too." | Choose by clarity, originality, brand fit, feasibility and accessibility, not taste alone. Human review decides subjective finals. |
+| "It looks good; the hard checks can wait." | Hard checks run first. A beautiful artifact that fails contrast or keyboard navigation fails. |
+| "One screenshot proves it works." | Inspect at thumbnail and full size, on a narrow screen, with real interactions and reduced motion. One view is not verification. |
+| "The reference style is the design." | Extract principles; never copy a distinctive layout or copyrighted imagery. A reference is inspiration, not a template. |
+| "Field validation is paperwork; the poster looked fine." | V0.1 is NOT FIELD-VALIDATED until three varied briefs pass with side-by-side comparison and an independent reviewer. A web case proves nothing about illustration or motion. |
+
+## Red Flags
+
+- A deliverable shipped with no Design Decision Record — choices untraceable.
+- A hard-check matrix missing, FAILED checks buried in prose, or NOT_RUN checks reported as verified.
+- Text contrast below WCAG AA, or "looks fine to me" substituted for measurement.
+- A reference layout copied instead of principles extracted.
+- Identity or brand assets altered — face, logo geometry, product color — without approval.
+- One medium's field validation cited as proof for another medium.

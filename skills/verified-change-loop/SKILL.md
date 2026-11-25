@@ -38,3 +38,23 @@ This command validates structure and reviewer separation; it **does not** execut
 
 ## Provenance and reuse
 Adapted into an original AKA.CRISTI workflow from the user-supplied Lauren Tan/Grok Bot verification-engineering reference (November 2026). Attribution is for methodological inspiration; this is not Lauren Tan's official Skill. Use on supported, authorized projects; retain local policies and human approvals.
+
+## Common Rationalizations
+
+| Rationalization | Rebuttal |
+| --- | --- |
+| "I already know the cause; reproducing is a waste of time." | Without a reproduced baseline there is no before/after comparison — the patch is a guess, not a fix. |
+| "It failed once in CI; that is reproduction enough." | CI output is not the real user journey. Replay the actual scenario with equivalent inputs. |
+| "One passing check proves the fix." | One passing dimension does not prove the others. Compare behavior, performance and quality separately. |
+| "The patch is urgent; I will add the test later." | Reproduce → patch → replay is the loop. Skipping replay breaks the contract this skill exists to enforce. |
+| "The reviewer is busy; my own check is enough." | Handoff requires review by someone other than the executor before verified status. No exception for urgency. |
+| "Same failure, same fix — just retry harder." | The same failure without a new hypothesis means stop. The retry budget is bounded; escalate instead. |
+
+## Red Flags
+
+- A patch applied before any reproduction evidence exists.
+- Replay run with different inputs or a different scenario than the baseline.
+- `evidence.json` validates structurally, but no real reviewer inspected the artifacts.
+- Checks reported PASS that were never run.
+- The repair loop exceeds its retry budget without escalation or a new hypothesis.
+- A regression in an unrelated area dismissed without before/after evidence.

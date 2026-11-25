@@ -35,3 +35,23 @@ Run `python -m tools.skill_evidence --file evidence.json` to validate an evidenc
 
 ## Provenance
 Original AKA.CRISTI adaptation inspired by user-provided Lauren Tan/Grok Bot fieldnotes, 2026. Do not present it as an official third-party Skill or claim independent replay without execution logs.
+
+## Common Rationalizations
+
+| Rationalization | Rebuttal |
+| --- | --- |
+| "It worked once in my session, so it is tested." | One pass is Candidate at best. Tested requires a real scenario replay with documented negative cases. |
+| "The author reviewed it; that is independent enough." | The reviewer must be separate from the executor. The author's summary is not evidence. |
+| "Formatting checks pass, so it is ready to install." | Static checks are the Candidate gate only. Never advertise a candidate as installed. |
+| "No negative cases failed, so there are no negatives." | Negative and edge cases must be written and run, not assumed absent. |
+| "It works on my machine; platform support is fine." | Approved/released requires a supported target platform and a rollback plan, not one local run. |
+| "The scores look good; ship it." | Scores may only cover cases actually tested. A successful journey does not establish every quality property. |
+
+## Red Flags
+
+- A gate advanced without an evidence ledger, or with the executor acting as reviewer.
+- "Tested" claimed from a single happy-path run with no negative cases.
+- A skill described as installed or activated before explicit human approval.
+- Failures fixed by changing several things at once, with no regression rerun.
+- Post-release results never monitored; silent deactivation instead of retest or retirement.
+- The evidence tool validates the ledger shape, but commands, screenshots and review were never checked by a real reviewer.

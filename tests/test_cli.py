@@ -22,6 +22,7 @@ EXPECTED_SKILLS = {
     "feature-journey-map",
     "skill-evaluation-gate",
     "visual-design",
+    "interview-me",
 }
 SUBCOMMANDS = ("install", "verify", "status", "list-skills", "validate", "serve")
 
@@ -162,7 +163,7 @@ class CliTests(unittest.TestCase):
         self.assertEqual(result["preview"]["status"], "PREVIEW")
         self.assertEqual((tree(self.home), tree(self.skills)), before)
 
-    def test_list_skills_returns_all_five(self):
+    def test_list_skills_returns_all_six(self):
         code, out = run_cli(["list-skills", "--json"])
         self.assertEqual(code, 0)
         skills = json.loads(out)
