@@ -146,6 +146,12 @@ Agents own dependency setup in their available development environment, not the 
 知识通过验证后方可进入正式知识库。
 不得擅自公开私人素材或发布新版本。
 
+### Activation boundaries
+Treat these as agent instructions when the skill is loaded. Automatic discovery and upload-event handling depend on host support; do not claim runtime hooks exist without evidence. For ambiguous or private references, do not persist or publish without appropriate authorization. If storage or image access is unavailable, report NOT_RUN rather than inventing a case. Preserve existing quality and release gates.
+
+## Reference case retrieval
+Before selecting art direction, consult the [observed case index](references/cases/INDEX.md) and load relevant case files selectively. Transfer principles to the current brief; do not copy source assets or treat observed cases as field-validated. Record the case IDs and principles used in the design decision record.
+
 ## Common Rationalizations
 
 | Rationalization | Rebuttal |
