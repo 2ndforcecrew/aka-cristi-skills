@@ -167,6 +167,34 @@ class ToolFunctionTests(unittest.TestCase):
             self.assertEqual(result.get("live_agents"), "NOT_RUN")
             self.assertEqual(before, after, "install_preview must not create files")
 
+    def test_install_preview_under_symlinked_parent(self):
+        # Regression: macOS temp dirs live under /var, a symlink to
+        # /private/var, so an unresolved temp path tripped the installer's
+        # symlink guard and install_preview returned ERROR instead of a
+        # preview (macOS CI failure on PR #62). A symlinked *parent* must
+        # not block a preview; a symlinked target itself is still refused
+        # by the guard (tests/test_filesystem_security.py).
+        with tempfile.TemporaryDirectory() as tmp:
+            real = Path(tmp).resolve()
+            link = real.parent / f"alias-{real.name}"
+            try:
+                link.symlink_to(real, target_is_directory=True)
+            except (NotImplementedError, OSError):
+                self.skipTest("symlinks unsupported")
+            try:
+                sandbox = link / f"sb-{real.name}"
+                before = _snapshot(real)
+                result = mcp_server.install_preview(
+                    codex_home=sandbox / "codex",
+                    skills_root=sandbox / "skills",
+                )
+                after = _snapshot(real)
+                self.assertEqual(result.get("core_install"), "PREVIEW_ONLY")
+                self.assertIs(result.get("writes"), False)
+                self.assertEqual(before, after, "install_preview must not create files")
+            finally:
+                link.unlink(missing_ok=True)
+
     def test_install_preview_invalid_host_and_scope(self):
         self.assertEqual(
             mcp_server.install_preview(host="bogus").get("status"), "ERROR"
