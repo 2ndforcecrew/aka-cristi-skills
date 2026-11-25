@@ -29,38 +29,39 @@ recommendations (see below) never change the exit code.
 
 For every `skills/<name>/SKILL.md`: frontmatter must have a
 well-formed `name` and a non-empty `description`, and the body must
-cover one section per concept. Headings are matched **by concept,
-not by literal agent-skills titles**, because this repo's skills use
-their own section names (decided from the actual headings,
-2026-11-26):
+cover one section per concept. Headings must match the **literal
+standard titles** in `docs/skill-format.md` — the evals enforce the
+standard, they do not accept synonyms (tightened 2026-11-26 in the
+format-unification pass; previously aliases like `Procedure` /
+`Workflow` / `Evidence contract` were accepted):
 
-| Concept | Accepted headings |
+| Concept | Required heading |
 |---|---|
-| overview | H1 title + non-empty frontmatter description (repo convention; only interview-me has a literal `## Overview`) |
-| when-to-use | `Use when` / `When to use` / `Trigger …` |
-| process | `Procedure` / `Workflow …` / `Process` |
+| overview | `## Overview` |
+| when-to-use | `## When to Use` |
+| process | `## Process` |
 | common-rationalizations | heading containing `Rationalization` |
 | red-flags | heading containing `Red Flag` |
-| verification | `Verification` / `Evidence check` / `Evidence contract` / `Quality gates` / `Acceptance` |
+| verification | `## Verification` |
 
 Deliberate non-matches: `Safety gates` is safety, not verification
 evidence; the parenthetical `(not real evidence)` in the Handoff
-output heading is why `evidence` only matches at the start of a
-heading.
+output heading is not a verification section.
 
-Soft rule: the description *should* carry `Use when` trigger
-language (agent-skills convention). Only visual-design and
-interview-me do today; the other four put trigger language in the
-body `When to use` section instead. Reported as a recommendation,
-not a failure — adopting the convention repo-wide (or dropping the
-requirement) is a parent decision.
+Soft rule: the description *must* carry `Use when` trigger
+language (agent-skills convention, now the repo standard in
+`docs/skill-format.md`). All six skills do. A description without
+it is reported as a recommendation, not a failure — the hard gate
+is name present and well-formed + description non-empty. The soft
+rule stays so a future skill that forgets the trigger language is
+flagged, not silently accepted.
 
 ## Check 2 — routing
 
 For each case in `routing-cases.json`, the expected skill must exist
 and be named by `skills/chef-orchestrator/SKILL.md`. Parse basis:
 chef-orchestrator has no routing table; its routing surface is the
-`Use when` paragraph plus the `Suggested complementary Skills`
+`When to Use` paragraph plus the `Suggested complementary Skills`
 list, so the whole file text is searched for the skill name
 (word-boundary match). A match on the orchestrator's own name is an
 identity match (it IS the router); the substantive signal is the
@@ -85,6 +86,7 @@ catch real problems:
   Closed by updating their EXPECTED_SKILLS to 6.
 
 Current state: no known red. `python3 -m evals.run_evals` exits 0
-(skills 6/6 ok; routing 18/18 ok). 4 soft recommendations remain:
-four skills' frontmatter descriptions lack "Use when" trigger
-language — by design, these never affect the exit code.
+(skills 6/6 ok; routing 18/18 ok). 0 soft recommendations: all six
+skill descriptions now carry `Use when` trigger language, and the
+structure gate enforces the literal titles in
+`docs/skill-format.md`.

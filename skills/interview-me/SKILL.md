@@ -31,10 +31,6 @@ Apply this Skill when:
 - Mechanical operations (renames, formats, file moves).
 - You already hold ~95% confidence; re-read the stop test below before assuming you do not.
 
-## Loading constraints
-
-This Skill needs a live, responsive user. **Do not invoke it in non-interactive contexts** such as CI pipelines, scheduled runs, or autonomous loops. In those contexts, if the ask is underspecified, record it as a blocker for the user instead of guessing. CHEF invokes this Skill in the Studio lane; Factory work must wait for the confirmed brief.
-
 ## Process
 
 ### Step 1: Hypothesize, with a confidence number
@@ -126,6 +122,10 @@ If yes, you have shared understanding: stop interviewing and produce the restate
 
 There is also a floor: if you have gone several rounds and confidence still is not visibly rising, that is information about the ask, not a reason to keep grinding. Stop and tell the user: "I've asked X questions and I still can't predict your reactions. Something foundational is missing. Want to step back?"
 
+## Loading constraints
+
+This Skill needs a live, responsive user. **Do not invoke it in non-interactive contexts** such as CI pipelines, scheduled runs, or autonomous loops. In those contexts, if the ask is underspecified, record it as a blocker for the user instead of guessing. CHEF invokes this Skill in the Studio lane; Factory work must wait for the confirmed brief.
+
 ## Output: the confirmed brief
 
 The deliverable of this Skill is a confirmed brief. Specs, plans, and task lists are downstream; they consume this brief.
@@ -146,6 +146,13 @@ Confirmed by: <explicit yes from the user>
 ```
 
 If the user wants the brief to persist (a multi-session project, a handoff to another collaborator), offer to save it. Only save if they confirm.
+
+## Interaction with other Skills
+
+- **`chef-orchestrator`**: the invoker. CHEF runs this Skill in the Studio lane before routing Factory work; no implementation task is handed off until the brief is confirmed.
+- **`verified-change-loop`**: downstream. Once the brief is confirmed and work exists to verify, the loop takes over.
+- **`feature-journey-map`**: downstream. The confirmed brief's user and success lines feed the journey map.
+- **`skill-evaluation-gate`**: this Skill itself is subject to the gate like any other candidate; field evidence decides whether it stays.
 
 ## Common Rationalizations
 
@@ -182,13 +189,6 @@ After applying interview-me:
 - [ ] At the stop point, the agent could predict reactions to the next three questions it would ask.
 - [ ] Upon receiving explicit confirmation, the turn stopped immediately without invoking tools or starting downstream work.
 - [ ] Any handoff to a downstream Skill was framed in terms of the confirmed brief, not the original underspecified ask.
-
-## Interaction with other Skills
-
-- **`chef-orchestrator`**: the invoker. CHEF runs this Skill in the Studio lane before routing Factory work; no implementation task is handed off until the brief is confirmed.
-- **`verified-change-loop`**: downstream. Once the brief is confirmed and work exists to verify, the loop takes over.
-- **`feature-journey-map`**: downstream. The confirmed brief's user and success lines feed the journey map.
-- **`skill-evaluation-gate`**: this Skill itself is subject to the gate like any other candidate; field evidence decides whether it stays.
 
 ## Provenance
 
