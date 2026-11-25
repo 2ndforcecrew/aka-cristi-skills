@@ -16,9 +16,9 @@ The launcher only starts the Python application. It does not download Python or 
 
 1. Select the trusted local source folder and check the two target directories. Codex defaults to `CODEX_HOME` or `~/.codex`; Skills default to `~/.agents/skills`.
 2. Confirm that you reviewed or verified the source, then choose **检查与预览**. This reads configuration without writing user files.
-3. Inspect the full local before/after `AGENTS.md` diff and the expected four Skills/four roles. Private pre-existing rules are visible only in this local window, never in the progress log.
+3. Inspect the full local before/after `AGENTS.md` diff and the expected five Skills/four roles. Private pre-existing rules are visible only in this local window, never in the progress log.
 4. Explicitly consent to backing up and applying those changes. Installation stays disabled until this consent and a successful preview exist.
-5. **安装并校验文件** appends managed global rules, installs the four Skills and four TOML roles, then verifies integrity. The success state is `FILES_VERIFIED`, with actual Agent activation **NOT_RUN**.
+5. **安装并校验文件** appends managed global rules, installs the five Skills and four TOML roles, then verifies integrity. The success state is `FILES_VERIFIED`, with actual Agent activation **NOT_RUN**.
 6. **取消并恢复** requests cancellation at the next safe checkpoint, restores completed changes and preserves the local journal. A 60-second UI watchdog requests the same safe cancellation; it never kills a file write halfway through. Disk operations themselves cannot be safely force-terminated.
 7. **撤销本次安装** restores the before-install bytes after an additional confirmation. Any subsequent managed file or directory changes block rollback to preserve edits. This button operates on this GUI session's completed transaction only.
 

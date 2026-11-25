@@ -19,9 +19,6 @@ import argparse
 import hashlib
 import json
 import os
-import re
-import shutil
-import sys
 import tempfile
 from pathlib import Path
 
@@ -51,7 +48,11 @@ FILES = {
     "generic": ("AGENTS.md", ".aka-chef/role-templates", ".agents/skills"),
 }
 USER_FILES = {
-    "workbuddy": FILES["workbuddy"],
+    # WorkBuddy reads ~/.workbuddy/skills (verified on a real Windows
+    # machine 2026-11-25); the old ~/.codebuddy/* guess is wrong for the
+    # user-level install. Project scope (FILES["workbuddy"]) still uses
+    # .codebuddy/ until its loading is verified — see PLAN.md.
+    "workbuddy": (".workbuddy/rules/aka-chef.md", ".workbuddy/agents", ".workbuddy/skills"),
     "claude": FILES["claude"],
     "gemini": (".gemini/GEMINI.md", ".gemini/agents", ".gemini/skills"),
     "opencode": (".config/opencode/AGENTS.md",
@@ -200,7 +201,8 @@ def _file_action(path, expected, recorded):
     return "CONFLICT_MISSING" if recorded is not None else "INSTALL"
 
 
-def inspect(host, project=None, hermes_skills_root=None, scope="project"):
+def inspect(host, project=None, hermes_skills_root=None, scope="project",
+            workbuddy_skills_root=None):
     if host not in HOSTS:
         raise InstallError("Unknown host")
     if host == "codex":
@@ -224,6 +226,8 @@ def inspect(host, project=None, hermes_skills_root=None, scope="project"):
         raise InstallError("Target root must already exist")
     if host == "hermes" and hermes_skills_root is not None:
         skills_dir = str(_safe(Path(hermes_skills_root).expanduser().resolve()))
+    if host == "workbuddy" and workbuddy_skills_root is not None:
+        skills_dir = str(_safe(Path(workbuddy_skills_root).expanduser().resolve()))
     state_path = _state_file(project, host)
     state = _read_state(state_path)
     plans = {}
@@ -271,7 +275,10 @@ def inspect(host, project=None, hermes_skills_root=None, scope="project"):
     plans.update(_command_plans(host, project, state))
     skill_plans = {}
     if skills_dir:
-        target = _safe(Path(skills_dir) if host == "hermes" else project / skills_dir)
+        # An explicit --*-skills-root is absolute; a host default is
+        # relative to the (user or project) root.
+        target = _safe(Path(skills_dir) if Path(skills_dir).is_absolute()
+                      else project / skills_dir)
         for skill in SKILLS:
             skill_plans[skill] = skill_installer.inspect(
                 quick_install.skill_source(skill), target="directory", root=target)
@@ -291,10 +298,12 @@ def inspect(host, project=None, hermes_skills_root=None, scope="project"):
     }
 
 
-def install(host, project=None, apply=False, hermes_skills_root=None, scope="project"):
+def install(host, project=None, apply=False, hermes_skills_root=None, scope="project",
+            workbuddy_skills_root=None):
     if host == "codex":
         return quick_install.execute(apply=apply)
-    plan = inspect(host, project, hermes_skills_root, scope)
+    plan = inspect(host, project, hermes_skills_root, scope,
+                   workbuddy_skills_root=workbuddy_skills_root)
     if not apply or plan["conflicts"]:
         return plan
     project = Path(plan["project"])
@@ -365,14 +374,17 @@ def install(host, project=None, apply=False, hermes_skills_root=None, scope="pro
                 _atomic_write(path, before)
         raise
     return verify(host, None if scope == "user" else project,
-                  hermes_skills_root, scope=scope)
+                  hermes_skills_root, scope=scope,
+                  workbuddy_skills_root=workbuddy_skills_root)
 
 
-def verify(host, project=None, hermes_skills_root=None, scope="project"):
+def verify(host, project=None, hermes_skills_root=None, scope="project",
+           workbuddy_skills_root=None):
     if host == "codex":
         return {"host": host, "status": "USE_CODEX_NATIVE_VERIFY",
                 "hint": "Run python -m tools.quick_install --interactive"}
-    plan = inspect(host, project, hermes_skills_root, scope)
+    plan = inspect(host, project, hermes_skills_root, scope,
+                   workbuddy_skills_root=workbuddy_skills_root)
     if plan["status"] == "CONFLICT":
         return {"host": host, "status": "FAIL", "conflicts": plan["conflicts"]}
     if any(x["action"] != "ALREADY_INSTALLED" for x in plan["files"].values()):
@@ -390,11 +402,12 @@ def verify(host, project=None, hermes_skills_root=None, scope="project"):
 
 
 def uninstall(host, project=None, apply=False, hermes_skills_root=None,
-              scope="project"):
+              scope="project", workbuddy_skills_root=None):
     """Remove only our verified files and managed rule block; archive owned Skills."""
     if host == "codex":
         raise InstallError("Use existing Codex component uninstall commands")
-    plan = inspect(host, project, hermes_skills_root, scope)
+    plan = inspect(host, project, hermes_skills_root, scope,
+                   workbuddy_skills_root=workbuddy_skills_root)
     if plan["conflicts"]:
         return {"host": host, "status": "CONFLICT", "conflicts": plan["conflicts"]}
     if any(x["action"] != "ALREADY_INSTALLED" for x in plan["files"].values()):
@@ -457,6 +470,8 @@ def main(argv=None):
     p.add_argument("--project", type=Path)
     p.add_argument("--hermes-skills-root", type=Path,
                    help="Explicit authorized Hermes user skills folder (e.g. ~/.hermes/skills)")
+    p.add_argument("--workbuddy-skills-root", type=Path,
+                   help="Explicit WorkBuddy user skills folder (default: ~/.workbuddy/skills)")
     p.add_argument("--apply", action="store_true")
     p.add_argument("--interactive", action="store_true")
     args = p.parse_args(argv)
@@ -466,7 +481,8 @@ def main(argv=None):
         if args.action == "uninstall":
             preview = uninstall(args.host, args.project,
                                 hermes_skills_root=args.hermes_skills_root,
-                                scope=args.scope)
+                                scope=args.scope,
+                                workbuddy_skills_root=args.workbuddy_skills_root)
             if preview["status"] != "UNINSTALL_PREVIEW":
                 report = preview
             elif args.apply or args.interactive:
@@ -479,15 +495,18 @@ def main(argv=None):
                         consent = False
                 report = (uninstall(args.host, args.project, apply=True,
                                     hermes_skills_root=args.hermes_skills_root,
-                                    scope=args.scope) if consent else {"status": "CANCELLED"})
+                                    scope=args.scope,
+                                    workbuddy_skills_root=args.workbuddy_skills_root) if consent else {"status": "CANCELLED"})
             else:
                 report = preview
         elif args.action == "verify":
             report = verify(args.host, args.project, args.hermes_skills_root,
-                            scope=args.scope)
+                            scope=args.scope,
+                            workbuddy_skills_root=args.workbuddy_skills_root)
         else:
             plan = inspect(args.host, args.project, args.hermes_skills_root,
-                           scope=args.scope)
+                           scope=args.scope,
+                           workbuddy_skills_root=args.workbuddy_skills_root)
             if plan.get("conflicts"):
                 report = plan
             elif args.action == "preview" or not (args.apply or args.interactive):
@@ -500,12 +519,14 @@ def main(argv=None):
                     approved = ""
                 report = (install(args.host, args.project, apply=True,
                                   hermes_skills_root=args.hermes_skills_root,
-                                  scope=args.scope)
+                                  scope=args.scope,
+                                  workbuddy_skills_root=args.workbuddy_skills_root)
                           if approved == "INSTALL" else {"status": "CANCELLED"})
             else:
                 report = install(args.host, args.project, apply=True,
                                  hermes_skills_root=args.hermes_skills_root,
-                                 scope=args.scope)
+                                 scope=args.scope,
+                                 workbuddy_skills_root=args.workbuddy_skills_root)
         print(json.dumps(report, ensure_ascii=True, indent=2))
         return 0 if report.get("status") not in ("CONFLICT", "FAIL", "NOT_INSTALLED") else 1
     except (OSError, ValueError, UnicodeError, json.JSONDecodeError) as exc:

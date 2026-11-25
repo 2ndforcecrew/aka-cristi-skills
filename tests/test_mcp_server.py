@@ -12,16 +12,21 @@ import asyncio
 import importlib.util
 import json
 import os
+import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 sys.path.insert(0, str(REPO_ROOT))
 
 from aka_skills import mcp_server  # noqa: E402
+from aka_skills import repo as repo_mod  # noqa: E402
+from tools import repo_update  # noqa: E402
 
 EXPECTED_SKILLS = {
     # Native (7).
@@ -229,6 +234,51 @@ class ToolFunctionTests(unittest.TestCase):
                 self.assertEqual(before, after, "install_preview must not create files")
             finally:
                 link.unlink(missing_ok=True)
+
+    def test_update_preview_under_symlinked_parent(self):
+        # Regression (mirrors test_install_preview_under_symlinked_parent):
+        # a symlinked *parent* must not block an update preview; the repo
+        # root is resolved before the installer's symlink guard sees it.
+        if shutil.which("git") is None:
+            self.skipTest("git unavailable")
+        with tempfile.TemporaryDirectory() as tmp:
+            real = Path(tmp).resolve()
+            link = real.parent / f"alias-{real.name}"
+            try:
+                link.symlink_to(real, target_is_directory=True)
+            except (NotImplementedError, OSError):
+                self.skipTest("symlinks unsupported")
+            try:
+                repo = link / "repo"
+                repo.mkdir()
+                for name in ("skills", "templates", "agents"):
+                    shutil.copytree(REPO_ROOT / name, repo / name)
+                shutil.copy2(REPO_ROOT / "pyproject.toml", repo / "pyproject.toml")
+
+                def git(*args):
+                    cp = subprocess.run(
+                        ["git", *args], cwd=str(repo), capture_output=True,
+                        text=True, timeout=120)
+                    assert cp.returncode == 0, cp.stderr
+
+                git("init", "-b", "main")
+                git("config", "user.email", "test@example.com")
+                git("config", "user.name", "Test")
+                git("add", "-A")
+                git("commit", "-m", "seed")
+                home = real / "home"
+                home.mkdir()
+                before = _snapshot(real)
+                with patch("pathlib.Path.home", return_value=home):
+                    result = repo_update.preview_update(
+                        repo_root=repo, no_pull=True)
+                after = _snapshot(real)
+                self.assertEqual(result.get("status"), "PREVIEW_ONLY")
+                self.assertEqual(before, after,
+                                 "update preview must not create files")
+            finally:
+                link.unlink(missing_ok=True)
+                repo_mod.bind_tools_to_root(REPO_ROOT)
 
     def test_install_preview_invalid_host_and_scope(self):
         self.assertEqual(

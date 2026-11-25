@@ -24,6 +24,11 @@ Notes / deliberate limits (PLAN.md §4):
   ``directory`` target (with ``--skills-root``) or the ``codex`` target
   (without it). ``--codex-home`` only steers the global-rules and role
   checks; the skill check uses ``skill_installer``'s own target rules.
+- ``update`` pulls latest main and re-syncs installed hosts; default is
+  preview-only, ``--apply`` executes, ``--interactive`` asks for a
+  literal ``YES``. Its ``--scope`` default is ``user`` (unlike
+  install's ``project``); ``--skills-root`` overrides the ``--host``
+  given (workbuddy/hermes/codex) and needs ``--host`` to take effect.
 - No ``uninstall``/``rollback`` subcommands in v1 (destructive ops need a
   separate decision).
 """
@@ -43,6 +48,7 @@ from tools import (
     codex_subagents,
     full_setup,
     quick_install,
+    repo_update,
     skill_installer,
     skill_validator,
     universal_chef,
@@ -84,6 +90,7 @@ def _cmd_install(args: argparse.Namespace) -> int:
             host=args.host,
             project=args.project,
             scope=args.scope,
+            workbuddy_skills_root=args.workbuddy_skills_root,
             input_fn=input,
         )
     except (OSError, ValueError, UnicodeError, KeyError) as exc:
@@ -209,6 +216,40 @@ def _cmd_serve(args: argparse.Namespace) -> int:
     return mcp_server.serve(repo_root=args.repo_root)
 
 
+def _update_kwargs(args: argparse.Namespace) -> dict:
+    return {
+        "repo_root": getattr(args, "repo_root", None) or getattr(args, "repo", None),
+        "hosts": [args.host] if args.host else None,
+        "scope": args.scope,
+        "project": args.project,
+        "skills_root": args.skills_root,
+        "no_pull": args.no_pull,
+    }
+
+
+def _cmd_update(args: argparse.Namespace) -> int:
+    try:
+        if args.apply:
+            report = repo_update.apply_update(**_update_kwargs(args))
+            _emit(report, args.json, f"update: {report.get('status')}")
+            return repo_update.exit_for_report(report)
+        preview = repo_update.preview_update(**_update_kwargs(args))
+        if args.interactive:
+            _emit(preview, args.json, f"update: {preview.get('status')}")
+            if not repo_update.approve("Apply the update", input):
+                cancelled = dict(preview)
+                cancelled["status"] = "CANCELLED"
+                _emit(cancelled, args.json, "update: CANCELLED")
+                return 0
+            report = repo_update.apply_update(**_update_kwargs(args))
+            _emit(report, args.json, f"update: {report.get('status')}")
+            return repo_update.exit_for_report(report)
+        _emit(preview, args.json, f"update: {preview.get('status')}")
+        return repo_update.exit_for_report(preview)
+    except (OSError, ValueError, UnicodeError, KeyError) as exc:
+        return _fail(exc, args.json)
+
+
 def _add_global_flags(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--repo-root", type=Path, default=None,
@@ -278,6 +319,9 @@ def build_parser() -> argparse.ArgumentParser:
                            default="project")
     p_install.add_argument("--project", type=Path, default=None,
                            help="existing target project (non-Codex hosts)")
+    p_install.add_argument("--workbuddy-skills-root", type=Path, default=None,
+                           help="explicit user WorkBuddy Skills directory "
+                           "(default: ~/.workbuddy/skills)")
     _add_sandbox_flags(p_install)
     _add_shared_flags(p_install)
     p_install.set_defaults(func=_cmd_install)
@@ -316,6 +360,40 @@ def build_parser() -> argparse.ArgumentParser:
         "serve", help="start the MCP server on stdio (needs the .[mcp] extra)")
     _add_shared_flags(p_serve)
     p_serve.set_defaults(func=_cmd_serve)
+
+    p_update = sub.add_parser(
+        "update",
+        help="pull latest main and re-sync installed hosts (preview by "
+        "default; nothing is written without --apply or YES)",
+    )
+    mode = p_update.add_mutually_exclusive_group()
+    mode.add_argument("--interactive", action="store_true",
+                      help="preview, then ask for a literal YES before writing")
+    mode.add_argument("--apply", action="store_true",
+                      help="pull and re-sync without prompting (explicit user choice)")
+    p_update.add_argument("--host", choices=universal_chef.HOSTS, default=None,
+                          help="limit the update to one host (default: all "
+                          "installed hosts)")
+    p_update.add_argument("--scope", choices=("project", "user"),
+                          default="user",
+                          help="scope for universal hosts (default: user; "
+                          "differs from install, which defaults to project)")
+    p_update.add_argument("--project", type=Path, default=None,
+                          help="project root for project-scope targets; "
+                          "also adds that project's hosts to the update")
+    p_update.add_argument("--skills-root", type=Path, default=None,
+                          help="explicit skills directory for the --host "
+                          "given (workbuddy: overrides ~/.workbuddy/skills; "
+                          "hermes: same as --hermes-skills-root; codex: "
+                          "directory-target override). Needs --host to take "
+                          "effect; ignored otherwise. Unlike install, where "
+                          "--skills-root only affects codex.")
+    p_update.add_argument("--repo", type=Path, default=None,
+                          help="alias for --repo-root")
+    p_update.add_argument("--no-pull", action="store_true",
+                          help="skip git pull; sync from the local tree only")
+    _add_shared_flags(p_update)
+    p_update.set_defaults(func=_cmd_update)
 
     return parser
 

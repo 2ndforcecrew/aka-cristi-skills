@@ -332,7 +332,7 @@ python3 -m tools.chef_dual_engine --kind hybrid --prompt "修复一个小问题�
 | 类别 | 状态 | 说明 |
 | --- | --- | --- |
 | **公开发布** | **已完成 Beta** | [`v1.0.0-beta.3`](https://github.com/2ndforcecrew/aka-cristi-skills/releases/tag/v1.0.0-beta.3) 已提供 Windows EXE、源码 ZIP、SHA-256、GitHub provenance |
-| **CHEF + 4 Skills + 4 角色配置** | **已实现** | 可本地预览、安装、校验；不是自动启动所有 Agent |
+| **CHEF + 5 Skills + 4 角色配置** | **已实现** | 可本地预览、安装、校验；不是自动启动所有 Agent |
 | **跨平台 CI** | **已通过相应测试** | Windows、macOS、Ubuntu；不代表所有外部用户环境 |
 | **Dual-Engine Factory / Studio** | **实验性运行时** | 隔离执行、SQLite、恢复、QA；尚无完整真实 Codex E2E |
 | **Personal AI Workspace** | **实验性** | GUI/CLI/Mock 已实现，真实 OAuth 与私人仓库流程需验收 |

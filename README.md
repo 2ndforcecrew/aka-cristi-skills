@@ -23,7 +23,7 @@
 
 | CLI 命令 | MCP 工具 |
 | :---: | :---: |
-| **06** | **07** |
+| **07** | **07** |
 | 安装、验证、状态、调用 | 列出、读取、预览、验证 |
 
 **NEW — 2026-11-26 · PR #66 已合併**：Addy Osmani agent-skills 全量引入，32 个能力走同一安装器、同一路由、同一载入索引。
@@ -74,7 +74,7 @@ pip install '.[mcp]'    # 再加 MCP Server（想让别的 AI 调用才需要）
 **第 3 步：先预览，再安装**
 
 ~~~bash
-aka-skills --help                 # 看全部 6 个子命令
+aka-skills --help                 # 看全部 7 个子命令
 aka-skills status                 # 环境预检 + 安装预览，不写文件
 aka-skills install                # 只预览，不写文件
 aka-skills install --interactive  # 预览后输入 YES 才真正安装
@@ -89,6 +89,17 @@ aka-skills list-skills             # 列出全部 32 个可安装 Skills
 aka-skills validate visual-design  # 只读预检单个 Skill，不写文件
 aka-skills verify                  # 校验已安装的文件
 ~~~
+
+**第 5 步：仓更新后，同步已装的宿主**
+
+~~~bash
+aka-skills update                # 只预览：哪些宿主会更新、哪些冲突，不写文件
+aka-skills update --apply        # 拉最新 main + 同步全部已发现宿主
+aka-skills update --host workbuddy --apply   # 只更新 WorkBuddy
+aka-skills update --no-pull --apply          # 不拉仓，只从本地树同步
+~~~
+
+`update` 默认只预览；`--interactive` 预览后输入 `YES` 才执行。更新 WorkBuddy 后要**重启整个 WorkBuddy 应用**（新开会话不够，skill 列表缓存要靠应用重启刷新）。旧的 `.codebuddy` 安装只会被报告，不会自动删除。
 
 ### B. MCP Server：让任何支持 MCP 的 AI 都能调用
 
@@ -319,7 +330,7 @@ python3 -m tools.chef_dual_engine --host claude --kind hybrid \
 
 | 工具 | 做什么 | 状态 |
 | :--- | :--- | :--- |
-| **`aka-skills` CLI** | 安装、验证、状态、列出、预检、MCP 服务，6 个子命令 | 已实现；干净 venv 安装验证通过 |
+| **`aka-skills` CLI** | 安装、验证、状态、列出、预检、MCP 服务、更新，7 个子命令 | 已实现；干净 venv 安装验证通过 |
 | **MCP Server** | stdio 服务，7 个工具，任何支持 MCP 的 AI 都能调用 | 已实现；protocol smoke 通过 |
 | **安装器 `full_setup`** | 交互安装向导：预览、YES 确认、写文件、校验 | 已实现；行为未变 |
 | **快速安装 `quick_install`** | 不交互的安装路径 | 已实现 |
@@ -370,13 +381,13 @@ Factory 负责工程、稳定性、代码与测试；Studio 负责视觉语言�
 | :--- | :--- | :--- |
 | Codex | 用户级规则、Skills、四个原生 TOML 角色 | 真实安装；四角色验收 BLOCKED |
 | Claude Code | 项目级 Skill 文件适配 | 仅文件适配；加载 / 调用 NOT_RUN |
-| WorkBuddy / CodeBuddy | 项目级或用户级规则、Skills、Markdown 角色 | 仅文件适配；未验证 |
+| WorkBuddy / CodeBuddy | 用户级 `~/.workbuddy/skills`（实测读取）+ 规则/角色同步（加载 NOT_RUN）；项目级 `.codebuddy/` 未验证 | 仅文件适配；规则/角色加载 NOT_RUN，更新后需重启整个应用 |
 | Gemini CLI | 项目级规则、Skills、Markdown 角色 | 仅文件适配；未验证 |
 | OpenCode | 项目级规则、Skills、Markdown 角色 | 仅文件适配；未验证 |
 | Hermes | 项目规则、角色交接模板 | 不支持（BLOCKED） |
 | ChatGPT | 无兼容本地宿主 | 不支持（BLOCKED） |
 
-例如 WorkBuddy 全局安装：将对应系统的安装命令最后一段改为 `py -3 -m tools.full_setup --host workbuddy --scope user --interactive`，macOS / Linux 使用 `python3`。
+例如 WorkBuddy 全局安装：将对应系统的安装命令最后一段改为 `py -3 -m tools.full_setup --host workbuddy --scope user --interactive`，macOS / Linux 使用 `python3`。更新已装的 WorkBuddy：`aka-skills update --host workbuddy --apply`（先预览用 `aka-skills update --host workbuddy`）；更新完重启整个 WorkBuddy 应用再验证。
 
 Vendored skills（25 个）与原生 6 个走同一安装器，落盘路径与上表相同；加载 / 调用同样 NOT_RUN，见 [跨宿主适配](docs/host-adaptation.md)。
 

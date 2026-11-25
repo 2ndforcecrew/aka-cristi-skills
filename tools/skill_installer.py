@@ -179,6 +179,35 @@ def install(source,target="directory",root=None,apply=False):
             "activation":"NOT_RUN"}
 
 
+def adopt(source, root=None):
+    """Adopt an already-present skill directory as managed content.
+
+    When a skill directory exists under ``root`` with exactly the same
+    content hash as ``source`` but no state record (e.g. it was copied
+    there by hand), record it in the installer state so later
+    ``inspect`` calls treat it as ``already_installed`` / ``upgrade``
+    instead of ``conflict_unmanaged``. Writes state only; never touches
+    the skill files. Content that differs is refused (returns the
+    ``conflict_unmanaged`` action instead of adopting).
+    """
+    info = package(source)
+    destination = root_for("directory", root)
+    state = load_state(destination)
+    name = info["name"]
+    installed = destination / name
+    if installed.is_symlink():
+        raise InstallError("symlink installed skill")
+    if not installed.exists():
+        return {"action": "install", "name": name, "adopted": False}
+    if state["installed"].get(name):
+        return {"action": "already_installed", "name": name, "adopted": False}
+    if package(installed)["sha256"] != info["sha256"]:
+        return {"action": "conflict_unmanaged", "name": name, "adopted": False}
+    state["installed"][name] = {"sha256": info["sha256"], "backup": None}
+    persist(destination, state)
+    return {"action": "adopted", "name": name, "adopted": True, "sha256": info["sha256"]}
+
+
 def managed(name,target,root):
     if not NAME.fullmatch(name):
         raise InstallError("invalid skill name")

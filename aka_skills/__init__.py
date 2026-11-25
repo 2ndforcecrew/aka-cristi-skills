@@ -4,4 +4,4 @@
 ``pyproject.toml`` reads it dynamically via ``[tool.hatch.version]``.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"

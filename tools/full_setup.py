@@ -48,9 +48,11 @@ def _approve(question, input_fn):
 
 
 def _run_portable_host(*, host, project, apply, interactive, workspace,
-                       test_agents, hermes_skills_root, scope, input_fn):
+                       test_agents, hermes_skills_root, scope, input_fn,
+                       workbuddy_skills_root=None):
     """Install native project rules + Skills + roles, never fake runtime activation."""
-    plan = universal_chef.inspect(host, project, hermes_skills_root, scope=scope)
+    plan = universal_chef.inspect(host, project, hermes_skills_root, scope=scope,
+                                  workbuddy_skills_root=workbuddy_skills_root)
     report = {
         "host": host,
         "preflight": dependency_status(),
@@ -74,7 +76,7 @@ def _run_portable_host(*, host, project, apply, interactive, workspace,
         return report
     installed = universal_chef.install(
         host, project, apply=True, hermes_skills_root=hermes_skills_root,
-        scope=scope,
+        scope=scope, workbuddy_skills_root=workbuddy_skills_root,
     )
     report["core_install"] = installed["status"]
     report["host_file_verification"] = installed
@@ -92,7 +94,8 @@ def _run_portable_host(*, host, project, apply, interactive, workspace,
 
 def run(*, apply=False, interactive=False, workspace=False, test_agents=False,
         codex_home=None, skills_root=None, input_fn=input, host="codex",
-        project=None, hermes_skills_root=None, scope="project"):
+        project=None, hermes_skills_root=None, scope="project",
+        workbuddy_skills_root=None):
     if apply and interactive:
         raise ValueError("Choose --interactive or --apply, not both")
     if host != "codex":
@@ -100,7 +103,7 @@ def run(*, apply=False, interactive=False, workspace=False, test_agents=False,
             host=host, project=project, apply=apply, interactive=interactive,
             workspace=workspace, test_agents=test_agents,
             hermes_skills_root=hermes_skills_root, scope=scope,
-            input_fn=input_fn,
+            input_fn=input_fn, workbuddy_skills_root=workbuddy_skills_root,
         )
     before = dependency_status()
     preview = quick_install.execute(codex_home=codex_home, skills_root=skills_root)
@@ -219,6 +222,8 @@ def main(argv=None):
                         help="existing target project required for non-Codex hosts")
     parser.add_argument("--hermes-skills-root", type=Path,
                         help="explicit user Hermes Skills directory when authorized")
+    parser.add_argument("--workbuddy-skills-root", type=Path,
+                        help="explicit user WorkBuddy Skills directory (default: ~/.workbuddy/skills)")
     parser.add_argument("--codex-home", type=Path)
     parser.add_argument("--skills-root", type=Path)
     args = parser.parse_args(argv)
@@ -227,7 +232,8 @@ def main(argv=None):
                      workspace=args.workspace, test_agents=args.test_agents,
                      codex_home=args.codex_home, skills_root=args.skills_root,
                      host=args.host, project=args.project,
-                     hermes_skills_root=args.hermes_skills_root, scope=args.scope)
+                     hermes_skills_root=args.hermes_skills_root, scope=args.scope,
+                     workbuddy_skills_root=args.workbuddy_skills_root)
         print(json.dumps(result, ensure_ascii=True, indent=2))
         return 1 if result.get("core_install") not in (
             "PREVIEW_ONLY", "CANCELLED", "FILES_VERIFIED",
