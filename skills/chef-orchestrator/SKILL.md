@@ -1,19 +1,20 @@
 ---
 name: chef-orchestrator
-description: Lead complex tasks by discovering authorized capabilities, planning scoped handoffs, independently verifying outputs, recovering from bounded failures, and preserving validated lessons.
+description: Lead complex tasks by discovering authorized capabilities, planning scoped handoffs, independently verifying outputs, recovering from bounded failures, and preserving validated lessons. Use when a task spans research, creative design, programming, automation, or multiple agents, or when the user asks CHEF to own the outcome rather than teach implementation.
 ---
 
-# CHEF Orchestrator — Portable Starter
+# CHEF Orchestrator
 
-## Use when
+## Overview
+
+CHEF orchestrates complex tasks: discovering authorized capabilities, planning scoped handoffs, independently verifying outputs, recovering from bounded failures, and preserving validated lessons. This is a portable starter workflow, not an autonomous multi-agent runtime — it can coordinate only the tools and connected agents actually available in the host.
+
+## When to Use
 A task spans research, creative design, programming, automation, or multiple agents, or when the user asks CHEF to own the outcome rather than teach implementation.
 
 When the ask is vague or underspecified, or the user says "interview me", route first to `interview-me`: one question at a time until ~95% confidence, then continue with the clarified brief.
 
-## Important limits
-This Skill is a **workflow**, not an autonomous multi-agent runtime, a credential store or a bypass of the user's project rules. It can coordinate only the tools and connected agents actually available in the host. No fake worker or independent reviewer may be claimed.
-
-## Workflow
+## Process
 1. **Goal / acceptance:** capture outcome, project, scope, observable success, approvals and stop conditions.
 2. **Inspect:** read closest AGENTS.md and configs; record Git revision and existing modifications; discover connected tools, worker agents and their permissions.
 3. **Capability plan:** select necessary roles — Research, Creative, Coding, Review, Automation, Knowledge — using real tool availability. Prefer fewer handoffs when they improve safety and clarity.
@@ -24,17 +25,8 @@ This Skill is a **workflow**, not an autonomous multi-agent runtime, a credentia
 8. **Deliver:** explicit COMPLETED vs VERIFIED statuses, tested revision, modified files, evidence links, blocked parts, rollback and next steps.
 9. **Evolve:** extract only **validated** repeatable procedures into reviewed Skill candidates; maintain provenance and maintenance checks.
 
-## Verification
-
-After applying chef-orchestrator, a run is VERIFIED only when every check below holds. A run that fails any of them is COMPLETED at most — never VERIFIED.
-
-- [ ] The real user journey was replayed end to end (Workflow step 6), not just described: the files, tests, logs, or visible output were inspected directly.
-- [ ] Worker claims were distinguished from independent review: nothing is marked verified on a worker's word alone.
-- [ ] Negative cases and regressions were tested where applicable; a happy-path-only pass is not verification.
-- [ ] The reviewer is a different agent or thread from the worker that did the work; self-review is marked NOT_RUN, never PASS.
-- [ ] Delivery states COMPLETED vs VERIFIED explicitly, with evidence links, the tested revision, modified files, blocked parts, and rollback steps (Workflow step 8).
-- [ ] Unavailable hosts or integrations are reported BLOCKED / NOT_RUN with the reason — never inferred as working from copied files or mocked traces.
-- [ ] No mocked multi-agent demonstration is presented as production orchestration evidence.
+## Important limits
+This Skill is a **workflow**, not an autonomous multi-agent runtime, a credential store or a bypass of the user's project rules. It can coordinate only the tools and connected agents actually available in the host. No fake worker or independent reviewer may be claimed.
 
 ## Handoff output (example template, not real evidence)
 ```yaml
@@ -63,9 +55,6 @@ status: PLANNED
 - `feature-journey-map` for user-facing paths.
 - `skill-evaluation-gate` for candidate acceptance.
 - `visual-design` for design and visual work (posters, landing-page visual direction, typography and layout quality, style extraction from references).
-
-## Provenance
-An original portable public starter adapted from AKA.CRISTI's verified collaboration principles. No private AGENTS.md or account data is included.
 
 ## Codex native Subagents (only where supported and enabled)
 
@@ -101,3 +90,18 @@ When this Skill is invoked, read the applicable sections of [TRAINING.md](refere
 - The reviewer is the same agent or thread that did the work.
 - A missing host reported as working because files were copied into place.
 - Blocked parts hidden from the summary while the outcome is called COMPLETED.
+
+## Verification
+
+After applying chef-orchestrator, a run is VERIFIED only when every check below holds. A run that fails any of them is COMPLETED at most — never VERIFIED.
+
+- [ ] The real user journey was replayed end to end (Process step 6), not just described: the files, tests, logs, or visible output were inspected directly.
+- [ ] Worker claims were distinguished from independent review: nothing is marked verified on a worker's word alone.
+- [ ] Negative cases and regressions were tested where applicable; a happy-path-only pass is not verification.
+- [ ] The reviewer is a different agent or thread from the worker that did the work; self-review is marked NOT_RUN, never PASS.
+- [ ] Delivery states COMPLETED vs VERIFIED explicitly, with evidence links, the tested revision, modified files, blocked parts, and rollback steps (Process step 8).
+- [ ] Unavailable hosts or integrations are reported BLOCKED / NOT_RUN with the reason — never inferred as working from copied files or mocked traces.
+- [ ] No mocked multi-agent demonstration is presented as production orchestration evidence.
+
+## Provenance
+An original portable public starter adapted from AKA.CRISTI's verified collaboration principles. No private AGENTS.md or account data is included.

@@ -3,15 +3,19 @@ name: visual-design
 description: Evaluate, design and independently review visual work across illustration, character and environment design, photography, brand identity, packaging, campaigns, editorial layouts, digital interfaces and motion graphics. Use when a user asks for visual direction, redesign, layout, typography, style analysis, or visual quality assurance.
 ---
 
-# Visual Design Skill · V0.1
+# Visual Design Skill
 
-## Mission
-Turn a design brief into an intentional, buildable artifact with traceable aesthetic decisions and honest QA evidence. This skill is **brand-neutral**: never force AKA.CRISTI colors, logos or tastes onto another user's brand.
+## Overview
 
-## Trigger and boundaries
+Turn a design brief into an intentional, buildable artifact with traceable aesthetic decisions and honest QA evidence. This skill is brand-neutral: never force AKA.CRISTI colors, logos or tastes onto another user's brand. V0.1 is implemented but NOT FIELD-VALIDATED — real acceptance requires at least three varied briefs, side-by-side comparison with and without this skill, reproducible evidence, and an independent reviewer.
+
+## When to Use
 Select the production route below for each requested deliverable. Respect the user's supplied assets, likenesses, logo geometry and existing project constraints. For reference works, extract principles rather than copying distinctive layouts or copyrighted imagery. Never claim that a screenshot, browser test, or implementation exists without evidence.
 
-## Workflow: Brief → Perceive → Reason → Execute → Verify
+## Process
+
+**Pipeline: Brief → Perceive → Reason → Execute → Verify**
+
 1. **Brief**: capture deliverable, audience, platform, message, existing brand, accessibility, assets, constraints and success criteria. Ask only for essential missing details.
 2. **Perceive**: inspect existing artifact and supplied references where available. Record observations, not assumptions. Describe composition, type hierarchy, color, spacing, imagery, contrast, interaction and responsive behavior. If screenshots or reference pages cannot be accessed, label them unverified.
 3. **Reason**: propose at most three design directions when useful. Choose one by weighing clarity, originality, brand fit, feasibility and accessibility. Produce a compact Design Decision Record (DDR) using the [decision record template](references/decision-record.md): goal → evidence → choice → trade-off.
@@ -42,13 +46,6 @@ Record a source and permission context, observations and transferable design pri
 - transferable_principle / avoid_copying / confidence / applicable_context
 Keep source evidence distinct from generated interpretations. A reference is inspiration, not a template to reproduce.
 
-## Quality gates
-**Hard checks (pass/fail/not-run):** required content present; responsive overflow; text contrast (WCAG AA target where applicable); keyboard navigation; focus visibility; image alt text; reduced-motion behavior; build/lint/typecheck if relevant; no broken media or links; preserve identity and brand assets.
-
-**Aesthetic critique (1–5 each, with reasons):** hierarchy, coherence, editorial rhythm, originality, brand fit, composition, imagery and craft. These are editorial judgments, not automated guarantees. Never average them into a claim of objectively correct beauty.
-
-**Evidence contract:** each gate records status, method, evidence reference, and limitation. Separate VERIFIED, FAILED, NOT_RUN, and SUBJECTIVE_REVIEW. Do not turn unavailable tools into a passing score.
-
 ## Output contract
 Provide: (a) chosen direction and rationale, (b) artifact or exact changed files, (c) DDR, (d) hard-check matrix, (e) aesthetic critique with actionable corrections, (f) known limitations, (g) next action. Keep the report concise and suited to the user's medium.
 
@@ -56,11 +53,6 @@ Provide: (a) chosen direction and rationale, (b) artifact or exact changed files
 Use available native tools for inspection, creation, browser validation and screenshots. Prefer API/MCP for web retrieval; use browser automation when necessary; HTML parsing (e.g. Beautiful Soup) is optional and not presumed installed. Never crawl a gallery at scale without checking site policies and resource costs. Never imply a tool was installed just because an equivalent is available.
 
 On failure: diagnose once, retry only reversible operations with bounded attempts, preserve originals, log what changed, and stop before irreversible publication or overwriting existing production sites.
-
-## Acceptance
-A passing local Skill validation proves file structure only. Real acceptance requires at least three varied briefs (website, poster/editorial, brand system), side-by-side comparison with/without this skill, reproducible evidence, and an independent reviewer. Until then, report V0.1 as implemented but NOT FIELD-VALIDATED.
-
-Track field validation separately for each additional medium. A passing web case supplies no evidence for illustration continuity, a packaging proof or a motion export.
 
 ## Visual language and aesthetic judgment
 For visual direction, consult [visual language research batches 1–2](references/visual-language-batches-01-02.md) and the [Phase 1 reference research](references/phase-1-visual-research.md) when relevant. Apply the following rules across media without imposing a house style:
@@ -156,3 +148,14 @@ Agents own dependency setup in their available development environment, not the 
 - A reference layout copied instead of principles extracted.
 - Identity or brand assets altered — face, logo geometry, product color — without approval.
 - One medium's field validation cited as proof for another medium.
+
+## Verification
+**Hard checks (pass/fail/not-run):** required content present; responsive overflow; text contrast (WCAG AA target where applicable); keyboard navigation; focus visibility; image alt text; reduced-motion behavior; build/lint/typecheck if relevant; no broken media or links; preserve identity and brand assets.
+
+**Aesthetic critique (1–5 each, with reasons):** hierarchy, coherence, editorial rhythm, originality, brand fit, composition, imagery and craft. These are editorial judgments, not automated guarantees. Never average them into a claim of objectively correct beauty.
+
+**Evidence contract:** each gate records status, method, evidence reference, and limitation. Separate VERIFIED, FAILED, NOT_RUN, and SUBJECTIVE_REVIEW. Do not turn unavailable tools into a passing score.
+
+A passing local Skill validation proves file structure only. Real acceptance requires at least three varied briefs (website, poster/editorial, brand system), side-by-side comparison with/without this skill, reproducible evidence, and an independent reviewer. Until then, report V0.1 as implemented but NOT FIELD-VALIDATED.
+
+Track field validation separately for each additional medium. A passing web case supplies no evidence for illustration continuity, a packaging proof or a motion export.

@@ -6,13 +6,11 @@ Two layers:
    text prove the runner logic itself — section aliases, frontmatter
    parsing, routing matching, exit-code contract.
 
-2. Final-state gates for the real repo: the state the parallel
-   borrowings PR must reach — 6 skills, each with all six structure
-   concepts, and every routing case resolved by chef-orchestrator.
-   These are expected to be RED until the real gaps the evals found
-   are closed (see evals/README.md "Known red"); the failure output
-   itself is the itemised list, so do not weaken the assertions to
-   force green.
+2. Final-state gates for the real repo: 6 skills, each with all six
+   structure concepts, and every routing case resolved by
+   chef-orchestrator. These gates are green on main; a failure here
+   is a todo list, not a broken runner — do not weaken the
+   assertions to force green.
 """
 import json
 import subprocess
@@ -67,27 +65,27 @@ When a demo is needed.
 - Tests pass.
 """
 
-# Repo-idiom headings: "When to use" / "Procedure" /
-# "Evidence contract" instead of the literal agent-skills names,
-# and a description without "Use when" (soft recommendation only).
-REPO_IDIOM_SKILL = """---
+# Standard headings (docs/skill-format.md) but a description
+# without "Use when" — the missing trigger language is a soft
+# recommendation only, never a hard failure.
+STANDARD_NO_USE_WHEN_SKILL = """---
 name: demo-skill
 description: Do demo work.
 ---
 
 # Demo Skill
 
-## When to use
+## Overview
+
+Demo overview text.
+
+## When to Use
 
 When a demo is needed.
 
-## Procedure
+## Process
 
 1. Do the demo.
-
-## Evidence contract
-
-- Outcomes compared before handoff.
 
 ## Common Rationalizations
 
@@ -98,6 +96,10 @@ When a demo is needed.
 ## Red Flags
 
 - Skipping verification.
+
+## Verification
+
+- Tests pass.
 """
 
 
@@ -139,9 +141,9 @@ class StructureCheckFixtureTests(unittest.TestCase):
         self.assertEqual(result["missing"], [])
         self.assertTrue(result["frontmatter"]["description_has_use_when"])
 
-    def test_repo_idiom_headings_pass_and_missing_use_when_is_soft_only(self):
+    def test_standard_headings_pass_and_missing_use_when_is_soft_only(self):
         with tempfile.TemporaryDirectory() as d:
-            result = check_skill_structure(make_skill(d, "demo-skill", REPO_IDIOM_SKILL))
+            result = check_skill_structure(make_skill(d, "demo-skill", STANDARD_NO_USE_WHEN_SKILL))
         self.assertTrue(result["ok"], result)
         self.assertEqual(result["missing"], [])
         self.assertFalse(result["frontmatter"]["description_has_use_when"])
@@ -275,10 +277,9 @@ class RunnerCliTests(unittest.TestCase):
 class RepoFinalStateTests(unittest.TestCase):
     """Final-state gates for the real repo.
 
-    Expected RED until the gaps listed in evals/README.md
-    ("Known red") are closed by follow-up edits; the assertion
-    messages itemise exactly what is still missing, so a failure
-    here is a todo list, not a broken runner.
+    These must stay green. A failure here itemises exactly what is
+    still missing, so a failure is a todo list, not a broken
+    runner — do not weaken the assertions to force green.
     """
 
     def test_repo_structure_final_state(self):

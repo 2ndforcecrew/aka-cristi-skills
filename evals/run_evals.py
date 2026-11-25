@@ -4,46 +4,41 @@ No LLM, no network, stdlib only. Two check families:
 
 1. Structure: every skills/<name>/SKILL.md must carry frontmatter
    (name + non-empty description) and one section per concept in
-   SECTION_CONCEPTS. Headings are matched by concept, not by literal
-   agent-skills titles, because this repo's skills use their own
-   section names (see SECTION_ALIASES and evals/README.md).
+   SECTION_CONCEPTS. Headings must match the standard literal titles
+   in docs/skill-format.md — the evals enforce the standard, they do
+   not guess at synonyms (see SECTION_ALIASES and evals/README.md).
 
 2. Routing: every case in evals/routing-cases.json must resolve to a
    skill that chef-orchestrator actually names. Parse basis: the
    whole text of skills/chef-orchestrator/SKILL.md is searched for
    the expected skill name (word-boundary match). chef-orchestrator
-   has no routing table; its routing surface is the "Use when"
+   has no routing table; its routing surface is the "When to Use"
    paragraph plus the "Suggested complementary Skills" list, so a
    whole-file match is the honest parse. A match on the
    orchestrator's own name is an identity match (it IS the router),
    not a routing entry; the substantive signal is the other five
    names.
 
-Section-alias map (decided from the actual headings in skills/,
-2026-11-26; see evals/README.md):
-  overview            -> H1 title + non-empty frontmatter description
-                         (no skill in this repo has a dedicated
-                         Overview section except interview-me)
-  when-to-use         -> Use when | When to use | Trigger
-  process             -> Procedure | Workflow | Process
-  common-rationalizations -> Rationalization (in a heading)
-  red-flags           -> Red Flag (in a heading)
-  verification        -> Verification | Evidence check/contract |
-                         Quality gates | Acceptance
+Literal-title gate (docs/skill-format.md, 2026-11-26):
+  overview            -> literal `## Overview`
+  when-to-use         -> literal `## When to Use`
+  process             -> literal `## Process`
+  common-rationalizations -> heading containing `Rationalization`
+  red-flags           -> heading containing `Red Flag`
+  verification        -> literal `## Verification`
                          (deliberately NOT "Safety gates": safety
                          constraints are not verification evidence;
                          and NOT the parenthetical "(not real
-                         evidence)" in the Handoff output heading,
-                         which is why "evidence" only matches at
-                         the start of a heading)
+                         evidence)" in the Handoff output heading)
 
-Frontmatter "Use when": the description SHOULD carry trigger
-language ("Use when ..."), per the agent-skills convention. In this
-repo only visual-design and interview-me do. A missing "Use when"
-in the description is a soft recommendation, not a hard failure:
-the repo's live convention puts trigger language in the body
-"When to use" section, which every skill has. Hard gate: name
-present and well-formed + description non-empty.
+Frontmatter "Use when": the description MUST carry trigger
+language ("Use when ..."), per the agent-skills convention. All six
+skills in this repo do. A missing "Use when" in the description is
+reported as a soft recommendation, not a hard failure: the hard
+gate is name present and well-formed + description non-empty.
+(Adopting the convention repo-wide was decided in the 2026-11-26
+format-unification pass; the soft rule stays so a future skill
+that forgets it is flagged, not silently accepted.)
 
 Exit code: 0 when every hard check passes, 1 otherwise. Soft
 recommendations never change the exit code.
@@ -76,13 +71,14 @@ SECTION_CONCEPTS = (
 )
 
 # concept -> regexes matched (case-insensitive) against H2+ headings.
-# "overview" is handled separately (H1 + description, see above).
+# Literal titles per docs/skill-format.md: no synonyms accepted.
 SECTION_ALIASES = {
-    "when-to-use": [r"when to use", r"use when", r"trigger"],
-    "process": [r"\bprocedure\b", r"\bworkflow\b", r"\bprocess\b"],
+    "overview": [r"^overview$"],
+    "when-to-use": [r"^when to use$"],
+    "process": [r"^process$"],
     "common-rationalizations": [r"rationalization"],
     "red-flags": [r"red flag"],
-    "verification": [r"verif", r"^evidence\b", r"quality gate", r"acceptance"],
+    "verification": [r"^verification$"],
 }
 
 NAME_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
@@ -184,17 +180,13 @@ def check_skill_structure(skill_dir):
     if description_ok and not has_use_when:
         result["recommendations"].append(
             "description lacks 'Use when' trigger language "
-            "(repo convention puts it in the body 'When to use' section)"
+            "(docs/skill-format.md requires it in the description)"
         )
     headings = extract_headings(text)
     result["headings"] = [title for _, title in headings]
     titles = [title for level, title in headings if level >= 2]
     missing = []
-    # overview: H1 title + non-empty description (repo convention).
-    has_h1 = any(level == 1 for level, _ in headings)
-    if not (has_h1 and description_ok):
-        missing.append("overview")
-    for concept in SECTION_CONCEPTS[1:]:
+    for concept in SECTION_CONCEPTS:
         patterns = SECTION_ALIASES[concept]
         found = any(
             re.search(pattern, title, re.IGNORECASE)
