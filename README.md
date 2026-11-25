@@ -42,6 +42,38 @@ git clone --depth 1 https://github.com/2ndforcecrew/aka-cristi-skills.git; if ($
 git clone --depth 1 https://github.com/2ndforcecrew/aka-cristi-skills.git && cd aka-cristi-skills && python3 -m tools.full_setup --interactive
 ~~~
 
+**pip 安装（CLI `aka-skills`）**
+
+~~~bash
+git clone --depth 1 https://github.com/2ndforcecrew/aka-cristi-skills.git && cd aka-cristi-skills && pip install . && aka-skills --help
+~~~
+
+~~~bash
+aka-skills install                # 只预览，不写文件
+aka-skills install --interactive  # 预览后输入 YES 确认安装
+aka-skills status                 # 环境预检 + 安装预览
+aka-skills list-skills            # 列出全部 5 个 Skills
+aka-skills validate visual-design # 只读预检单个 Skill
+~~~
+
+`pip install .` 只从本地源码安装，尚未发布到 PyPI（`pip install aka-cristi-skills` 目前不可用）。上面的 `git clone` + `python3 -m tools.full_setup --interactive` 流程仍然有效，两者安装结果相同。`--workspace` 云端配置不在 CLI 中提供，仍需 `python3 -m tools.full_setup --workspace`。
+
+**MCP Server（`aka-skills serve`）**
+
+`aka-skills serve` 以 stdio 方式运行 MCP server，没有网络监听端口、不设认证，任何支持 MCP 的宿主（Claude、Cursor、Muse 等）都可以直接调用。需要先安装 MCP 依赖：
+
+~~~bash
+pip install '.[mcp]'
+~~~
+
+没有装 MCP 依赖时，`serve` 会以非零退出码退出，并明确提示需要安装 `.[mcp]`；其他子命令（install、verify、status、list-skills、validate）不需要 MCP 依赖。客户端配置示例：
+
+~~~json
+{"mcpServers": {"aka-skills": {"command": "aka-skills", "args": ["serve"]}}}
+~~~
+
+共 7 个工具，全部返回 JSON 文本：`list_skills`（列出全部 Skills）、`read_skill`（读取单个 Skill）、`list_design_cases`（列出设计案例）、`read_design_case`（读取单个设计案例）、`install_preview`（安装预览）、`validate_skill`（验证单个 Skill）、`check_status`（环境与安装状态）。其中 `install_preview` 是纯 dry-run，只预览、不写文件、不提问。
+
 前提：Git、Python 3.11+、新目录，以及与目标宿主匹配的运行环境。先审查源码；安装器预览变更并要求同意，不覆盖有冲突的个人配置。已有仓库请先检查 Git 状态及更新内容，再从干净的可信版本运行安装器。
 
 **使用其他 Agent？** 见 [跨宿主安装](#hosts)。**不熟悉终端？** 将本仓库链接发给具备终端权限的 Agent，请它检查环境、预览安装并在获批后执行对应宿主命令。没有终端权限的 Agent 只能提供指导。
