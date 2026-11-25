@@ -36,6 +36,22 @@
 
 ## 01 / INSTALL — 安装方法（写明每一步）
 
+### MCP Server 一行装（想让 AI 直接调用，先装这个）
+
+~~~bash
+git clone --depth 1 https://github.com/2ndforcecrew/aka-cristi-skills.git && cd aka-cristi-skills && pip install '.[mcp]' && aka-skills serve
+~~~
+
+客户端配置（Claude、Cursor、Muse 等支持 MCP 的宿主通用）：
+
+~~~json
+{"mcpServers": {"aka-skills": {"command": "aka-skills", "args": ["serve"]}}}
+~~~
+
+**两点注意**：
+- MCP 代码在 PR #62，未合入 main。想现在试，用 PR 分支：`git checkout feat/cli-mcp-tools-20261125`；等合并后 main 就可以直接用。
+- `serve` 报错说缺 MCP SDK，就是你只装了 `pip install .`、没装 `.[mcp]`，跑 `pip install '.[mcp]'` 就好。`serve` 是 stdio 服务，没有网络端口、不设认证，跑起来不打印东西是正常的，要透过 MCP 客户端调用才看到回应。
+
 ### A. 命令行工具 `aka-skills`（推荐，最安全）
 
 **第 1 步：拿到源码**
