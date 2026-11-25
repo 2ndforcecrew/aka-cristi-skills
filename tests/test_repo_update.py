@@ -108,6 +108,27 @@ class RepoUpdateTests(unittest.TestCase):
         self.assertNotEqual(report["repo"]["before"], report["repo"]["after"])
         self.assertEqual(report["status"], "NO_CHANGE")
 
+    def test_pull_non_fast_forward_refused(self):
+        # Diverged histories: seed pushes a new commit, local commits a
+        # different one on the old base -> git pull --ff-only fails, and
+        # update syncs nothing.
+        skill = self.seed / "skills" / "chef-orchestrator" / "SKILL.md"
+        skill.write_text(skill.read_text(encoding="utf-8") + "\n<!-- upstream -->\n",
+                         encoding="utf-8")
+        _git("add", "-A", cwd=self.seed)
+        _git("commit", "-m", "upstream", cwd=self.seed)
+        _git("push", "origin", "main", cwd=self.seed)
+        local_skill = self.local / "skills" / "chef-orchestrator" / "SKILL.md"
+        local_skill.write_text(
+            local_skill.read_text(encoding="utf-8") + "\n<!-- local -->\n",
+            encoding="utf-8")
+        _git("add", "-A", cwd=self.local)
+        _git("commit", "-m", "local", cwd=self.local)
+        with self.assertRaises(repo_update.UpdateError) as ctx:
+            self._apply()
+        self.assertIn("git pull failed", str(ctx.exception))
+        self.assertEqual(list(self.home.iterdir()), [])
+
     def test_dirty_tree_refused(self):
         skill = self.local / "skills" / "chef-orchestrator" / "SKILL.md"
         skill.write_text(skill.read_text(encoding="utf-8") + "\n<!-- local edit -->\n",
