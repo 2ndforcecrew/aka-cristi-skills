@@ -152,6 +152,9 @@ Treat these as agent instructions when the skill is loaded. Automatic discovery 
 ## Reference case retrieval
 Before selecting art direction, consult the [observed case index](references/cases/INDEX.md) and load relevant case files selectively. Transfer principles to the current brief; do not copy source assets or treat observed cases as field-validated. Record the case IDs and principles used in the design decision record.
 
+## Adaptive reference learning
+Analyze each supplied design reference according to its distinctive visual value; no mandatory fixed analysis template. Persist substantive observations, reasoning, transferable techniques and evidence limits in an independent case MD. Consult the [style index](references/styles/INDEX.md) for relevant candidate knowledge; enrich existing modules or create a distinct one when justified. Update both indexes and verify stored content. Do not equate file existence with field validation. Preserve existing rules and privacy boundaries.
+
 ## Common Rationalizations
 
 | Rationalization | Rebuttal |
