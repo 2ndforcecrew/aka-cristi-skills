@@ -1,0 +1,51 @@
+# AKA.CRISTI Skills — installable CLI (`aka-skills`) + optional MCP server.
+# Installable only (`pip install .` from a checkout); NOT published to PyPI.
+# The CLI itself needs no runtime dependency beyond the standard library.
+
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "aka-cristi-skills"
+# Version lives in exactly one place: aka_skills/__init__.py (`__version__`).
+dynamic = ["version"]
+description = "AKA.CRISTI Skills — portable agent skills, global rules and role definitions, installable as the `aka-skills` CLI."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+# Pinned 2026-11-25 (verified against PyPI with `pip index versions mcp` and
+# a scratch-venv install): mcp==1.13.0 is the version named in PLAN.md and
+# exists on PyPI. It declares pydantic<3.0.0,>=2.11.0, but pydantic 2.14
+# removed the private `eval_type_backport` helper that mcp 1.13 imports, so
+# a bare `pip install '.[mcp]'` picks pydantic 2.14.4 and `import mcp`
+# fails with ImportError. The pydantic<2.12 bound keeps the extra
+# installable; verified working with pydantic==2.11.7, where
+# `mcp.server.fastmcp.FastMCP`, `mcp.client.stdio.stdio_client` and
+# `mcp.client.session.ClientSession` all import cleanly.
+mcp = [
+    "mcp==1.13.0",
+    "pydantic>=2.11,<2.12",
+]
+
+[project.scripts]
+aka-skills = "aka_skills.cli:main"
+
+[tool.hatch.version]
+path = "aka_skills/__init__.py"
+
+[tool.hatch.build]
+# Flat layout (PLAN.md §6): both the new package and the existing tools/
+# package ship in the wheel, so `from tools import full_setup` keeps
+# working unchanged in a checkout and in an installed wheel.
+packages = ["aka_skills", "tools"]
+
+[tool.hatch.build.force-include]
+# Repo-root content stays where it is in the source tree; hatchling maps it
+# into the wheel/sdist under aka_skills/data/ (resolved by aka_skills/repo.py).
+"skills" = "aka_skills/data/skills"
+"agents" = "aka_skills/data/agents"
+"templates" = "aka_skills/data/templates"
+"shared-training" = "aka_skills/data/shared-training"

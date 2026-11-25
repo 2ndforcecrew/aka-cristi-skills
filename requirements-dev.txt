@@ -1,3 +1,9 @@
 -r requirements-workspace.txt
 ruff==0.14.14
 mypy==1.19.1
+# Only needed for MCP tests / `aka-skills serve`; the CLI itself has no
+# extra runtime dependency. mcp==1.13.0 needs pydantic<2.12: pydantic 2.14
+# removed the private `eval_type_backport` helper that mcp 1.13 imports, so
+# a bare mcp install fails on `import mcp` (verified 2026-11-25).
+mcp==1.13.0
+pydantic>=2.11,<2.12

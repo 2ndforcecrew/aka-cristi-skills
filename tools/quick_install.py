@@ -18,6 +18,16 @@ TEMPLATE = ROOT / "templates" / "AGENTS.global.md"
 
 def execute(*, apply=False, codex_home=None, skills_root=None):
     """安装前预检全部目标；已有冲突则不写任何文件。"""
+    # Canonicalize caller-supplied sandbox locations before the installer's
+    # symlink guard sees them: on macOS, temp dirs live under /var (a
+    # symlink to /private/var), so every macOS temp path would otherwise be
+    # refused as a "symlink path". The guard itself is untouched and still
+    # refuses a symlinked target when called directly (see
+    # tests/test_filesystem_security.py).
+    if codex_home is not None:
+        codex_home = Path(codex_home).resolve()
+    if skills_root is not None:
+        skills_root = Path(skills_root).resolve()
     target = "directory" if skills_root is not None else "codex"
     plans = {
         "global_rules": chef_global_rules.plan("install", TEMPLATE, codex_home),
