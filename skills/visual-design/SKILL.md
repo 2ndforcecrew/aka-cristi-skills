@@ -129,6 +129,23 @@ creative-web-toolkit/
 
 Agents own dependency setup in their available development environment, not the user's browsing device. Inspect existing project and instructions first; preserve existing files. Bootstrap checks Node.js, npm, browser availability and project manifests; use a verified lockfile and npm ci when available, otherwise resolve compatible dependencies and generate the lockfile through npm. Never fabricate a lockfile. Select GSAP/ScrollTrigger, Lenis, Three.js, Motion, Lottie, React, Tailwind, Vite, TypeScript and Playwright as needed; evaluate Aceternity UI and Magic UI components individually for licensing and compatibility. Do not load every library into every website. Resolve missing dependencies with bounded retries, timeout, logs and safe fallbacks; do not bypass security or silently incur charges. Run dependency installation in an isolated or sandbox environment; never install unreviewed postinstall scripts on a production machine. Reconstruct the environment after session resets. Verify build, browser errors, responsive layout, scroll progress in both directions, reduced motion and performance. For exploded views, test assembled → separated → reassembled states with independently movable geometry; distinguish procedural models from photorealistic assets. Record actual evidence and blockers. Promote tested effects into reusable modules; mark unimplemented modules as planned. Deliver a browser-ready build; users should not need developer dependencies to view it. Public deployment requires authorization and verified access. Preserve all existing release gates.
 
+## Automatic Activation
+
+当用户提出设计、创作、视觉分析、品牌建设或设计修改任务时，自动激活 Visual Design Skill。
+
+当用户上传设计参考图片时：
+1. 自动判断是否属于设计学习素材。
+2. 检查是否已经分析过。
+3. 分析视觉语言及设计原理。
+4. 生成独立案例 MD。
+5. 关联已有风格知识。
+6. 将新增知识纳入候选验证队列。
+
+无需用户额外发出学习指令。
+
+知识通过验证后方可进入正式知识库。
+不得擅自公开私人素材或发布新版本。
+
 ## Common Rationalizations
 
 | Rationalization | Rebuttal |
