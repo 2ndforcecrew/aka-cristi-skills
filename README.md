@@ -14,7 +14,7 @@
 
 | SHARED TRAINING | GLOBAL RULES | SKILLS | AGENT ROLES |
 | :---: | :---: | :---: | :---: |
-| **22** | **12** | **05** | **04** |
+| **22** | **12** | **06** | **04** |
 | 共享训练规则 | 全局工作规范 | 核心工作方法 | 专业角色配置 |
 
 | CLI 命令 | MCP 工具 |
@@ -48,9 +48,7 @@ git clone --depth 1 https://github.com/2ndforcecrew/aka-cristi-skills.git && cd 
 {"mcpServers": {"aka-skills": {"command": "aka-skills", "args": ["serve"]}}}
 ~~~
 
-**两点注意**：
-- MCP 代码在 PR #62，未合入 main。想现在试，用 PR 分支：`git checkout feat/cli-mcp-tools-20261125`；等合并后 main 就可以直接用。
-- `serve` 报错说缺 MCP SDK，就是你只装了 `pip install .`、没装 `.[mcp]`，跑 `pip install '.[mcp]'` 就好。`serve` 是 stdio 服务，没有网络端口、不设认证，跑起来不打印东西是正常的，要透过 MCP 客户端调用才看到回应。
+**注意**：MCP 已合入 main（PR #62，2026-11-25），按上面命令装即可。`serve` 报错说缺 MCP SDK，就是你只装了 `pip install .`、没装 `.[mcp]`，跑 `pip install '.[mcp]'` 就好。`serve` 是 stdio 服务，没有网络端口、不设认证，跑起来不打印东西是正常的，要透过 MCP 客户端调用才看到回应。
 
 ### A. 命令行工具 `aka-skills`（推荐，最安全）
 
@@ -81,7 +79,7 @@ aka-skills install --interactive  # 预览后输入 YES 才真正安装
 **第 4 步：看看装了什么**
 
 ~~~bash
-aka-skills list-skills             # 列出全部 5 个 Skills
+aka-skills list-skills             # 列出全部 6 个 Skills
 aka-skills validate visual-design  # 只读预检单个 Skill，不写文件
 aka-skills verify                  # 校验已安装的文件
 ~~~
@@ -222,7 +220,7 @@ git clone --depth 1 https://github.com/2ndforcecrew/aka-cristi-skills.git; if ($
                      VERIFY → DELIVER → LEARN
 ~~~
 
-这是产品架构方向。当前 CHEF 与五个 Skills 已有安装实现，双引擎为实验性运行时，不代表全部厂商 Agent 已自动在线协作。
+这是产品架构方向。当前 CHEF 与六个 Skills 已有安装实现，双引擎为实验性运行时，不代表全部厂商 Agent 已自动在线协作。
 
 <a id="shared-training"></a>
 
@@ -260,8 +258,11 @@ git clone --depth 1 https://github.com/2ndforcecrew/aka-cristi-skills.git; if ($
 | **[Feature Journey Map](skills/feature-journey-map/SKILL.md)** | 从用户入口验证完整实际路径 | 已有本地安装实现 |
 | **[Skill Evaluation Gate](skills/skill-evaluation-gate/SKILL.md)** | 评估风险、质量、兼容性及发布证据 | 已有本地安装实现 |
 | **[Visual Design](skills/visual-design/SKILL.md)** | 视觉设计全流程 + QA + 设计参考案例 | V0.1 已实现，未实战验证，见 [§02](#visual-design) |
+| **[interview-me](skills/interview-me/SKILL.md)** | 一次一问、每问附推荐答案，榨需求到 ~95% 信心再开工 | 已实现（PR #63 新增） |
 | **22 项共享训练规则** | CHEF 调度、审美、设计流程、交付验收 | 随 CHEF Skill 分发 |
 | **12 章全局工作规范** | 沟通、工程、AI 自动化、摄影、电商、安全、测试 | 随 CHEF Skill 分发 |
+| **[Evals 框架](evals/run_evals.py)** | 结构 + 路由 18 条，确定性检查、无 LLM、无联网 | 已实现，exit 0 |
+| **[Skill 格式标准](docs/skill-format.md)** | 10 节固定顺序 + SKILL.md / references / scripts / assets 目录结构 | 已实现；evals 强制执行 6 个核心节标题 |
 
 ### 四个专业角色（Codex 原生 TOML）
 
@@ -352,12 +353,15 @@ Factory 负责工程、稳定性、代码与测试；Studio 负责视觉语言�
 | :--- | :--- |
 | 共享训练规则公开至 Skills 源码 | 已完成，PR #55 已合并 |
 | 训练 MD 随 CHEF Skill 分发 | 本次源码集成；安装回归见 PR #57 |
-| 核心安装器、五 Skills、角色文件、CLI、MCP server | 已有本地实现；干净 venv 安装验证通过 |
+| 核心安装器、六 Skills、角色文件、CLI、MCP server | 已有本地实现；干净 venv 安装验证通过 |
+| PR #63：借鉴 agent-skills 的 4 项机制 | 已合并（Rationalizations + Red Flags、interview-me、evals 框架、comparison.md） |
+| PR #64：Skill 格式统一 | 已合并（10 节固定顺序、字面标题、格式标准 docs/skill-format.md） |
+| 全量测试 | 375 个全过（31 跳过）；evals：skills 6/6、路由 18/18、0 软建议 |
 | Visual Design Skill | V0.1 已实现；实战验收 1 / 3（海报已做，网站和品牌系统待做） |
 | 真实跨宿主端到端验收 | 尚未全部完成 |
 | Visual Design 完整技术 Toolkit | 开发中（路线图，未建成） |
 | 后台自动更新与跨厂商自动调度 | 尚未完成 |
-| 历史 Beta 安装包 | v1.0.0-beta.3；不含 CLI / MCP 与本次新增内容 |
+| 历史 Beta 安装包 | v1.0.0-beta.3；不含 CLI / MCP 及之后新增内容；main 已有这些内容，尚未切新 beta |
 | 稳定版、独立用户 UAT、Windows 代码签名 | 尚未完成 |
 
 验证报告应区分 `FILES_VERIFIED`、`PASS`、`FAIL`、`BLOCKED`、`NOT_RUN` 和 `INCONCLUSIVE`。真实模型调用需要宿主、登录、额度及另外授权。
