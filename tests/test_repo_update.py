@@ -276,6 +276,22 @@ class RepoUpdateTests(unittest.TestCase):
         self.assertIn("user edit", edited.read_text(encoding="utf-8"))
         self.assertFalse((wb_root / ".aka-skill-installer").exists())
 
+    def test_preview_fail_when_repo_skill_incomplete(self):
+        # Repair round 1: preview must not report PREVIEW_ONLY when a
+        # target fails. A repo missing a skill's SKILL.md makes the
+        # codex target FAIL (inspect raises InstallError, caught in
+        # discovery), so the top-level status is FAIL and exit is 1.
+        skill = self.local / "skills" / "visual-design" / "SKILL.md"
+        skill.unlink()
+        _git("add", "-A", cwd=self.local)
+        _git("commit", "-m", "drop visual-design SKILL.md", cwd=self.local)
+        report = self._preview(no_pull=True)
+        self.assertEqual(report["status"], "FAIL")
+        target = report["targets"]["codex:user"]
+        self.assertEqual(target["status"], "FAIL")
+        self.assertIn("SKILL.md", target["error"])
+        self.assertEqual(repo_update.exit_for_report(report), 1)
+
     def test_update_4_to_5_skills(self):
         # Fixture repo at 4 skills: install workbuddy with the OLD
         # 4-skill installer (SKILLS patched for the install step only),

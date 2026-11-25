@@ -178,10 +178,11 @@ def _state_is_legacy(state_path: Path) -> bool:
 
 
 def detect_legacy(home: Path | None = None) -> dict | None:
-    """Report a legacy ``.codebuddy`` install; never read/write/delete it.
+    """Report a legacy ``.codebuddy`` install.
 
-    Only the two state files are read (existence + recorded skill names)
-    to build the report. Legacy skill content is never hashed or used.
+    Only the two state files are read (existence + recorded skill
+    names); legacy skill content is never hashed, used, written, or
+    deleted.
     """
     home = Path(home) if home is not None else Path.home()
     paths: list[str] = []
@@ -219,8 +220,10 @@ def detect_legacy(home: Path | None = None) -> dict | None:
         "paths": paths,
         "skills": sorted(set(skills)),
         "note": (
-            "Legacy .codebuddy install detected. update never reads, "
-            "writes or deletes the legacy tree. After confirming the "
+            "Legacy .codebuddy install detected. Only the two state "
+            "files are read (existence + recorded skill names); legacy "
+            "skill content is never hashed, used, written, or deleted. "
+            "After confirming the "
             f".workbuddy install works, you may manually delete the "
             f"aka-chef managed files under {home / '.codebuddy'} "
             "(or leave them alone)."
@@ -688,7 +691,12 @@ def preview_update(*, repo_root=None, hosts=None, scope="user",
         "before": pre["before"],
         "after": pre["before"] if pre["before"] else "NO_GIT",
     }
-    status = "NO_TARGETS" if not targets else "PREVIEW_ONLY"
+    if not targets:
+        status = "NO_TARGETS"
+    elif any(t["status"] in ("CONFLICT", "FAIL") for t in targets):
+        status = "FAIL"
+    else:
+        status = "PREVIEW_ONLY"
     return _assemble(status, repo_info, targets, legacy,
                      note=_skills_root_note(skills_root, hosts))
 
