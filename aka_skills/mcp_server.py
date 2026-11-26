@@ -193,11 +193,34 @@ def _rel(root: Path, path: Path) -> str:
 
 
 def list_skills(repo_root: str | Path | None = None) -> dict[str, object]:
-    """Enumerate skills/*/SKILL.md with frontmatter name/description."""
+    """Enumerate installable skills (native + vendored) with frontmatter.
+
+    Delegates to ``aka_skills.repo.list_skills`` (31 installable: 6 native
+    + 25 vendored; vendored interview-me is reference-only and excluded)
+    and maps each entry to the MCP shape (``path`` is the SKILL.md file,
+    relative to the repo root). Falls back to the legacy native-only scan
+    when ``repo`` is not importable.
+    """
     root = _require_root(repo_root)
     if isinstance(root, dict):
         return root
-    skills: list[dict[str, str]] = []
+    try:
+        from aka_skills.repo import list_skills as _repo_list_skills
+    except ImportError:
+        _repo_list_skills = None
+    if _repo_list_skills is not None:
+        skills: list[dict[str, str]] = []
+        for item in _repo_list_skills(root):
+            skill_file = Path(item["path"]) / "SKILL.md"
+            skills.append(
+                {
+                    "name": item["name"],
+                    "description": item["description"],
+                    "path": _rel(root, skill_file),
+                    "source": item["source"],
+                }
+            )
+        return {"skills": skills}
     skills_dir = root / "skills"
     if not skills_dir.is_dir():
         return _error("repo root has no skills/ directory")
@@ -220,16 +243,27 @@ def list_skills(repo_root: str | Path | None = None) -> dict[str, object]:
     return {"skills": skills}
 
 
+def _resolve_skill_file(name: str, root: Path) -> Path:
+    """Resolve a skill name to its SKILL.md (native first, then vendored)."""
+    try:
+        from aka_skills.repo import resolve_skill_dir as _resolve_dir
+    except ImportError:
+        _resolve_dir = None
+    if _resolve_dir is not None:
+        return _resolve_dir(root, name) / "SKILL.md"
+    return root / "skills" / name / "SKILL.md"
+
+
 def read_skill(
     name: str, repo_root: str | Path | None = None
 ) -> dict[str, object]:
-    """Read skills/<name>/SKILL.md (UTF-8, capped at MAX_SKILL_BYTES)."""
+    """Read a skill's SKILL.md (UTF-8, capped at MAX_SKILL_BYTES)."""
     if _bad_name(name):
         return _error(f"invalid skill name: {name!r}")
     root = _require_root(repo_root)
     if isinstance(root, dict):
         return root
-    skill_file = root / "skills" / name / "SKILL.md"
+    skill_file = _resolve_skill_file(name, root)
     if not skill_file.is_file():
         return _error(f"unknown skill: {name}")
     content = _read_capped(skill_file)
@@ -352,7 +386,15 @@ def validate_skill(
     root = _require_root(repo_root)
     if isinstance(root, dict):
         return root
-    return skill_validator.validate_skill(root / "skills" / name)
+    try:
+        from aka_skills.repo import resolve_skill_dir as _resolve_dir
+    except ImportError:
+        _resolve_dir = None
+    skill_dir = (
+        _resolve_dir(root, name) if _resolve_dir is not None
+        else root / "skills" / name
+    )
+    return skill_validator.validate_skill(skill_dir)
 
 
 def check_status(repo_root: str | Path | None = None) -> dict[str, object]:

@@ -25,11 +25,21 @@ from evals.run_evals import (
     check_routing,
     check_skill_structure,
     load_routing_cases,
+    orchestrator_mentions_skill,
     run_all,
 )
+from evals.run_vendor_evals import (
+    check_index_coverage,
+    check_vendor_frontmatter,
+    run_vendor_all,
+)
+from tools.generate_skill_index import build_index, render
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 CASES_PATH = REPO_ROOT / "evals" / "routing-cases.json"
+VENDOR_CASES_PATH = REPO_ROOT / "evals" / "vendor-routing-cases.json"
+VENDOR_SKILLS_DIR = REPO_ROOT / "vendor" / "addy-agent-skills" / "skills"
+INDEX_PATH = REPO_ROOT / "docs" / "skill-index.json"
 
 CONFORMING_SKILL = """---
 name: demo-skill
@@ -297,6 +307,239 @@ class RepoFinalStateTests(unittest.TestCase):
             if not r["ok"]
         ]
         self.assertEqual(failures, [], msg=f"routing gaps: {failures}")
+
+
+# A vendored skill body with frontmatter only — no standard sections
+# at all. The vendor adapter evals check frontmatter, not sections:
+# that is the Option A exemption (docs/dedup-decisions.md §4).
+VENDOR_MINIMAL_SKILL = """---
+name: vdemo-skill
+description: Do vendor demo work. Use when a vendor demo is needed.
+---
+
+# Vendor Demo Skill
+
+Some prose, no standard sections.
+"""
+
+
+class VendorFrontmatterFixtureTests(unittest.TestCase):
+    def test_frontmatter_only_skill_passes(self):
+        with tempfile.TemporaryDirectory() as d:
+            result = check_vendor_frontmatter(
+                make_skill(d, "vdemo-skill", VENDOR_MINIMAL_SKILL)
+            )
+        self.assertTrue(result["ok"], result)
+        self.assertEqual(result["problems"], [])
+        self.assertTrue(result["frontmatter"]["description_has_use_when"])
+
+    def test_name_must_match_directory(self):
+        body = VENDOR_MINIMAL_SKILL.replace("name: vdemo-skill", "name: other-skill")
+        with tempfile.TemporaryDirectory() as d:
+            result = check_vendor_frontmatter(make_skill(d, "vdemo-skill", body))
+        self.assertFalse(result["ok"])
+        self.assertIn("!= directory", result["problems"][0])
+
+    def test_missing_use_when_is_soft_only(self):
+        body = VENDOR_MINIMAL_SKILL.replace(
+            "description: Do vendor demo work. Use when a vendor demo is needed.",
+            "description: Do vendor demo work.",
+        )
+        with tempfile.TemporaryDirectory() as d:
+            result = check_vendor_frontmatter(make_skill(d, "vdemo-skill", body))
+        self.assertTrue(result["ok"], result)
+        self.assertEqual(len(result["recommendations"]), 1)
+
+
+class VendorIndexFixtureTests(unittest.TestCase):
+    # Fixture skills use real PHASES-covered names (native interview-me,
+    # vendored test-driven-development): generate_skill_index raises on
+    # any collected skill without a PHASES entry, so demo names that
+    # are not in the taxonomy cannot be used to build an index.
+    def _fixture_repo(self, d):
+        root = Path(d)
+        make_skill(
+            root / "skills",
+            "interview-me",
+            CONFORMING_SKILL.replace("demo-skill", "interview-me"),
+        )
+        vendor_dir = root / "vendor" / "addy-agent-skills" / "skills"
+        make_skill(
+            vendor_dir,
+            "test-driven-development",
+            VENDOR_MINIMAL_SKILL.replace(
+                "vdemo-skill", "test-driven-development"
+            ),
+        )
+        index_path = root / "docs" / "skill-index.json"
+        index_path.parent.mkdir(parents=True, exist_ok=True)
+        index_path.write_text(render(build_index(root)), encoding="utf-8")
+        return root, index_path
+
+    def test_missing_phase_raises(self):
+        # A collected skill with no PHASES entry must fail loud, never
+        # land in the index with a silent empty phase (WP4 issue 2).
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            make_skill(root / "skills", "demo-skill", CONFORMING_SKILL)
+            (root / "vendor" / "addy-agent-skills" / "skills").mkdir(
+                parents=True, exist_ok=True
+            )
+            with self.assertRaises(ValueError) as ctx:
+                build_index(root)
+        self.assertIn("no routing phase", str(ctx.exception))
+        self.assertIn("native/demo-skill", str(ctx.exception))
+
+    def test_generated_index_covers_fixture_repo(self):
+        with tempfile.TemporaryDirectory() as d:
+            root, index_path = self._fixture_repo(d)
+            result = check_index_coverage(root, index_path)
+        self.assertTrue(result["ok"], result["problems"])
+        self.assertEqual(result["counts"], {"native": 1, "vendor": 1, "index_entries": 2})
+
+    def test_crlf_line_endings_do_not_break_hash_check(self):
+        # Windows checkout converts LF to CRLF (git autocrlf). The index
+        # records hashes of LF-normalised text (generate_skill_index reads
+        # in text mode), so the verifier must hash the same normalised
+        # content, not raw disk bytes — otherwise every skill mismatches
+        # on Windows (CI: test (windows-latest) failed on all 32 skills).
+        with tempfile.TemporaryDirectory() as d:
+            root, index_path = self._fixture_repo(d)
+            for skill_path in (
+                root / "skills" / "interview-me" / "SKILL.md",
+                root
+                / "vendor"
+                / "addy-agent-skills"
+                / "skills"
+                / "test-driven-development"
+                / "SKILL.md",
+            ):
+                # Read via read_text first: on Windows the fixture files
+                # are already CRLF on disk (text-mode writes), so a raw
+                # byte-level \n -> \r\n replace would double-convert
+                # \r\n into \r\r\n and the check would (correctly) fail
+                # on genuinely different content. Normalise to LF first,
+                # then write pure CRLF — exactly what a Windows checkout
+                # produces — on every platform.
+                text = skill_path.read_text(encoding="utf-8")
+                skill_path.write_bytes(
+                    text.replace("\n", "\r\n").encode("utf-8")
+                )
+            result = check_index_coverage(root, index_path)
+        self.assertTrue(result["ok"], result["problems"])
+
+    def test_tampered_skill_file_fails_hash_check(self):
+        with tempfile.TemporaryDirectory() as d:
+            root, index_path = self._fixture_repo(d)
+            vendor_skill = (
+                root
+                / "vendor"
+                / "addy-agent-skills"
+                / "skills"
+                / "test-driven-development"
+                / "SKILL.md"
+            )
+            vendor_skill.write_text(
+                vendor_skill.read_text(encoding="utf-8") + "\nTampered.\n",
+                encoding="utf-8",
+            )
+            result = check_index_coverage(root, index_path)
+        self.assertFalse(result["ok"])
+        self.assertTrue(
+            any("sha256 mismatch" in p for p in result["problems"]),
+            result["problems"],
+        )
+
+    def test_missing_index_entry_is_reported(self):
+        with tempfile.TemporaryDirectory() as d:
+            root, index_path = self._fixture_repo(d)
+            index = json.loads(index_path.read_text(encoding="utf-8"))
+            index["skills"] = [
+                s for s in index["skills"] if s["name"] != "test-driven-development"
+            ]
+            index_path.write_text(json.dumps(index), encoding="utf-8")
+            result = check_index_coverage(root, index_path)
+        self.assertFalse(result["ok"])
+        self.assertTrue(
+            any(
+                "index missing vendored skill: test-driven-development" in p
+                for p in result["problems"]
+            ),
+            result["problems"],
+        )
+
+
+class VendorEvalsFinalStateTests(unittest.TestCase):
+    """Final-state gates for the vendored skill set (PR #66 WP2).
+
+    Same rule as the native gates: a failure here is a todo list,
+    not a broken runner — do not weaken the assertions to force green.
+    """
+
+    def test_vendor_evals_final_state(self):
+        report = run_vendor_all(REPO_ROOT)
+        frontmatter_failures = {
+            s["skill"]: s["problems"] for s in report["frontmatter"] if not s["ok"]
+        }
+        routing_failures = [
+            (r["id"], r["expected_skill"], r["reason"])
+            for r in report["routing"]
+            if not r["ok"]
+        ]
+        self.assertEqual(frontmatter_failures, {}, msg=f"frontmatter gaps: {frontmatter_failures}")
+        self.assertEqual(routing_failures, [], msg=f"routing gaps: {routing_failures}")
+        self.assertTrue(report["index"]["ok"], msg=f"index gaps: {report['index']['problems']}")
+
+    def test_vendor_cases_cover_all_26_vendored_skills_once_each(self):
+        cases = load_routing_cases(VENDOR_CASES_PATH)
+        vendored = {p.name for p in VENDOR_SKILLS_DIR.iterdir() if p.is_dir()}
+        by_skill = Counter(c["expected_skill"] for c in cases)
+        self.assertEqual(sorted(by_skill), sorted(vendored), "one case per vendored skill")
+        for skill, count in by_skill.items():
+            self.assertEqual(count, 1, skill)
+
+    def test_chef_routing_names_all_32_skills(self):
+        index = json.loads(INDEX_PATH.read_text(encoding="utf-8"))
+        chef_text = (
+            REPO_ROOT / "skills" / "chef-orchestrator" / "SKILL.md"
+        ).read_text(encoding="utf-8")
+        missing = [
+            f"{e['source']}/{e['name']}"
+            for e in index["skills"]
+            if not orchestrator_mentions_skill(chef_text, e["name"])
+        ]
+        self.assertEqual(missing, [], msg=f"chef routing table misses: {missing}")
+
+    def test_every_index_entry_has_phase(self):
+        # PHASES coverage lock (WP4 issue 2): every collected skill
+        # must carry a non-empty routing phase; a missing entry raises
+        # in build_index (see test_missing_phase_raises), this gate
+        # pins the real repo at 32/32.
+        index = build_index(REPO_ROOT)
+        self.assertEqual(len(index["skills"]), 32)
+        missing = [
+            f"{e['source']}/{e['name']}"
+            for e in index["skills"]
+            if not e["phase"]
+        ]
+        self.assertEqual(missing, [], msg=f"skills without phase: {missing}")
+
+    def test_skill_index_is_fresh(self):
+        proc = subprocess.run(
+            [sys.executable, "tools/generate_skill_index.py", "--check"],
+            cwd=str(REPO_ROOT),
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+
+    def test_combined_routing_cases_total_44(self):
+        native = load_routing_cases(CASES_PATH)
+        vendor = load_routing_cases(VENDOR_CASES_PATH)
+        self.assertEqual(len(native), 18)
+        self.assertEqual(len(vendor), 26)
+        self.assertEqual(len(native) + len(vendor), 44)
 
 
 if __name__ == "__main__":

@@ -9,9 +9,11 @@ instead of by feel.
 
 | File | What it is |
 |---|---|
-| `evals/routing-cases.json` | 18 intent → expected-skill cases, 3 per skill, 6 skills |
+| `evals/routing-cases.json` | 18 intent → expected-skill cases, 3 per skill, 6 native skills |
 | `evals/run_evals.py` | The runner (structure + routing), also the CLI |
-| `tests/test_evals.py` | unittest wiring: fixture tests + final-state repo gates |
+| `evals/vendor-routing-cases.json` | 26 intent → expected-skill cases, 1 per vendored skill |
+| `evals/run_vendor_evals.py` | The vendor adapter runner (frontmatter + routing + index coverage) |
+| `tests/test_evals.py` | unittest wiring: fixture tests + final-state repo gates (native + vendor) |
 
 ## Run
 
@@ -60,12 +62,62 @@ flagged, not silently accepted.
 
 For each case in `routing-cases.json`, the expected skill must exist
 and be named by `skills/chef-orchestrator/SKILL.md`. Parse basis:
-chef-orchestrator has no routing table; its routing surface is the
-`When to Use` paragraph plus the `Suggested complementary Skills`
-list, so the whole file text is searched for the skill name
-(word-boundary match). A match on the orchestrator's own name is an
-identity match (it IS the router); the substantive signal is the
-other five names.
+the whole file text is searched for the skill name
+(word-boundary match). Since PR #66 WP2, chef-orchestrator carries a
+`## Routing` table naming all 32 capabilities (6 native + 26
+vendored); the table is the routing surface, and the whole-file
+match is the parse that checks it. A match on the orchestrator's
+own name is an identity match (it IS the router); the substantive
+signal is the other five names.
+
+The vendored routing cases (one per vendored skill, 26 total) live
+in `evals/vendor-routing-cases.json` and are checked by
+`evals/run_vendor_evals.py`, not by this runner — the native cases
+file stays exactly the six native skills, 18 cases.
+
+## Vendor adapter evals (PR #66 WP2, Option A)
+
+Vendored skills (`vendor/addy-agent-skills/skills/`) are exempt
+from the native structure gate: only 1 of 26 has a literal
+`## Process` heading and `using-agent-skills` has no standard
+sections at all, and retitling them would break byte identity with
+upstream. `evals/run_vendor_evals.py` checks them instead:
+
+| File | What it is |
+|---|---|
+| `evals/vendor-routing-cases.json` | 26 intent → expected-skill cases, 1 per vendored skill |
+| `evals/run_vendor_evals.py` | The vendor runner (frontmatter + routing + index coverage) |
+| `docs/skill-index.json` | Generated index, 32 skills (see below) |
+| `tools/generate_skill_index.py` | The index generator (stdlib only, deterministic) |
+
+```bash
+python3 -m evals.run_vendor_evals       # text summary, exit 0/1
+python3 tools/generate_skill_index.py   # regenerate docs/skill-index.json
+python3 tools/generate_skill_index.py --check  # fail when the index is stale
+```
+
+Check 1 — frontmatter: each vendored `SKILL.md` must have
+frontmatter with a well-formed `name` equal to its directory name
+and a non-empty `description`. No section-concept checks are
+applied. A missing `Use when` is a soft recommendation only.
+
+Check 2 — routing: each vendor case's expected skill must exist
+under `vendor/addy-agent-skills/skills/` and be named by
+chef-orchestrator (same word-boundary parse). The `interview-me`
+case proves the name is routed; the target is the native skill —
+the vendored copy is reference-only.
+
+Check 3 — index coverage: `docs/skill-index.json` must list all 32
+skills with the right source, the right installable verdict (only
+vendored `interview-me` is reference-only), and a sha256 per
+`SKILL.md` matching the working tree, so an accidental edit to a
+vendored file is caught. Full-tree byte identity against upstream
+is WP1 evidence (cmp records), not an eval — the evals run with no
+network and no upstream clone.
+
+Current state: native evals 6/6 + 18/18; vendor evals 26/26
+frontmatter + 26/26 routing + index ok. Combined routing cases:
+18 + 26 = 44.
 
 ## Known red — closed in this PR (history)
 

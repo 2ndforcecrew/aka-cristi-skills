@@ -1,4 +1,13 @@
-"""统一 Codex 安装入口；默认只读，--apply 才写本地文件。"""
+"""Unified Codex install entry; read-only by default, --apply writes local files.
+
+Installs 31 Skills: 6 native skills from ``skills/`` plus 25 vendored skills
+from ``vendor/addy-agent-skills/skills/`` (Addy Osmani agent-skills, MIT,
+vendored by PR #66). The vendored ``interview-me`` is reference-only
+(native ``interview-me`` wins per docs/dedup-decisions.md) and is never
+installed. Hooks (``vendor/.../hooks/*.sh``) are never installed or wired
+by this installer. Upstream Node validator scripts are reference-only and
+are not a runtime dependency of this installer.
+"""
 import argparse
 import json
 import sys
@@ -6,14 +15,67 @@ from pathlib import Path
 
 from tools import chef_global_rules, codex_subagents, skill_installer
 
-SKILLS = (
+# Native skills shipped in skills/ (alphabetical).
+NATIVE_SKILLS = (
     "chef-orchestrator",
-    "verified-change-loop",
     "feature-journey-map",
+    "interview-me",
     "skill-evaluation-gate",
+    "verified-change-loop",
+    "visual-design",
 )
+# Vendored skills shipped in vendor/addy-agent-skills/skills/ (alphabetical).
+# Must stay in sync with the installable set in docs/skill-index.json
+# (see tests/test_quick_install.py::test_skills_match_skill_index).
+# Vendored interview-me is intentionally absent: reference-only, the
+# native interview-me wins (docs/dedup-decisions.md).
+VENDOR_SKILLS = (
+    "accessibility-engineering",
+    "api-and-interface-design",
+    "browser-testing-with-devtools",
+    "ci-cd-and-automation",
+    "code-review-and-quality",
+    "code-simplification",
+    "constraint-driven-development",
+    "context-engineering",
+    "debugging-and-error-recovery",
+    "deprecation-and-migration",
+    "documentation-and-adrs",
+    "doubt-driven-development",
+    "frontend-ui-engineering",
+    "git-workflow-and-versioning",
+    "idea-refine",
+    "incremental-implementation",
+    "observability-and-instrumentation",
+    "performance-optimization",
+    "planning-and-task-breakdown",
+    "security-and-hardening",
+    "shipping-and-launch",
+    "source-driven-development",
+    "spec-driven-development",
+    "test-driven-development",
+    "using-agent-skills",
+)
+SKILLS = NATIVE_SKILLS + VENDOR_SKILLS
+VENDOR_DIRNAME = "addy-agent-skills"
 ROOT = Path(__file__).resolve().parents[1]
 TEMPLATE = ROOT / "templates" / "AGENTS.global.md"
+
+
+def skill_source(name):
+    """Return the source directory of an installable skill by name.
+
+    Native skills live in ``<ROOT>/skills/<name>``; vendored skills in
+    ``<ROOT>/vendor/addy-agent-skills/skills/<name>``. Reads the current
+    module-global ROOT at call time so repo.bind_tools_to_root rebinding
+    (installed-wheel layout) is honoured. Raises ValueError for names
+    that are not installable (including vendored interview-me).
+    """
+    if name in NATIVE_SKILLS:
+        return ROOT / "skills" / name
+    if name in VENDOR_SKILLS:
+        return ROOT / "vendor" / VENDOR_DIRNAME / "skills" / name
+    raise ValueError(f"skill is not installable: {name}")
 
 
 def execute(*, apply=False, codex_home=None, skills_root=None):
@@ -33,7 +95,7 @@ def execute(*, apply=False, codex_home=None, skills_root=None):
         "global_rules": chef_global_rules.plan("install", TEMPLATE, codex_home),
         "agents": [codex_subagents.plan(role, codex_home) for role in codex_subagents.ROLE_NAMES],
         "skills": [
-            skill_installer.inspect(ROOT / "skills" / skill, target, skills_root)
+            skill_installer.inspect(skill_source(skill), target, skills_root)
             for skill in SKILLS
         ],
     }
@@ -50,7 +112,7 @@ def execute(*, apply=False, codex_home=None, skills_root=None):
     for role in codex_subagents.ROLE_NAMES:
         codex_subagents.install(role, codex_home, apply=True)
     for skill in SKILLS:
-        skill_installer.install(ROOT / "skills" / skill, target, skills_root, apply=True)
+        skill_installer.install(skill_source(skill), target, skills_root, apply=True)
     rules = chef_global_rules.apply("verify", TEMPLATE, codex_home)
     agents = [codex_subagents.verify(role, codex_home) for role in codex_subagents.ROLE_NAMES]
     skills = [skill_installer.verify(skill, target, skills_root) for skill in SKILLS]
@@ -70,7 +132,8 @@ def execute(*, apply=False, codex_home=None, skills_root=None):
 
 
 def main(argv=None):
-    p = argparse.ArgumentParser(description="AKA.CRISTI CHEF 一键本地安装（默认预览）")
+    p = argparse.ArgumentParser(description="AKA.CRISTI CHEF 一键本地安装（默认预览）："
+        "31 个 Skills（6 原生 + 25 vendored），不装 hooks")
     mode = p.add_mutually_exclusive_group()
     mode.add_argument("--apply", action="store_true", help="明确同意安装到当前用户")
     mode.add_argument("--interactive", action="store_true", help="先预览所有变更，再询问是否安装")

@@ -1,6 +1,6 @@
 # Universal CHEF · 跨宿主 Agent 适配与安装说明
 
-**目标：让 CHEF Core 不依赖 Codex 专属 TOML，在不同 Agent 宿主上安装符合其规范的规则、四个 Skills 和执行角色。**
+**目标：让 CHEF Core 不依赖 Codex 专属 TOML，在不同 Agent 宿主上安装符合其规范的规则、31 个 Skills（6 原生 + 25 vendored）和执行角色。**
 
 这份说明依据真实源代码与各平台公开文档。**“文件可安装”不代表“已经真实启动四个 Agent”；跨平台配置与运行时接入分开验收。**
 
@@ -9,7 +9,7 @@
 | 层级 | 当前实现 | 能力限制 |
 | --- | --- | --- |
 | CHEF Core Rules | 共用 `templates/AGENTS.global.md` | 尊重平台内置和用户既有规则，不能取代系统指令 |
-| Skills | 同一套四个 Agent Skills，经目标平台原生 Skills 路径安装 | 是否被加载、触发由宿主控制 |
+| Skills | 同一套 31 个 Skills（6 原生 + 25 vendored），经目标平台原生 Skills 路径安装 | 是否被加载、触发由宿主控制 |
 | Role Profiles | 从 `agents/*.toml` 的职责语义生成各宿主原生 Markdown | WorkBuddy、Claude、Gemini、OpenCode 可发现配置，但运行时需单独验证 |
 | Agent Coordination | 原生角色说明写明 CHEF 分工与交接，提供通用 Handoff 任务契约 | 不能凭文件定义保证宿主实际派发 |
 | Dual-Engine | Factory/Studio/QA 通用 JSON 交接计划 + 现有 Codex CLI 隔离运行时 | 自动执行的跨厂商 Host Runner **尚未实现** |
@@ -17,7 +17,7 @@
 
 ## 官方支持的配置映射
 
-| 宿主 | 项目规则 | 四角色定义 | 四 Skills |
+| 宿主 | 项目规则 | 四角色定义 | 31 Skills |
 | --- | --- | --- | --- |
 | **Codex** | 原有 Codex 用户 `AGENTS.md` | `~/.codex/agents/*.toml` | `~/.agents/skills` |
 | **WorkBuddy / CodeBuddy** | `.codebuddy/rules/aka-chef.md` | `.codebuddy/agents/aka_*.md` | `.codebuddy/skills/*/SKILL.md` |

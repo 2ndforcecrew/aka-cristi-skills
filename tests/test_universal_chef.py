@@ -19,8 +19,11 @@ class UniversalChefTests(unittest.TestCase):
             with self.subTest(host=host):
                 data = uc.inspect(host, self.project)
                 self.assertEqual(data["status"], "PREVIEW")
-                self.assertEqual(len(data["files"]), 5)
-                self.assertEqual(len(data["skills"]), 0 if host == "hermes" else 4)
+                # 4 roles + 1 rule file + 10 upstream slash commands for
+                # the hosts that define a commands directory.
+                expected_files = 5 + (10 if host in uc.COMMANDS else 0)
+                self.assertEqual(len(data["files"]), expected_files)
+                self.assertEqual(len(data["skills"]), 0 if host == "hermes" else len(uc.SKILLS))
                 self.assertFalse((self.project / ".aka-chef-install").exists())
 
     def test_native_agent_and_skill_install_verify_idempotence(self):
@@ -74,7 +77,7 @@ class UniversalChefTests(unittest.TestCase):
     def test_hermes_explicit_user_skill_root(self):
         root = (Path(self.temp.name).resolve() / "isolated-hermes-skills")
         plan = uc.inspect("hermes", self.project, root)
-        self.assertEqual(len(plan["skills"]), 4)
+        self.assertEqual(len(plan["skills"]), len(uc.SKILLS))
         self.assertFalse(root.exists())
         result = uc.install("hermes", self.project, apply=True, hermes_skills_root=root)
         self.assertEqual(result["status"], "FILES_VERIFIED")
@@ -134,6 +137,65 @@ class UniversalChefTests(unittest.TestCase):
             data = uc.inspect("codex")
             self.assertEqual(data["host"], "codex")
             mocked.assert_called_once()
+
+    def test_commands_installed_for_claude_and_gemini_only(self):
+        # Claude ships .md commands, Gemini ships .toml commands; the other
+        # hosts have no upstream-defined commands directory.
+        cases = {
+            "claude": (".claude/commands", ".md", "plan.md"),
+            "gemini": (".gemini/commands", ".toml", "planning.toml"),
+        }
+        for host, (commands_dir, suffix, sample) in cases.items():
+            with self.subTest(host=host):
+                project = self.project / host
+                project.mkdir()
+                uc.install(host, project, apply=True)
+                self.assertEqual(uc.verify(host, project)["status"], "FILES_VERIFIED")
+                installed = sorted(p.name for p in (project / commands_dir).iterdir())
+                self.assertEqual(len(installed), 10)
+                self.assertTrue(all(p.endswith(suffix) for p in installed))
+                self.assertIn(sample, installed)
+                # Commands come from the vendored pack byte-identical.
+                vendored = uc._vendor_root() / commands_dir / sample
+                self.assertEqual(
+                    (project / commands_dir / sample).read_bytes(),
+                    vendored.read_bytes())
+                # Uninstall removes the command files again (the empty
+                # directory itself is left behind, like skills roots).
+                uc.uninstall(host, project, apply=True)
+                self.assertEqual(list((project / commands_dir).iterdir()), [])
+        for host in ("workbuddy", "opencode", "hermes", "generic"):
+            with self.subTest(host=host):
+                project = self.project / ("no-cmd-" + host)
+                project.mkdir()
+                data = uc.inspect(host, project)
+                command_rels = [r for r in data["files"] if r.endswith("/commands/plan.md")
+                                or r.endswith("/commands/planning.toml")]
+                self.assertEqual(command_rels, [])
+
+    def test_vendored_skill_references_and_scripts_land_with_skill(self):
+        project = self.project / "vendored-refs"
+        project.mkdir()
+        uc.install("workbuddy", project, apply=True)
+        skills_root = project / ".codebuddy" / "skills"
+        # references/ travels with the skill (never silently missing).
+        self.assertTrue(
+            (skills_root / "test-driven-development" / "references"
+             / "shared" / "testing-patterns.md").is_file())
+        self.assertTrue(
+            (skills_root / "idea-refine" / "scripts" / "idea-refine.sh").is_file())
+        # interview-me resolves to the NATIVE skill: the vendored copy is
+        # reference-only and must never be the installed content.
+        repo_root = Path(__file__).resolve().parents[1]
+        installed = (skills_root / "interview-me" / "SKILL.md").read_bytes()
+        native = (repo_root / "skills" / "interview-me" / "SKILL.md").read_bytes()
+        vendored = (repo_root / "vendor" / "addy-agent-skills" / "skills"
+                    / "interview-me" / "SKILL.md").read_bytes()
+        self.assertEqual(installed, native)
+        self.assertNotEqual(installed, vendored)
+        # No symlinks anywhere under the installed skills root.
+        links = [p for p in skills_root.rglob("*") if p.is_symlink()]
+        self.assertEqual(links, [])
 
 
 if __name__ == "__main__":

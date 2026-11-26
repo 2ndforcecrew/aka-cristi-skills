@@ -23,6 +23,18 @@ where they diverge, and where this repo is simply behind.
 > one person's design-led workflow as installable tooling, this repo is the
 > shape of that — and it is much smaller, much newer, and much less proven.
 
+> **Update — vendored import (PR #66, Draft, 2026-11-26):** this repo now
+> vendors the full agent-skills tree under `vendor/addy-agent-skills/`
+> (273 files + 1 symlink from upstream e997ac5, 280 entries; 6 files
+> excluded). 25 of its 26 skills install through the same installer as the
+> 6 native skills (vendored `interview-me` stays reference-only; the native
+> one wins). The coverage gaps named below — no spec, TDD, code-review or
+> ship skill — are now closed by the vendored set *at file level*: the
+> vendored skills are imports, not native skills. They are exempt from this
+> repo's literal section-title gate, their evals are separate, and no live
+> host has loaded them yet. Full status:
+> `vendor/addy-agent-skills/IMPORT_STATUS.md`.
+
 ---
 
 ## At a glance
@@ -35,11 +47,11 @@ where they diverge, and where this repo is simply behind.
 | **Adoption** | 0 stars / 0 forks (public repo, checked 2026-11-26) | 120,411 stars / 12,524 forks (checked 2026-11-26) |
 | **Version** | 0.1.0 (`aka_skills.__version__`) | 0.6.18 (`plugin.json`) |
 | **License** | No LICENSE file in the repo | MIT |
-| **Skills** | 6 (5 on `main`, + `interview-me` in this PR) | 26 (25 lifecycle + 1 meta router) |
+| **Skills** | 31 installable (6 native + 25 vendored; vendored `interview-me` reference-only) | 26 (25 lifecycle + 1 meta router) |
 | **Roles / personas** | 4 agent roles (`coding`, `qa`, `research`, `automation`) | 5 review personas (code, test, security, webperf, a11y) |
 | **Entry points** | `aka-skills` CLI (6 commands) + MCP server (7 tools) | 10 slash commands (`/spec` `/plan` `/build` `/test` `/review` `/ship` …) |
 | **Reference material** | 12 global rules, 22 shared-training sections, 58 design cases | 7 reference checklists |
-| **Verification** | 375 unit tests (see below); evals framework added in this PR | 3-tier eval framework in CI (structure, routing, behaviour) |
+| **Verification** | 392 unit tests (see below); native evals + separate vendor evals | 3-tier eval framework in CI (structure, routing, behaviour) |
 | **Install** | `aka-skills install` / one-command `full_setup`, 7 hosts | `npx skills add`, 70+ agents |
 | **Field validation** | Visual Design Skill V0.1 self-declares NOT FIELD-VALIDATED | Every skill ships with an eval |
 
@@ -138,8 +150,8 @@ instead of surfacing later as "why didn't the skill fire".
 This repo verifies the tooling with unit tests and the skills with
 field tests:
 
-- **Unit tests: 375 tests in `tests/`** (38 test files), run on this
-  branch: 344 passed, 31 skipped, 0 failed. They cover the
+- **Unit tests: 392 tests in `tests/`** (38 test files), run on this
+  branch: 361 passed, 31 skipped, 0 failed. They cover the
   installer, the CLI, the MCP server, and filesystem safety. Landing
   the new skill (`interview-me`) meant updating two list-skills tests
   whose expectations were hard-coded to five skills; the update is
@@ -149,7 +161,10 @@ field tests:
   website and brand-system briefs are not.
 - **Evals framework: new in this PR** (see below). It starts with
   structural checks and routing cases — deliberately smaller than
-  agent-skills' three tiers. There is no behavioural tier yet.
+  agent-skills' three tiers. There is no behavioural tier yet. Routing
+  cases now total 44 (18 native + 26 vendor, the vendor set in
+  `evals/vendor-routing-cases.json`); vendored skills are checked by a
+  separate vendor evals runner, not by the native literal-title gate.
 
 The honest summary: this repo proves its installer works; agent-skills
 proves its skills trigger correctly. Those are different claims, and this
@@ -281,10 +296,13 @@ In the order that matters:
    an independent verifier ran the tests. agent-skills has 120,000+
    stars and community review; a flaw in its skills gets found by
    strangers. A flaw in ours gets found by us, or not at all.
-2. **Skill count: 6 vs 26.** Even after this PR, this repo covers
+2. **Skill count: 6 vs 26 (native only).** Even after this PR, this repo covers
    orchestration and design, not engineering. There is no spec skill, no
    TDD skill, no code-review skill, no ship skill. Do not present this
-   repo as a software methodology; it is not one.
+   repo as a software methodology; it is not one. (PR #66 vendors the
+   upstream 26 as files, which closes the coverage gap at file level —
+   see the update at the top — but the vendored skills are imports, not
+   native skills, and no live host has loaded them.)
 3. **Visual Design is not field-validated.** V0.1 self-declares
    NOT FIELD-VALIDATED; field validation is one of three briefs done.
    The design cases are catalogued, not proven to make the skill produce
@@ -356,10 +374,9 @@ depends on the work in front of you, not on star counts.
   (`##` headings in `shared-training/rules/TRAINING.md`), 58 design
   images (rows in the six `skills/visual-design/references/styles/*.md`
   tables: 8 + 14 + 9 + 10 + 8 + 9), 6 CLI commands
-  (`aka_skills/cli.py`), 7 MCP tools (`aka_skills/mcp_server.py`), 375
-  unit tests run with `python3 -m unittest discover -s tests` (344
-  passed, 31 skipped, 0 failed on this branch; 361 on `main`, plus 14
-  new evals tests in this PR).
+  (`aka_skills/cli.py`), 7 MCP tools (`aka_skills/mcp_server.py`), 392
+  unit tests run with `python3 -m unittest discover -s tests` (361
+  passed, 31 skipped, 0 failed on this branch).
 - **Borrowing sources:** agent-skills `docs/skill-anatomy.md` and
   `docs/comparison.md` (anti-rationalization tables, Red Flags, and the
   comparison-document pattern), `skills/interview-me/SKILL.md` (the

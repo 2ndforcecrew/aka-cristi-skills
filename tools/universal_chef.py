@@ -1,4 +1,14 @@
-"""CHEF portable project adapter: rules + four Skills + four role definitions.
+"""CHEF portable project adapter: rules + 31 Skills + four role definitions.
+
+Installs 6 native skills plus 25 vendored skills (Addy Osmani agent-skills,
+MIT, vendored by PR #66) through the same path; vendored interview-me is
+reference-only and never installed. Also installs the upstream slash
+commands for the two hosts that define a commands directory (Claude Code:
+.claude/commands/*.md, Gemini CLI: .gemini/commands/*.toml). Codex invokes
+skills directly (@skill) and ships no commands; OpenCode has no upstream
+command files; WorkBuddy/Hermes/generic have no upstream-defined command
+format. Hooks are never installed or wired. Node validator scripts are
+reference-only, never a runtime dependency.
 
 An installed definition is NOT a live agent. Native host loading/dispatch require
 a real runtime and separate acceptance. Never overwrites unmanaged configuration.
@@ -20,6 +30,16 @@ from tools.fs_safety import checked_path
 
 ROOT = Path(__file__).resolve().parents[1]
 SKILLS = quick_install.SKILLS
+VENDOR_DIRNAME = "addy-agent-skills"
+# Hosts with an upstream-defined commands directory: host -> relative path
+# used both under vendor/addy-agent-skills/ (source) and under the target
+# project (destination). Claude ships .md commands, Gemini ships .toml
+# commands; the plan-vs-planning naming difference is upstream's and is
+# kept as-is (see docs/host-adaptation.md).
+COMMANDS = {
+    "claude": ".claude/commands",
+    "gemini": ".gemini/commands",
+}
 ROLES = ("research", "coding", "qa", "automation")
 HOSTS = ("codex", "workbuddy", "claude", "gemini", "opencode", "hermes", "generic")
 FILES = {
@@ -48,6 +68,40 @@ class InstallError(ValueError):
 
 def _safe(path):
     return checked_path(path, InstallError)
+
+
+def _vendor_root():
+    """Vendored upstream pack root (read ROOT at call time: bind_tools_to_root)."""
+    return ROOT / "vendor" / VENDOR_DIRNAME
+
+
+def _command_plans(host, project, state):
+    """Plan upstream slash-command files for hosts that define a commands dir.
+
+    Returns {relative path: {"action", "sha256"}} using the same conflict
+    rules as rules/roles. Empty for hosts without an upstream commands
+    directory. Raises InstallError when the vendored commands directory
+    is missing (fail closed: a checkout without vendor/ must not silently
+    install zero commands).
+    """
+    rel_dir = COMMANDS.get(host)
+    if rel_dir is None:
+        return {}
+    source_dir = _vendor_root() / rel_dir
+    if not source_dir.is_dir():
+        raise InstallError(f"vendored commands missing: {source_dir}")
+    plans = {}
+    for path in sorted(source_dir.iterdir()):
+        if not path.is_file():
+            continue
+        rel = rel_dir + "/" + path.name
+        expected = path.read_bytes()
+        plans[rel] = {
+            "action": _file_action(
+                project / rel, _digest(expected), state["files"].get(rel)),
+            "sha256": _digest(expected),
+        }
+    return plans
 
 
 def _digest(data):
@@ -211,12 +265,16 @@ def inspect(host, project=None, hermes_skills_root=None, scope="project"):
     else:
         action = _file_action(rule_target, _digest(_rules()), state["files"].get(rule_rel))
     plans[rule_rel] = {"action": action, "sha256": _digest(_rule_block(host) if append else _rules())}
+    # Upstream slash commands (Claude .md / Gemini .toml only). They share
+    # the files plan (same conflict rules, same state file) so verify() and
+    # uninstall() cover them without extra machinery.
+    plans.update(_command_plans(host, project, state))
     skill_plans = {}
     if skills_dir:
         target = _safe(Path(skills_dir) if host == "hermes" else project / skills_dir)
         for skill in SKILLS:
             skill_plans[skill] = skill_installer.inspect(
-                ROOT / "skills" / skill, target="directory", root=target)
+                quick_install.skill_source(skill), target="directory", root=target)
     problems = [f"{name}: {p['action']}" for name, p in plans.items()
                 if p["action"].startswith("CONFLICT")]
     problems.extend(f"{name}: {p['action']}" for name, p in skill_plans.items()
@@ -263,8 +321,14 @@ def install(host, project=None, apply=False, hermes_skills_root=None, scope="pro
                     data = left + _rule_block(host) + right
                 new_state["rule"] = {"sha256": _digest(_rule_block(host))}
             else:
-                name = next((n for n in ROLES if rel.endswith("/aka_" + n + ".md")), None)
-                data = _rules() if rel == rule_rel else _role(name, host)
+                if host in COMMANDS and rel.startswith(COMMANDS[host] + "/"):
+                    # Upstream slash command: bytes come from the vendored
+                    # pack, never generated. rel doubles as the vendored
+                    # path under vendor/addy-agent-skills/.
+                    data = (_vendor_root() / rel).read_bytes()
+                else:
+                    name = next((n for n in ROLES if rel.endswith("/aka_" + n + ".md")), None)
+                    data = _rules() if rel == rule_rel else _role(name, host)
                 new_state["files"][rel] = _digest(data)
             _atomic_write(path, data)
             changed.append((path, before))
@@ -274,7 +338,8 @@ def install(host, project=None, apply=False, hermes_skills_root=None, scope="pro
                 action = plan["skills"][skill]["action"]
                 if action == "already_installed":
                     continue
-                skill_installer.install(ROOT / "skills" / skill, target="directory",
+                skill_installer.install(quick_install.skill_source(skill),
+                                        target="directory",
                                         root=skills_root, apply=True)
                 completed_skills.append((skill, action))
         _atomic_write(state_file, (json.dumps(new_state, ensure_ascii=True,
@@ -371,7 +436,8 @@ def uninstall(host, project=None, apply=False, hermes_skills_root=None,
             _atomic_write(target, before)
         for skill in uninstalled_skills:
             try:
-                skill_installer.install(ROOT / "skills" / skill, target="directory",
+                skill_installer.install(quick_install.skill_source(skill),
+                                        target="directory",
                                         root=plan["skills_root"], apply=True)
             except (OSError, ValueError):
                 pass
