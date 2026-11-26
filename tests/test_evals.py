@@ -414,8 +414,17 @@ class VendorIndexFixtureTests(unittest.TestCase):
                 / "test-driven-development"
                 / "SKILL.md",
             ):
-                raw = skill_path.read_bytes()
-                skill_path.write_bytes(raw.replace(b"\n", b"\r\n"))
+                # Read via read_text first: on Windows the fixture files
+                # are already CRLF on disk (text-mode writes), so a raw
+                # byte-level \n -> \r\n replace would double-convert
+                # \r\n into \r\r\n and the check would (correctly) fail
+                # on genuinely different content. Normalise to LF first,
+                # then write pure CRLF — exactly what a Windows checkout
+                # produces — on every platform.
+                text = skill_path.read_text(encoding="utf-8")
+                skill_path.write_bytes(
+                    text.replace("\n", "\r\n").encode("utf-8")
+                )
             result = check_index_coverage(root, index_path)
         self.assertTrue(result["ok"], result["problems"])
 
