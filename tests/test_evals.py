@@ -397,6 +397,28 @@ class VendorIndexFixtureTests(unittest.TestCase):
         self.assertTrue(result["ok"], result["problems"])
         self.assertEqual(result["counts"], {"native": 1, "vendor": 1, "index_entries": 2})
 
+    def test_crlf_line_endings_do_not_break_hash_check(self):
+        # Windows checkout converts LF to CRLF (git autocrlf). The index
+        # records hashes of LF-normalised text (generate_skill_index reads
+        # in text mode), so the verifier must hash the same normalised
+        # content, not raw disk bytes — otherwise every skill mismatches
+        # on Windows (CI: test (windows-latest) failed on all 32 skills).
+        with tempfile.TemporaryDirectory() as d:
+            root, index_path = self._fixture_repo(d)
+            for skill_path in (
+                root / "skills" / "interview-me" / "SKILL.md",
+                root
+                / "vendor"
+                / "addy-agent-skills"
+                / "skills"
+                / "test-driven-development"
+                / "SKILL.md",
+            ):
+                raw = skill_path.read_bytes()
+                skill_path.write_bytes(raw.replace(b"\n", b"\r\n"))
+            result = check_index_coverage(root, index_path)
+        self.assertTrue(result["ok"], result["problems"])
+
     def test_tampered_skill_file_fails_hash_check(self):
         with tempfile.TemporaryDirectory() as d:
             root, index_path = self._fixture_repo(d)

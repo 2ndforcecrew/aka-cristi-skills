@@ -187,13 +187,22 @@ def check_index_coverage(repo_root, index_path=None):
 
 
 def _check_entry_hash(skill_dir, entry, result):
-    """Compare a recorded sha256 against the SKILL.md on disk."""
+    """Compare a recorded sha256 against the SKILL.md on disk.
+
+    The hash must be computed over the same LF-normalised content the
+    generator records (tools/generate_skill_index.py reads the file in
+    text mode, which folds CRLF to LF). Hashing raw disk bytes would
+    mismatch every skill on a Windows checkout, where git converts LF
+    to CRLF — CI test (windows-latest) failed on all 32 skills for
+    exactly this reason. Do not "fix" this by forcing line endings;
+    the anchor itself must be line-ending insensitive.
+    """
     recorded = entry.get("sha256", "")
     path = skill_dir / "SKILL.md"
     if not recorded:
         result["problems"].append(f"index entry {skill_dir.name} has no sha256")
         return
-    actual = hashlib.sha256(path.read_bytes()).hexdigest()
+    actual = hashlib.sha256(path.read_text(encoding="utf-8").encode("utf-8")).hexdigest()
     if recorded != actual:
         result["problems"].append(
             f"sha256 mismatch for {skill_dir.name}: index {recorded[:12]}… "
