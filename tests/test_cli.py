@@ -17,12 +17,39 @@ from aka_skills.cli import main
 from tools.quick_install import SKILLS
 
 EXPECTED_SKILLS = {
+    # Native (6).
     "chef-orchestrator",
     "verified-change-loop",
     "feature-journey-map",
     "skill-evaluation-gate",
     "visual-design",
     "interview-me",
+    # Vendored (25). Vendored interview-me is reference-only and excluded.
+    "accessibility-engineering",
+    "api-and-interface-design",
+    "browser-testing-with-devtools",
+    "ci-cd-and-automation",
+    "code-review-and-quality",
+    "code-simplification",
+    "constraint-driven-development",
+    "context-engineering",
+    "debugging-and-error-recovery",
+    "deprecation-and-migration",
+    "documentation-and-adrs",
+    "doubt-driven-development",
+    "frontend-ui-engineering",
+    "git-workflow-and-versioning",
+    "idea-refine",
+    "incremental-implementation",
+    "observability-and-instrumentation",
+    "performance-optimization",
+    "planning-and-task-breakdown",
+    "security-and-hardening",
+    "shipping-and-launch",
+    "source-driven-development",
+    "spec-driven-development",
+    "test-driven-development",
+    "using-agent-skills",
 }
 SUBCOMMANDS = ("install", "verify", "status", "list-skills", "validate", "serve")
 
@@ -163,7 +190,7 @@ class CliTests(unittest.TestCase):
         self.assertEqual(result["preview"]["status"], "PREVIEW")
         self.assertEqual((tree(self.home), tree(self.skills)), before)
 
-    def test_list_skills_returns_all_six(self):
+    def test_list_skills_returns_all_thirty_one(self):
         code, out = run_cli(["list-skills", "--json"])
         self.assertEqual(code, 0)
         skills = json.loads(out)

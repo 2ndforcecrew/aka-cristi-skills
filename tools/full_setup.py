@@ -66,7 +66,8 @@ def _run_portable_host(*, host, project, apply, interactive, workspace,
     if not (apply or interactive):
         return report
     if interactive and not _approve(
-        "Install native CHEF project rules, four role definitions and four Skills?",
+        "Install native CHEF project rules, four role definitions and 31 Skills "
+        "(6 native + 25 vendored)?",
         input_fn,
     ):
         report["core_install"] = "CANCELLED"
@@ -113,7 +114,7 @@ def run(*, apply=False, interactive=False, workspace=False, test_agents=False,
     }
     if not (apply or interactive):
         return report
-    if interactive and not _approve("Install managed CHEF rules, 4 Skills and 4 Codex role files?", input_fn):
+    if interactive and not _approve("Install managed CHEF rules, 31 Skills (6 native + 25 vendored) and 4 Codex role files?", input_fn):
         report["core_install"] = "CANCELLED"
         return report
     core = quick_install.execute(apply=True, codex_home=codex_home, skills_root=skills_root)

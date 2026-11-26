@@ -1,0 +1,21 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "author": {
+    "name": "AKA.CRISTI",
+    "url": "https://github.com/2ndforcecrew"
+  },
+  "description": "AKA.CRISTI Skills — 6 native skills plus 25 vendored engineering skills (Addy Osmani agent-skills, MIT), installed by the aka-skills CLI across Codex, Claude Code, Gemini CLI, OpenCode, WorkBuddy, Hermes and generic hosts.",
+  "homepage": "https://github.com/2ndforcecrew/aka-cristi-skills",
+  "keywords": [
+    "skills",
+    "chef",
+    "engineering",
+    "spec",
+    "tdd",
+    "review",
+    "ship"
+  ],
+  "name": "aka-cristi-skills",
+  "repository": "https://github.com/2ndforcecrew/aka-cristi-skills",
+  "version": "0.1.0"
+}

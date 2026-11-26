@@ -49,3 +49,15 @@ packages = ["aka_skills", "tools"]
 "agents" = "aka_skills/data/agents"
 "templates" = "aka_skills/data/templates"
 "shared-training" = "aka_skills/data/shared-training"
+# Vendored upstream pack (PR #66): list-skills / install must see the
+# vendored skills from an installed wheel, not just from a checkout.
+"vendor" = "aka_skills/data/vendor"
+# Explicit second mapping for the real skills/ tree. The vendored pack
+# carries a symlink, .opencode/skills -> ../skills/; the build walk
+# follows it and then drops the real skills/ directory as a duplicate of
+# the symlinked copy (verified 2026-11-26: without this line the wheel
+# had .opencode/skills/* but no skills/). Pinning skills/ directly puts
+# both copies in the wheel; the installed layout never reads the symlink
+# (see docs/host-adaptation.md). NOTE: a [tool.hatch.build] exclude for
+# the symlink does NOT work — force-include bypasses exclude patterns.
+"vendor/addy-agent-skills/skills" = "aka_skills/data/vendor/addy-agent-skills/skills"

@@ -158,7 +158,8 @@ def _cmd_list_skills(args: argparse.Namespace) -> int:
         print(json.dumps(skills, ensure_ascii=False, indent=2))
     else:
         for skill in skills:
-            print(f"{skill['name']} — {skill['description']}")
+            source = f" [{skill['source']}]" if skill.get("source") == "vendor" else ""
+            print(f"{skill['name']} — {skill['description']}{source}")
     return 0
 
 
@@ -256,8 +257,15 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_install = sub.add_parser(
         "install",
-        help="preview (default) or install the 4 core Skills, global "
-        "rules and 4 roles",
+        help="preview (default) or install the 31 Skills (6 native + "
+        "25 vendored from Addy Osmani agent-skills; vendored "
+        "interview-me excluded), global rules and 4 roles",
+        description="Preview (default) or install the 31 Skills (6 native "
+        "+ 25 vendored from Addy Osmani agent-skills; vendored "
+        "interview-me is reference-only and excluded), global rules "
+        "and 4 roles. Hooks are never installed. Non-Codex hosts also "
+        "install their upstream slash commands where one is defined "
+        "(Claude Code .md, Gemini CLI .toml).",
     )
     mode = p_install.add_mutually_exclusive_group()
     mode.add_argument("--interactive", action="store_true",
@@ -287,7 +295,12 @@ def build_parser() -> argparse.ArgumentParser:
     p_status.set_defaults(func=_cmd_status)
 
     p_list = sub.add_parser(
-        "list-skills", help="list the Skills shipped in this repo")
+        "list-skills", help="list the 31 installable Skills shipped in "
+        "this repo (6 native + 25 vendored)",
+        description="List the 31 installable Skills shipped in this repo "
+        "(6 native + 25 vendored from Addy Osmani agent-skills; "
+        "vendored interview-me is reference-only and excluded).",
+    )
     _add_shared_flags(p_list)
     p_list.set_defaults(func=_cmd_list_skills)
 

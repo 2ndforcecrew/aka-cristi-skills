@@ -24,6 +24,10 @@ from typing import Any
 
 ENV_VAR = "AKA_SKILLS_REPO_ROOT"
 _MAX_DISCOVERY_LEVELS = 6
+# Vendored skills that are reference-only and never installed/listed as
+# installable (native skill of the same name wins; docs/dedup-decisions.md).
+VENDOR_REFERENCE_ONLY = frozenset({"interview-me"})
+VENDOR_DIRNAME = "addy-agent-skills"
 
 _NAME_RE = re.compile(r"^(name|description):\s*(.*)$")
 
@@ -160,33 +164,46 @@ def parse_skill_frontmatter(text: str) -> dict[str, str]:
     return fields
 
 
-def list_skills(root: str | Path) -> list[dict[str, str]]:
-    """Enumerate ``skills/*/SKILL.md`` under ``root``.
+def vendor_skills_dir(root: str | Path) -> Path:
+    """Return the vendored skills directory under a resolved repo root."""
+    return Path(root) / "vendor" / VENDOR_DIRNAME / "skills"
 
-    Returns ``[{"name", "description", "path"}]`` sorted by directory name.
-    Directories without a readable SKILL.md frontmatter are skipped.
+
+def list_skills(root: str | Path) -> list[dict[str, str]]:
+    """Enumerate installable skills: native ``skills/*/SKILL.md`` plus
+    vendored ``vendor/addy-agent-skills/skills/*/SKILL.md``.
+
+    Returns ``[{"name", "description", "path", "source"}]`` sorted by name;
+    ``source`` is ``"native"`` or ``"vendor"``. Reference-only vendored
+    skills (see VENDOR_REFERENCE_ONLY) are excluded. Directories without
+    a readable SKILL.md frontmatter are skipped.
     """
     found: list[dict[str, str]] = []
-    base = skills_dir(root)
-    if not base.is_dir():
-        return found
-    for skill_dir in sorted(p for p in base.iterdir() if p.is_dir()):
-        entry = skill_dir / "SKILL.md"
-        if not entry.is_file():
+    for base, source in ((skills_dir(root), "native"),
+                         (vendor_skills_dir(root), "vendor")):
+        if not base.is_dir():
             continue
-        try:
-            fields = parse_skill_frontmatter(entry.read_text(encoding="utf-8"))
-        except (OSError, UnicodeError):
-            continue
-        if not fields.get("name"):
-            continue
-        found.append(
-            {
-                "name": fields["name"],
-                "description": fields.get("description", ""),
-                "path": str(skill_dir),
-            }
-        )
+        for skill_dir in sorted(p for p in base.iterdir() if p.is_dir()):
+            if source == "vendor" and skill_dir.name in VENDOR_REFERENCE_ONLY:
+                continue
+            entry = skill_dir / "SKILL.md"
+            if not entry.is_file():
+                continue
+            try:
+                fields = parse_skill_frontmatter(entry.read_text(encoding="utf-8"))
+            except (OSError, UnicodeError):
+                continue
+            if not fields.get("name"):
+                continue
+            found.append(
+                {
+                    "name": fields["name"],
+                    "description": fields.get("description", ""),
+                    "path": str(skill_dir),
+                    "source": source,
+                }
+            )
+    found.sort(key=lambda item: item["name"])
     return found
 
 
@@ -194,8 +211,11 @@ def resolve_skill_dir(root: str | Path, value: str | Path) -> Path:
     """Resolve a ``validate`` argument to a skill directory.
 
     ``value`` may be a skill directory name (``visual-design``) or a path
-    to a skill directory. Unknown names resolve to ``<root>/skills/<value>``
-    so the validator reports ``INVALID_ROOT`` instead of the CLI guessing.
+    to a skill directory. Native names resolve under ``skills/`` first;
+    vendored installable names resolve under
+    ``vendor/addy-agent-skills/skills/``. Unknown names resolve to
+    ``<root>/skills/<value>`` so the validator reports ``INVALID_ROOT``
+    instead of the CLI guessing.
     """
     given = Path(value)
     if given.is_dir():
@@ -203,4 +223,7 @@ def resolve_skill_dir(root: str | Path, value: str | Path) -> Path:
     by_name = skills_dir(root) / given.name
     if by_name.is_dir():
         return by_name
+    vendor = vendor_skills_dir(root) / given.name
+    if vendor.is_dir() and given.name not in VENDOR_REFERENCE_ONLY:
+        return vendor
     return by_name
