@@ -1,5 +1,7 @@
 <div align="center">
 
+![AKA.CRISTI SKILLS — AI Agent Orchestration Framework: CHEF 总指挥调度 Planning、Coding、Testing、Deployment、Monitoring 五个 Agent，按需求 → 计划 → 执行 → 验证 → 部署 → 反馈流程协作，底层为 Infrastructure as Code 与 Tools / APIs / Cloud Infrastructure](docs/assets/aka-cristi-skills-hero.png)
+
 # AKA.CRISTI / SKILLS
 
 **FROM EXPERIENCE TO CAPABILITY.**
