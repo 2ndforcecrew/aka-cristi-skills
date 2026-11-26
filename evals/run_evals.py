@@ -11,13 +11,16 @@ No LLM, no network, stdlib only. Two check families:
 2. Routing: every case in evals/routing-cases.json must resolve to a
    skill that chef-orchestrator actually names. Parse basis: the
    whole text of skills/chef-orchestrator/SKILL.md is searched for
-   the expected skill name (word-boundary match). chef-orchestrator
-   has no routing table; its routing surface is the "When to Use"
-   paragraph plus the "Suggested complementary Skills" list, so a
-   whole-file match is the honest parse. A match on the
-   orchestrator's own name is an identity match (it IS the router),
-   not a routing entry; the substantive signal is the other five
-   names.
+   the expected skill name (word-boundary match). Since PR #66 WP2,
+   chef-orchestrator carries a `## Routing` table naming all 32
+   capabilities (6 native + 26 vendored); the whole-file match is
+   still the parse, and the table is what satisfies it. A match on
+   the orchestrator's own name is an identity match (it IS the
+   router), not a routing entry; the substantive signal is the other
+   five names. The vendored routing cases (one per vendored skill,
+   26 total) live separately in evals/vendor-routing-cases.json and
+   are checked by evals/run_vendor_evals.py — the native cases file
+   stays exactly the six native skills.
 
 Literal-title gate (docs/skill-format.md, 2026-11-26):
   overview            -> literal `## Overview`
