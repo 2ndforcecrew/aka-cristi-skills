@@ -12,8 +12,11 @@ a vendored SKILL.md is caught without needing the upstream clone).
 
 Deterministic: entries are sorted by name, JSON keys are sorted,
 output ends with a single newline. Re-running produces a
-byte-identical file. Use --check to verify the on-disk index is
-fresh (CI guard); exit 1 on any difference.
+byte-identical file. Default generation also refreshes the index and
+dedup decision copies bundled under CHEF's references/ directory so
+installed Skills do not depend on the repository layout. Use --check
+to verify all default outputs are fresh (CI guard); exit 1 on any
+difference. An explicit --output only reads/writes that output.
 
 Stdlib only, no network. The single installability exception is
 vendored interview-me (reference only — the native interview-me
@@ -268,15 +271,28 @@ def main(argv=None):
     output = Path(args.output) if args.output else root / "docs" / "skill-index.json"
     index = build_index(root)
     text = render(index)
+    outputs = {output: text}
+    if args.output is None:
+        bundled = root / "skills" / "chef-orchestrator" / "references"
+        outputs[bundled / "skill-index.json"] = text
+        outputs[bundled / "dedup-decisions.md"] = (
+            root / "docs" / "dedup-decisions.md"
+        ).read_text(encoding="utf-8")
     if args.check:
-        current = output.read_text(encoding="utf-8") if output.is_file() else ""
-        if current != text:
-            print(f"index out of date: {output} (run without --check to regenerate)")
+        stale = [
+            path for path, expected in outputs.items()
+            if not path.is_file() or path.read_text(encoding="utf-8") != expected
+        ]
+        if stale:
+            for path in stale:
+                print(f"index/reference out of date: {path} (run without --check to regenerate)")
             return 1
         print(f"index fresh: {output} ({index['counts']['installable']} installable, "
               f"{index['counts']['reference_only']} reference-only)")
         return 0
-    output.write_text(text, encoding="utf-8")
+    for path, content in outputs.items():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8", newline="\n")
     print(f"wrote {output} ({len(index['skills'])} skills, "
           f"{index['counts']['installable']} installable, "
           f"{index['counts']['reference_only']} reference-only)")

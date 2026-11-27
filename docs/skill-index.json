@@ -19,7 +19,7 @@
       "name": "chef-orchestrator",
       "phase": "Orchestrate",
       "route_note": "",
-      "sha256": "8c45bd12c42b0b4695073102642cff14b1c9d74573b7eac0fad9bc268e5d5227",
+      "sha256": "b8e06201ad3822d4edd5c44e6d3087391830270456996198fdae764351581bdb",
       "source": "native",
       "triggers": "Use when a task spans research, creative design, programming, automation, or multiple agents, or when the user asks CHEF to own the outcome rather than teach implementation."
     },
