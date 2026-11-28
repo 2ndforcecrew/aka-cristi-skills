@@ -61,10 +61,10 @@ SUBCOMMANDS = ("install", "verify", "status", "list-skills", "validate", "serve"
 
 
 def _make_git_repo(base: Path) -> Path:
-    """Minimal git checkout of the repo content (skills/templates/agents)."""
+    """Minimal git checkout of the repo content (skills/templates/agents/vendor)."""
     dest = base / "repo"
     dest.mkdir()
-    for name in ("skills", "templates", "agents"):
+    for name in ("skills", "templates", "agents", "vendor"):
         shutil.copytree(REPO_ROOT / name, dest / name)
     shutil.copy2(REPO_ROOT / "pyproject.toml", dest / "pyproject.toml")
 

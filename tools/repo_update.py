@@ -288,7 +288,7 @@ def _codex_preview(skills_root: Path | None = None) -> dict:
         ],
         "skills": [
             skill_installer.inspect(
-                quick_install.ROOT / "skills" / skill, target, skills_root
+                quick_install.skill_source(skill), target, skills_root
             )
             for skill in quick_install.SKILLS
         ],
@@ -345,7 +345,7 @@ def _universal_preview(host: str, scope: str, project: Path | None,
         for name, action in list(skills.items()):
             if action != "conflict_unmanaged":
                 continue
-            check = _adoption_check(repo_root / "skills" / name, root)
+            check = _adoption_check(quick_install.skill_source(name), root)
             if check == "adopted":
                 skills[name] = "adopted"
                 adopted.append(name)
@@ -547,7 +547,7 @@ def _sync_universal(target: dict, repo_root: Path,
         for name in target["adopted"]:
             try:
                 adopted = skill_installer.adopt(
-                    repo_root / "skills" / name, root=root
+                    quick_install.skill_source(name), root=root
                 )
             except (OSError, ValueError, UnicodeError) as exc:
                 target["status"] = "FAIL"

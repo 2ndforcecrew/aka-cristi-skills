@@ -27,7 +27,7 @@ def _git(*args, cwd):
 
 
 def _copy_repo_content(dest):
-    for name in ("skills", "templates", "agents"):
+    for name in ("skills", "templates", "agents", "vendor"):
         shutil.copytree(REPO_ROOT / name, dest / name)
     shutil.copy2(REPO_ROOT / "pyproject.toml", dest / "pyproject.toml")
 
@@ -228,7 +228,7 @@ class RepoUpdateTests(unittest.TestCase):
 
         wb_root = self.home / ".workbuddy" / "skills"
         for skill in quick_install.SKILLS:
-            shutil.copytree(REPO_ROOT / "skills" / skill, wb_root / skill)
+            shutil.copytree(quick_install.skill_source(skill), wb_root / skill)
         before_hashes = {
             skill: skill_installer.package(wb_root / skill)["sha256"]
             for skill in quick_install.SKILLS
@@ -262,7 +262,7 @@ class RepoUpdateTests(unittest.TestCase):
     def test_workbuddy_adoption_conflict(self):
         wb_root = self.home / ".workbuddy" / "skills"
         for skill in quick_install.SKILLS:
-            shutil.copytree(REPO_ROOT / "skills" / skill, wb_root / skill)
+            shutil.copytree(quick_install.skill_source(skill), wb_root / skill)
         edited = wb_root / "chef-orchestrator" / "SKILL.md"
         edited.write_text(edited.read_text(encoding="utf-8") + "\n<!-- user edit -->\n",
                           encoding="utf-8")
@@ -292,10 +292,11 @@ class RepoUpdateTests(unittest.TestCase):
         self.assertIn("SKILL.md", target["error"])
         self.assertEqual(repo_update.exit_for_report(report), 1)
 
-    def test_update_4_to_5_skills(self):
+    def test_update_adds_new_skills(self):
         # Fixture repo at 4 skills: install workbuddy with the OLD
         # 4-skill installer (SKILLS patched for the install step only),
-        # then add visual-design back, commit, and update to 5.
+        # then add visual-design back, commit, and update to the full
+        # current set (native + vendored skills).
         old_skills = (
             "chef-orchestrator", "verified-change-loop",
             "feature-journey-map", "skill-evaluation-gate",
@@ -321,6 +322,10 @@ class RepoUpdateTests(unittest.TestCase):
         self.assertEqual(report["status"], "UPDATED")
         target = report["targets"]["workbuddy:user"]
         self.assertEqual(target["verification"], "FILES_VERIFIED")
+        self.assertEqual(
+            sorted(p.name for p in wb_root.iterdir()
+                   if p.is_dir() and not p.name.startswith(".")),
+            sorted(quick_install.SKILLS))
         self.assertTrue((wb_root / "visual-design" / "SKILL.md").is_file())
         self.assertTrue((self.home / ".workbuddy" / "rules" / "aka-chef.md").is_file())
         self.assertTrue((self.home / ".workbuddy" / "agents" / "aka_research.md").is_file())
@@ -330,7 +335,7 @@ class RepoUpdateTests(unittest.TestCase):
         spaced_home.mkdir(parents=True)
         wb_root = spaced_home / ".workbuddy" / "skills"
         for skill in quick_install.SKILLS:
-            shutil.copytree(REPO_ROOT / "skills" / skill, wb_root / skill)
+            shutil.copytree(quick_install.skill_source(skill), wb_root / skill)
         with patch("pathlib.Path.home", return_value=spaced_home):
             report = repo_update.apply_update(
                 repo_root=self.local, no_pull=True)

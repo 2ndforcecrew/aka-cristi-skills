@@ -251,7 +251,7 @@ class ToolFunctionTests(unittest.TestCase):
             try:
                 repo = link / "repo"
                 repo.mkdir()
-                for name in ("skills", "templates", "agents"):
+                for name in ("skills", "templates", "agents", "vendor"):
                     shutil.copytree(REPO_ROOT / name, repo / name)
                 shutil.copy2(REPO_ROOT / "pyproject.toml", repo / "pyproject.toml")
 
