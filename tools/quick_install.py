@@ -18,6 +18,7 @@ from tools import chef_global_rules, codex_subagents, skill_installer
 # Native skills shipped in skills/ (alphabetical).
 NATIVE_SKILLS = (
     "chef-orchestrator",
+    "dual-engine-routing",
     "feature-journey-map",
     "interview-me",
     "skill-evaluation-gate",

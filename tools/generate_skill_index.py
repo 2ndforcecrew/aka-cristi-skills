@@ -52,6 +52,7 @@ REFERENCE_ONLY = {
 # phase must be classified before the index can be generated).
 PHASES = {
     "native/chef-orchestrator": "Orchestrate",
+    "native/dual-engine-routing": "Orchestrate",
     "native/interview-me": "Define",
     "native/feature-journey-map": "Plan",
     "native/verified-change-loop": "Verify",
