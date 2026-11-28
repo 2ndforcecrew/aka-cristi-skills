@@ -35,6 +35,16 @@ Do not call a Beta "stable", fabricate signatures, copy a previously signed arti
 | Fresh Windows 11 UAT | independent standard user install → verify → reinstall → rollback/uninstall, with missing prerequisites and failure recovery | NOT_RUN |
 | Public GitHub Pre-release | beta.2 tag and assets; README caveats and provenance attached | PUBLISHED (BETA); stable release NOT_PUBLISHED |
 
+## Residual risks (§5.3)
+
+Per §5.3 of the scan-triage plan (`plan-scan-triage-20261124.md`), the following three residual risks are disclosed as-is. They supplement — not repeat — the statements already in this document: the v1.0 surface note that Windows Job Object timeout containment "is not an OS permission or MCP sandbox", and the Credential/MCP scope checklist row ("preflight implemented; live acceptance pending"). Those statements do not spell out the three items below:
+
+1. **No OS-level network/filesystem sandbox.** `tools/codex_probe_isolation.py` states in its own docstring that it does not provide filesystem/network OS sandboxing. `--sandbox read-only` is a Codex CLI sandbox parameter, not OS-enforced isolation. A real agent can still read files outside the workspace and reach the network (unless the CLI itself restricts it). This item cannot be turned into "isolated" on the basis of the existing evidence.
+2. **MCP isolation completeness depends on CLI behaviour.** Preflight only inspects the `config.toml` in the dedicated home. Whether the CLI also reads MCP registrations from other locations (e.g. project-level `.codex/`, other global configuration sources, or MCP specified via environment variables) is not covered by preflight. The canary method (E-247-5) is behavioural evidence, not a completeness proof.
+3. **POSIX descendant state after timeout is unconfirmed on the verify_* path.** Windows is covered by WP-B/WP-C. On Linux/macOS, the descendant state after a verify_* timeout remains NOT_VERIFIED until equivalent experiments are run on the corresponding platforms.
+
+**Gate status:** #247/#250 remain BLOCKED until every item of the §5 evidence package is checked off. D2 live-machine evidence E-247-4 through E-247-8 is currently all NOT_VERIFIED.
+
 ## Instructions for independent Windows 11 tester
 1. Obtain the **exact release candidate** only after verifying independently reviewed GitHub SHA-256 and source/signer provenance. Do not run arbitrary third-party installers.
 2. Record Windows edition/build, Python and Codex CLI versions, standard-user status, source SHA and archive SHA-256; use a tester alias (no names, tokens, screenshots with private data).

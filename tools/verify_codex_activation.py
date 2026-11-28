@@ -120,19 +120,45 @@ def run(name, codex="codex", timeout=180, root=None):
                 proc = run_in_job(args, workspace, timeout, env=probe_env)
                 proc.stdout = (proc.stdout.decode("utf-8", errors="replace")
                                if isinstance(proc.stdout, bytes) else proc.stdout)
-            except JobTimeout:
+            except JobTimeout as exc:
+                # WP-C: pass WP-B's verification through verbatim. The
+                # field is True only when run_in_job confirmed the job
+                # empty; a mock/older JobTimeout without the attribute
+                # (or a failed verification) reports False, never True.
                 return {**result, "status": "FAIL", "reason": "Agent timed out; Job Object closed",
-                        "descendants_verified_terminated": False}
+                        "descendants_verified_terminated": bool(
+                            getattr(exc, "descendants_verified_terminated", False)),
+                        "alive_pids": list(getattr(exc, "alive_pids", None) or [])}
             except (JobError, OSError) as exc:
                 return {**result, "status": "FAIL", "reason": "Job Object process failed",
                         "failure_type": type(exc).__name__}
         else:
             try:
-                proc = subprocess.run(args, cwd=workspace, capture_output=True,
-                                      text=True, encoding="utf-8", errors="replace",
-                                      timeout=timeout, check=False, env=probe_env)
-            except subprocess.TimeoutExpired:
-                return {**result, "status": "FAIL", "reason": "Agent timed out (POSIX tree unverified)"}
+                try:
+                    from tools.chef_dual_engine import ProcessGroupTimeout, run_in_process_group
+                except ModuleNotFoundError:
+                    from chef_dual_engine import ProcessGroupTimeout, run_in_process_group
+            except ModuleNotFoundError:
+                # Both import fallbacks failed. ModuleNotFoundError is NOT
+                # an OSError, and ProcessGroupTimeout would be unbound in
+                # the except clause below, so the import gets its own try:
+                # a double failure returns FAIL here instead of escaping
+                # run() (or surfacing as UnboundLocalError).
+                return {**result, "status": "FAIL", "reason": "Agent execution failed"}
+            try:
+                proc = run_in_process_group(args, workspace, timeout, env=probe_env,
+                                            text=True, encoding="utf-8", errors="replace")
+            except ProcessGroupTimeout as exc:
+                # WP-C: the process group was SIGKILLed; report whether
+                # the group was actually observed empty. The tree is
+                # "unverified" only when that verification failed.
+                verified = bool(exc.descendants_verified_terminated)
+                return {**result, "status": "FAIL",
+                        "reason": ("Agent timed out (POSIX process group killed; "
+                                   "descendants verified terminated)" if verified else
+                                   "Agent timed out (POSIX tree unverified)"),
+                        "descendants_verified_terminated": verified,
+                        "alive_pids": list(exc.alive_pids)}
             except OSError:
                 return {**result, "status": "FAIL", "reason": "Agent execution failed"}
         result.update(assess(parse_events(proc.stdout), name, nonce, proc.returncode))

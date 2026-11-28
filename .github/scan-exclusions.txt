@@ -1,0 +1,26 @@
+# SkillSpector scan-input exclusions (WP-A, 2026-11-24).
+# SkillSpector has NO --exclude / --ignore option (verified: `skillspector scan
+# --help`, local 2.12.0; no .skillspector* config in the repo). These paths are
+# therefore excluded by staging, not by the scanner: the workflow runs
+# .github/scripts/stage_scan_source.py, which copies the checkout to a staging
+# directory without them and scans the staging directory instead of `.`.
+# Reason for every entry below: historical scan data / audit evidence, not
+# runtime source. What is excluded is the SCAN INPUT, not the disposition: the
+# 165 findings these files attracted in the 2026-11-24 rescan are dispositioned
+# item by item in ~/workspace/aka-skills-review/wp-a-historical-165.md
+# (HISTORICAL_DATA_REVIEWED). See docs/OPTIONAL_SKILLSPECTOR_POLICY.md.
+# Scope: the full-source scan only. The deterministic package scan still
+# contains these files (tools/release_package.py archives every committed
+# blob); findings on them in the package scan are dispositioned by the same
+# WP-A file, not by exclusion.
+# Rules: one path pattern per line, relative to the repo root, fnmatch syntax.
+# A pattern ending in "/" excludes the whole directory. Every pattern must
+# match at least one path or the staging script fails closed.
+security-findings.json
+docs/evidence/
+docs/TRIAGE-2026-11-24.md
+.github/scan-exclusions.txt
+.github/scripts/stage_scan_source.py
+# Any further human-readable triage summary placed under docs/ must be added
+# here as an exact path before the next rescan; until then it is NOT excluded
+# and will be scanned.

@@ -130,6 +130,27 @@ class IsolatedRuntimeTests(unittest.TestCase):
         time.sleep(1)
         self.assertFalse(marker.exists(), 'timed-out descendant survived and wrote output')
 
+    @unittest.skipUnless(__import__('os').name == 'posix', 'POSIX process group regression')
+    def test_run_in_process_group_timeout_verifies_descendants_dead(self):
+        # WP-C: the shared POSIX helper used by verify_* must raise
+        # ProcessGroupTimeout carrying verified=True (not just kill)
+        # when the whole process group is observed empty.
+        import sys
+        import time
+        marker = self.root / 'group-orphan-wrote'
+        grandchild_code = ('import time; from pathlib import Path; time.sleep(2.0); '
+                           'Path(' + repr(str(marker)) + ').write_text("orphan")')
+        parent_code = ('import subprocess, sys, time; '
+                       'subprocess.Popen([sys.executable, "-c", ' + repr(grandchild_code) + ']); '
+                       'time.sleep(60)')
+        with self.assertRaises(runtime.ProcessGroupTimeout) as ctx:
+            runtime.run_in_process_group(
+                [sys.executable, '-c', parent_code], self.repo, 1)
+        self.assertIs(ctx.exception.descendants_verified_terminated, True)
+        self.assertEqual(ctx.exception.alive_pids, [])
+        time.sleep(2.5)  # Past the grandchild's 2s marker delay.
+        self.assertFalse(marker.exists(), 'timed-out grandchild survived and wrote output')
+
     @unittest.skipUnless(__import__('os').name == 'posix', 'POSIX scripted CLI fixture')
     def test_cli_e2e_scripted_host_failure_resume_and_qa(self):
         """Real local CLI/Git/SQLite pipeline, SCRIPTED host, not live AI acceptance."""

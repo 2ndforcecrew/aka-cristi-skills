@@ -124,13 +124,20 @@ def main(argv=None):
     args = parser.parse_args(argv)
     try:
         adapter = HostAdapter(args.host, args.project)
-        if args.action in ('inspect', 'live-activation'):
-            result = getattr(adapter, args.action.replace('-', '_'))()
-        else:
-            if not args.value:
-                parser.error('This action requires a Skill source path or name')
-            options = {'apply': args.apply} if args.action in ('install','uninstall') else {}
-            result = getattr(adapter, args.action)(args.value, **options)
+        # Explicit dispatch table: args.action is argparse-constrained, but
+        # never resolve a method by name from input (no getattr dispatch).
+        # Each entry closes over the exact method and arguments it needs.
+        actions = {
+            'inspect': lambda: adapter.inspect(),
+            'live-activation': lambda: adapter.live_activation(),
+            'preview': lambda: adapter.preview(args.value),
+            'install': lambda: adapter.install(args.value, apply=args.apply),
+            'verify': lambda: adapter.verify(args.value),
+            'uninstall': lambda: adapter.uninstall(args.value, apply=args.apply),
+        }
+        if args.action not in ('inspect', 'live-activation') and not args.value:
+            parser.error('This action requires a Skill source path or name')
+        result = actions[args.action]()
         print(json.dumps(result, indent=2))
         if result.get('status') in ('BLOCKED','NOT_RUN'):
             return 2

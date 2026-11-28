@@ -345,21 +345,46 @@ def run(timeout=600, codex_bin="codex", codex_home=None, role_source=None):
                 except ModuleNotFoundError:
                     from aka_windows_job_runner import JobError, JobTimeout, run_in_job
                 proc = run_in_job(command, wd, timeout, env=probe_env)
-            except JobTimeout:
+            except JobTimeout as exc:
+                # WP-C: pass WP-B's verification through verbatim. The
+                # field is True only when run_in_job confirmed the job
+                # empty; a mock/older JobTimeout without the attribute
+                # (or a failed verification) reports False, never True.
                 return {**result, "status": "FAIL",
                         "reason": "Codex session timed out; Windows Job Object closed",
-                        "descendants_verified_terminated": False}
+                        "descendants_verified_terminated": bool(
+                            getattr(exc, "descendants_verified_terminated", False)),
+                        "alive_pids": list(getattr(exc, "alive_pids", None) or [])}
             except (OSError, JobError) as exc:
                 return {**result, "status": "FAIL",
                         "reason": "Windows Job Object setup or process launch failed",
                         "failure_type": type(exc).__name__}
         else:
             try:
-                proc = subprocess.run(command, cwd=wd, capture_output=True,
-                                      timeout=timeout, check=False, env=probe_env)
-            except subprocess.TimeoutExpired:
+                try:
+                    from tools.chef_dual_engine import ProcessGroupTimeout, run_in_process_group
+                except ModuleNotFoundError:
+                    from chef_dual_engine import ProcessGroupTimeout, run_in_process_group
+            except ModuleNotFoundError:
+                # Both import fallbacks failed. ModuleNotFoundError is NOT
+                # an OSError, and ProcessGroupTimeout would be unbound in
+                # the except clause below, so the import gets its own try:
+                # a double failure returns FAIL here instead of escaping
+                # run() (or surfacing as UnboundLocalError).
+                return {**result, "status": "FAIL", "reason": "Codex failed to start"}
+            try:
+                proc = run_in_process_group(command, wd, timeout, env=probe_env)
+            except ProcessGroupTimeout as exc:
+                # WP-C: the process group was SIGKILLed; report whether
+                # the group was actually observed empty. The tree is
+                # "unverified" only when that verification failed.
+                verified = bool(exc.descendants_verified_terminated)
                 return {**result, "status": "FAIL",
-                        "reason": "Codex session timed out (POSIX tree unverified)"}
+                        "reason": ("Codex session timed out (POSIX process group killed; "
+                                   "descendants verified terminated)" if verified else
+                                   "Codex session timed out (POSIX tree unverified)"),
+                        "descendants_verified_terminated": verified,
+                        "alive_pids": list(exc.alive_pids)}
             except OSError:
                 return {**result, "status": "FAIL", "reason": "Codex failed to start"}
         events = json_lines(proc.stdout)
