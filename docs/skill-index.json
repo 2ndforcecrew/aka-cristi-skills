@@ -79,7 +79,7 @@
       "name": "visual-design",
       "phase": "Build",
       "route_note": "design direction and style judgement; engineering UI implementation goes to frontend-ui-engineering",
-      "sha256": "ac8c7cf71c691f3cbced3b5fbb127e0e71bfdf712f3fc938e62a42998cd48091",
+      "sha256": "f2cf1a10f102c3378394e736d7fa2e37acc7b1059ca63cdd982e61ad259b8759",
       "source": "native",
       "triggers": "Use when a user asks for visual direction, redesign, layout, typography, style analysis, or visual quality assurance."
     },
