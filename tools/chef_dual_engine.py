@@ -12,6 +12,8 @@ import time
 import uuid
 from pathlib import Path
 
+from tools import host_runtime
+
 ROLES = {"factory": "Implement and test the requested change.", "studio": "Review user journey, visual quality and product intent.", "qa": "Independently audit the actual outputs and report concrete evidence."}
 
 def route(kind):
@@ -132,7 +134,8 @@ def _git(workspace, *args):
                           capture_output=True, timeout=60).stdout
 
 
-def orchestrate(kind, prompt, workspace, db_path, timeout=300, *, task_id=None):
+def orchestrate(kind, prompt, workspace, db_path, timeout=300, *,
+                task_id=None, host="codex", authorize_inference=False):
     """Durable isolated proposals; never grants release or QA acceptance.
 
     Recovery is explicit, limited to three attempts per role, and starts failed
@@ -140,6 +143,13 @@ def orchestrate(kind, prompt, workspace, db_path, timeout=300, *, task_id=None):
     Artifact directories are private; callers must retain them with the database.
     """
     roles = route(kind) + ["qa"]
+    if host != "codex":
+        if host not in host_runtime.HOST_BIN:
+            raise ValueError("No verified host runtime adapter")
+        if not authorize_inference:
+            raise ValueError("Explicit --authorize-inference required for non-Codex hosts")
+        if timeout > 1800:
+            raise ValueError("Non-Codex host runtime timeout must not exceed 1800 seconds")
     if not 1 <= timeout <= 3600:
         raise ValueError("timeout must be 1..3600")
     workspace = Path(workspace).resolve(strict=True)
@@ -155,7 +165,11 @@ def orchestrate(kind, prompt, workspace, db_path, timeout=300, *, task_id=None):
     db.execute("CREATE TABLE IF NOT EXISTS tasks (task_id TEXT PRIMARY KEY, config TEXT, status TEXT)")
     db.execute("CREATE TABLE IF NOT EXISTS attempts (task_id TEXT, role TEXT, attempt INTEGER, result TEXT, PRIMARY KEY(task_id, role, attempt))")
     db.commit()
-    config = json.dumps(dict(kind=kind, prompt=prompt, workspace=str(workspace), head=head, timeout=timeout), sort_keys=True)
+    details = dict(kind=kind, prompt=prompt, workspace=str(workspace),
+                   head=head, timeout=timeout)
+    if host != "codex":
+        details["host"] = host
+    config = json.dumps(details, sort_keys=True)
     # Separate SQLite mutex permits durable checkpoints without duplicate dispatch.
     lock = None
     try:
@@ -195,7 +209,9 @@ def orchestrate(kind, prompt, workspace, db_path, timeout=300, *, task_id=None):
             # A crash before durable result leaves an orphan directory, never reused.
             target = root / (role + "-" + str(attempt) + "-" + uuid.uuid4().hex)
             handoff = dict(task_id=task_id, engine=kind, role=role, objective=prompt,
-                           scope=str(target), allowed_tools="local sandbox tools",
+                           scope=str(target), allowed_tools=(
+                               "local sandbox tools" if host == "codex"
+                               else "read-only plan mode; text proposals only"),
                            prohibited_actions="No network, publishing, credential changes, merge, release, paid calls or sandbox escalation",
                            acceptance_criteria="Report commands, results and concrete evidence; never self-certify release",
                            timeout=timeout, retry_policy="explicit resume, maximum 3 attempts",
@@ -210,8 +226,12 @@ def orchestrate(kind, prompt, workspace, db_path, timeout=300, *, task_id=None):
                 _git(target, "checkout", "--detach", "--quiet")
                 baseline = _git(target, "rev-parse", "HEAD").decode().strip()
                 text = json.dumps(handoff, ensure_ascii=False) + "\nInspect prior deliverables. " + prompt
-                result = run_codex(role, text, target, timeout,
-                                   sandbox="workspace-write" if role == "factory" else "read-only")
+                if host == "codex":
+                    result = run_codex(role, text, target, timeout,
+                                       sandbox="workspace-write" if role == "factory" else "read-only")
+                else:
+                    result = host_runtime.run(host, role, text, target,
+                                              timeout, authorized=authorize_inference)
                 result["workspace"] = str(target)
                 # Preserve untracked files and modifications in this private proposal clone.
                 _git(target, "add", "--all")
@@ -220,7 +240,7 @@ def orchestrate(kind, prompt, workspace, db_path, timeout=300, *, task_id=None):
                 artifact.write_bytes(patch)
                 result["patch"] = str(artifact)
                 result["patch_sha256"] = hashlib.sha256(patch).hexdigest()
-                if role != "factory" and patch:
+                if (host != "codex" or role != "factory") and patch:
                     result.update(status="FAILED", reason="read-only role modified deliverables")
                 if result["status"] == "COMPLETED":
                     ids = result.get("thread_ids", [])
@@ -231,7 +251,7 @@ def orchestrate(kind, prompt, workspace, db_path, timeout=300, *, task_id=None):
                         _git(target, "-c", "user.name=CHEF proposal", "-c", "user.email=chef@example.invalid",
                              "-c", "core.hooksPath=/dev/null", "-c", "commit.gpgSign=false", "commit", "--quiet", "--allow-empty", "-m", "CHEF isolated proposal")
                         result["snapshot"] = _git(target, "rev-parse", "HEAD").decode().strip()
-            except (OSError, subprocess.SubprocessError) as exc:
+            except (OSError, ValueError, subprocess.SubprocessError) as exc:
                 result = dict(status="FAILED", reason=type(exc).__name__, workspace=str(target))
             results[role] = result
             db.execute("UPDATE attempts SET result=? WHERE task_id=? AND role=? AND attempt=?", (json.dumps(result), task_id, role, attempt))
@@ -245,7 +265,12 @@ def orchestrate(kind, prompt, workspace, db_path, timeout=300, *, task_id=None):
         db.commit()
         return dict(task_id=task_id, status=status, results=results,
                     qa=results.get("qa", "NOT_RUN"), release="BLOCKED",
-                    evidence_kind="agent_invocation_requires_independent_acceptance")
+                    host=host, native_child_agents=(
+                        "NOT_VERIFIED" if host != "codex" else "HOST_EVIDENCE_REQUIRED"),
+                    evidence_kind=(
+                        "independent_host_turns_not_native_agent_spawns"
+                        if host != "codex" else
+                        "agent_invocation_requires_independent_acceptance"))
     except BaseException:
         db.rollback()
         raise
@@ -258,6 +283,9 @@ def orchestrate(kind, prompt, workspace, db_path, timeout=300, *, task_id=None):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--kind", choices=["factory", "studio", "hybrid"], required=True)
+    parser.add_argument("--host", choices=["codex", *host_runtime.HOST_BIN], default="codex")
+    parser.add_argument("--authorize-inference", action="store_true",
+                        help="required for non-Codex model usage; may consume credits")
     parser.add_argument("--prompt", required=True)
     parser.add_argument("--workspace", type=Path, default=Path.cwd())
     parser.add_argument("--db", type=Path, default=None)
@@ -266,8 +294,12 @@ def main():
     args = parser.parse_args()
     if not 1 <= args.timeout <= 3600:
         parser.error("timeout must be 1..3600")
+    if args.host != "codex" and not args.authorize_inference:
+        parser.error("Non-Codex runtime requires --authorize-inference")
     db_path = args.db or args.workspace.resolve().parent / (args.workspace.resolve().name + ".chef-runtime.sqlite3")
-    result = orchestrate(args.kind, args.prompt, args.workspace, db_path, args.timeout, task_id=args.resume)
+    result = orchestrate(args.kind, args.prompt, args.workspace, db_path,
+                         args.timeout, task_id=args.resume, host=args.host,
+                         authorize_inference=args.authorize_inference)
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0 if result["status"] == "REVIEW_REQUIRED" else 2
 

@@ -197,6 +197,19 @@ python3 -m tools.chef_dual_engine --kind hybrid \
 [跨宿主安装/验收手册](UNIVERSAL_CHEF_SETUP.md) · [安装源码](../tools/universal_chef.py) · [交接源码](../tools/chef_handoff.py)
 
 
+## 新增｜Host Runtime V0.4（独立宿主会话，不是原生子 Agent）
+
+**状态：实际 CLI 调用框架与离线测试已实现；外部用户的真实模型执行未验证。**
+
+- Claude Code：`claude -p`、JSON result/session ID、Plan 模式。
+- Gemini CLI：`gemini -p`、stream-json 初始化与完成事件、Plan 模式。
+- OpenCode：`opencode run --agent plan --format json`、sessionID、step_finish。
+- 单独的 `tools.host_runtime`：默认拒绝推理，用户明确输入 `--authorize-inference` 才启动模型请求；缺 CLI、无会话证据、错误或超时不会标成 PASS。
+- 已集成 `tools.chef_dual_engine`：非 Codex 宿主在干净 Git 仓库中的独立克隆运行只读 Factory 建议、Studio、QA，沿用 SQLite、重试与恢复。
+- WorkBuddy / Hermes：真实安全的无界面 CLI Runner 仍 **NOT_RUN**；所有宿主的父子线程调度均 **NOT_VERIFIED**。
+
+说明：[Host Runtime V0.4](HOST_RUNTIME_V04.md) · [CLI Adapter](../tools/host_runtime.py) · [测试](../tests/test_host_runtime.py)。
+
 ## 当前安装究竟会部署哪些模块？
 
 | 模块 | 运行 `tools.full_setup` 后的行为 |
