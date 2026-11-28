@@ -1,4 +1,3 @@
-import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -57,6 +56,45 @@ class InstallerTests(unittest.TestCase):
         self.assertTrue(result["applied"])
         self.assertFalse((self.out/"sample-skill").exists())
         self.assertTrue(Path(result["archive"]).is_dir())
+
+    def test_adopt_matching_content_no_state(self):
+        # Manually copied skill, byte-identical, no state record: adopt
+        # writes the state record only; the skill files are untouched.
+        import shutil
+        from tools.skill_installer import adopt, load_state, package
+
+        shutil.copytree(self.src, self.out / "sample-skill")
+        before = package(self.out / "sample-skill")["sha256"]
+        result = adopt(self.src, root=self.out)
+        self.assertTrue(result["adopted"])
+        self.assertEqual(result["action"], "adopted")
+        self.assertEqual(package(self.out / "sample-skill")["sha256"], before)
+        self.assertEqual(
+            load_state(self.out)["installed"]["sample-skill"]["sha256"], before
+        )
+        self.assertEqual(inspect(self.src, root=self.out)["action"],
+                         "already_installed")
+
+    def test_adopt_mismatched_content_refused(self):
+        import shutil
+        from tools.skill_installer import adopt, load_state
+
+        shutil.copytree(self.src, self.out / "sample-skill")
+        (self.out / "sample-skill" / "SKILL.md").write_text(
+            "---\nname: sample-skill\ndescription: Sample safe skill\n---\n\n# Edited\n",
+            encoding="utf-8")
+        result = adopt(self.src, root=self.out)
+        self.assertFalse(result["adopted"])
+        self.assertEqual(result["action"], "conflict_unmanaged")
+        self.assertEqual(load_state(self.out)["installed"], {})
+
+    def test_adopt_with_state_is_noop(self):
+        from tools.skill_installer import adopt
+
+        install(self.src, root=self.out, apply=True)
+        result = adopt(self.src, root=self.out)
+        self.assertFalse(result["adopted"])
+        self.assertEqual(result["action"], "already_installed")
 
     def test_unmanaged_skill_never_overwritten(self):
         target=self.out/"sample-skill"

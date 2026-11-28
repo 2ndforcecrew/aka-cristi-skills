@@ -93,7 +93,7 @@ python3 -m tools.chef_dual_engine --kind hybrid \
 
 **状态：已实现并有 Windows/macOS/Linux CI。**
 
-- **`tools.full_setup`（`main` 新入口）**：环境与冲突预览、明确同意后安装 CHEF 规则、4 Skills、4 Codex 角色；检查 Codex 登录；可选启用 Workspace 设置和真实四 Agent 验收，额外授权另询问。
+- **`tools.full_setup`（`main` 新入口）**：环境与冲突预览、明确同意后安装 CHEF 规则、5 Skills、4 Codex 角色；检查 Codex 登录；可选启用 Workspace 设置和真实四 Agent 验收，额外授权另询问。
 - **`tools.quick_install`（`v1.0.0-beta.2` 已包含）**：核心配置统一预览、交互同意和文件校验，不调用真实模型。
 - **Windows GUI**：Tk 桌面窗口和冻结 EXE，支持预览、同意、进度、取消、文件验证和受保护回滚；二进制附有 GitHub 来源证明，**无 Authenticode 证书签名**。
 - **受保护事务安装**：`tools.install_transaction` 保存快照/日志，按受管理文件归属检查回滚，不允许盲目覆盖私人规则。
@@ -110,7 +110,7 @@ python3 -m tools.chef_dual_engine --kind hybrid \
 - **首次启动引导**：GitHub Setup Wizard / Sync Center，用户可跳过，之后重新设置。
 - **GitHub Device Flow**：使用官方浏览器与一次性 User Code；凭据预期保存在 OS 原生安全存储（Windows Credential Manager / macOS Keychain / Linux Secret Service），不写到普通设置文件。
 - **私人仓库**：支持用户自行授权创建/复用默认名 `my-agent-workspace`，必须明确确认，拒绝不匹配的账号或公开仓库。
-- **公开白名单初始化**：拟写入公开版 CHEF 规则、4 角色、4 Skills 与元数据，不自动上传用户私人 `AGENTS.md` 或客户数据。
+- **公开白名单初始化**：拟写入公开版 CHEF 规则、4 角色、5 Skills 与元数据，不自动上传用户私人 `AGENTS.md` 或客户数据。
 - **版本检查与手动拉取**：按远端固定 revision 预览差异，SHA-256/manifest 校验，手动 `Sync Now`，不是自动 push 或实时双向同步。
 - **备份、恢复与审计**：同步前创建本地备份，冲突停止，受控 Restore，锁避免不同进程同时改写，简化审计日志。
 - **ChatGPT 连接指导**：提供独立官方授权指引，**不能替用户验证 ChatGPT 账户已经 Connected**。
@@ -185,7 +185,7 @@ python3 -m tools.chef_dual_engine --kind hybrid \
 
 **状态：原生配置转换、预览、文件校验与受管理撤销已实现；各厂商真实 Agent 线程联动仍需独立实测。**
 
-- WorkBuddy / CodeBuddy：项目 `.codebuddy/rules`、`agents`、`skills`；或用户全局 `~/.codebuddy/`，不覆盖内置 WorkBuddy 规则。
+- WorkBuddy / CodeBuddy：用户全局 `~/.workbuddy/`（实测读取）；项目 `.codebuddy/rules`、`agents`、`skills`（是否被 WorkBuddy 读取未验证），不覆盖内置 WorkBuddy 规则。
 - Claude Code：项目/用户级 `.claude/rules`、`agents`、`skills`。
 - Gemini CLI：`GEMINI.md` / `~/.gemini/GEMINI.md`、`.gemini/agents`、`.gemini/skills`。
 - OpenCode：`AGENTS.md` / `~/.config/opencode/AGENTS.md`、`.opencode/agents`、`.opencode/skills`。

@@ -20,12 +20,14 @@
 | 宿主 | 项目规则 | 四角色定义 | 31 Skills |
 | --- | --- | --- | --- |
 | **Codex** | 原有 Codex 用户 `AGENTS.md` | `~/.codex/agents/*.toml` | `~/.agents/skills` |
-| **WorkBuddy / CodeBuddy** | `.codebuddy/rules/aka-chef.md` | `.codebuddy/agents/aka_*.md` | `.codebuddy/skills/*/SKILL.md` |
+| **WorkBuddy / CodeBuddy** | 用户级 `~/.workbuddy/rules/aka-chef.md` | `~/.workbuddy/agents/aka_*.md` | `~/.workbuddy/skills/*/SKILL.md` |
 | **Claude Code** | `.claude/rules/aka-chef.md` | `.claude/agents/aka_*.md` | `.claude/skills/*/SKILL.md` |
 | **Gemini CLI** | `GEMINI.md` 的 CHEF 受管理区块 | `.gemini/agents/aka_*.md` | `.gemini/skills/*/SKILL.md` |
 | **OpenCode** | `AGENTS.md` 的 CHEF 受管理区块 | `.opencode/agents/aka_*.md` | `.opencode/skills/*/SKILL.md` |
 | **Hermes Agent** | 项目 `AGENTS.md` 受管理区块 | `.aka-chef/role-templates/`（只是交接说明；**不是 Hermes 原生子 Agent**） | 需要额外指定用户 `~/.hermes/skills` 目标 |
 | **通用 Agent** | 项目 `AGENTS.md` CHEF 受管理区块 | `.aka-chef/role-templates/`（手动使用） | `.agents/skills/*/SKILL.md`（兼容性依宿主而定） |
+
+**WorkBuddy 注意：** 用户级路径是 `~/.workbuddy/`（2026-11-25 真机核实：WorkBuddy 应用只读 `~/.workbuddy/skills`，不读 `.codebuddy`）。项目级仍写 `.codebuddy/`，但**未验证 WorkBuddy 是否读取项目级 `.codebuddy/`**。旧的 `.codebuddy` 用户级安装只会被 `update` 报告，不会自动删除。
 
 **Hermes 注意：** 它的项目上下文文件存在优先级。如果项目已有优先级更高的 `.hermes.md`，`AGENTS.md` 可能不会成为实际加载的项目指令。安装器不会修改 `SOUL.md`，因为它是 Hermes 的身份配置，而非普通项目规则。
 
@@ -64,13 +66,26 @@ python3 -m tools.universal_chef verify --host workbuddy --scope user
 python3 -m tools.universal_chef uninstall --host workbuddy --scope user --interactive
 ~~~
 
+### 更新已装的宿主（`aka-skills update`）
+
+仓更新后，一条命令把已装宿主同步到最新：
+
+~~~bash
+aka-skills update                 # 只预览，不写文件
+aka-skills update --apply         # 拉最新 main + 同步全部已发现宿主
+aka-skills update --host workbuddy --apply   # 只更新 WorkBuddy
+aka-skills update --no-pull --apply          # 不拉仓，只从本地树同步
+~~~
+
+WorkBuddy 用户级 skills 是手动同步的（没有安装器 state 文件）也能更新：内容哈希与源码一致时，`update` 会先补写 state 记录（采用），再正常升级；内容被改过则拒绝覆盖。更新 WorkBuddy 后要**重启整个 WorkBuddy 应用**（新开会话不够，skill 列表缓存要靠应用重启刷新）；同步到 `~/.workbuddy` 的规则/角色是否被加载仍是 NOT_RUN，需重启后核实。
+
 撤销先检查本项目管理的配置内容是否仍与记录一致：受管理规则区块只移除该区块，其他用户规则保留；已管理 Skills 由原 Skill 安装器归档。若出现冲突则拒绝删除。某些意外文件系统异常可能需要根据现场备份恢复；不称整体操作已实现数据库式原子事务。
 
 ### 为什么没有全自动调用所有厂商？
 
 不同平台的 **规则文件 ≠ 原生 Agent 任务调度 API**。我们只能直接保证将允许安装的文件放到正确位置、校验 SHA-256 并保存状态：
 
-- WorkBuddy：官方支持项目 `.codebuddy/rules`、`agents`、`skills`；最终的 Expert/Agent 真正启动需要在 WorkBuddy 会话里进行独立测试。
+- WorkBuddy：用户级读 `~/.workbuddy/skills`（真机核实）；项目 `.codebuddy/rules`、`agents`、`skills` 是否被读取未验证；最终的 Expert/Agent 真正启动需要在 WorkBuddy 会话里进行独立测试。
 - Claude / Gemini / OpenCode：提供自定义 Agent 和 Skills 的公开格式，但仍需要宿主用户权限、登录以及真正的任务委派。
 - Hermes：公开技能路径与项目规则可用，**没有经过验证的本项目四角色原生 Host Adapter**。
 - Codex：已有原生 TOML + CLI 实验与四角色测试脚本，但非所有机器都经过真实验收。

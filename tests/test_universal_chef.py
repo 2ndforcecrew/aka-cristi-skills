@@ -83,6 +83,31 @@ class UniversalChefTests(unittest.TestCase):
         self.assertEqual(result["status"], "FILES_VERIFIED")
         self.assertEqual(result["roles"], "FILES_PRESENT")  # templates, not host-native roles
 
+    def test_workbuddy_user_scope_writes_to_dot_workbuddy_not_codebuddy(self):
+        # Regression (2026-11-25, real Windows machine): WorkBuddy reads
+        # ~/.workbuddy/skills, not ~/.codebuddy/*. The user-level install
+        # must land under .workbuddy/ and never under .codebuddy/.
+        home = self.project / "mock-home"
+        home.mkdir()
+        with patch("pathlib.Path.home", return_value=home):
+            result = uc.install("workbuddy", apply=True, scope="user")
+        self.assertEqual(result["status"], "FILES_VERIFIED")
+        self.assertTrue((home / ".workbuddy" / "rules" / "aka-chef.md").is_file())
+        self.assertTrue((home / ".workbuddy" / "agents" / "aka_research.md").is_file())
+        for skill in uc.SKILLS:
+            self.assertTrue(
+                (home / ".workbuddy" / "skills" / skill / "SKILL.md").is_file()
+            )
+        self.assertFalse((home / ".codebuddy").exists())
+
+    def test_workbuddy_explicit_user_skill_root(self):
+        root = (Path(self.temp.name).resolve() / "isolated-workbuddy-skills")
+        result = uc.install("workbuddy", self.project, apply=True,
+                            workbuddy_skills_root=root)
+        self.assertEqual(result["status"], "FILES_VERIFIED")
+        for skill in uc.SKILLS:
+            self.assertTrue((root / skill / "SKILL.md").is_file())
+
     def test_user_global_rules_for_supported_hosts(self):
         from unittest.mock import patch
         home = self.project / "mock-home"

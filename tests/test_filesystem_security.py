@@ -5,7 +5,7 @@ import subprocess
 import unittest
 from pathlib import Path
 from unittest.mock import patch
-from tools import chef_global_rules as rules, codex_subagents as agents, skill_installer as skills
+from tools import chef_global_rules as rules, codex_subagents as agents, skill_installer as skills, universal_chef as chef
 
 
 class FilesystemSecurityTests(unittest.TestCase):
@@ -67,6 +67,38 @@ class FilesystemSecurityTests(unittest.TestCase):
         with patch.object(skills.os, 'walk', walk_order(True)):
             second = skills.package(source)['sha256']
         self.assertEqual(first, second)
+
+    def test_update_resolves_symlinked_skills_root_to_real_path(self):
+        # resolve-first (plan §8, mirroring quick_install.execute and the
+        # hermes override): a symlinked --skills-root is canonicalized to
+        # its real target before the guard sees it, so files land under
+        # the real directory, never via the link. (Plan §10's "refuse a
+        # symlinked --skills-root" cannot hold together with §8's
+        # resolve-first rule; what the guard still guarantees is that
+        # nothing downstream of the resolved path may itself be a link —
+        # see the second half of this test.)
+        self.require_symlink(self.link)
+        proj = self.root / "proj"
+        proj.mkdir()
+        plan = chef.inspect("workbuddy", proj,
+                            workbuddy_skills_root=self.link / "skills")
+        self.assertEqual(plan["skills_root"],
+                         str(self.actual / "skills"))
+
+    def test_update_refuses_symlinked_skill_inside_root(self):
+        # Guard still alive in the update path: a skill directory that
+        # is itself a symlink under an otherwise fine root is refused.
+        real_skills = self.actual / "skills"
+        real_skills.mkdir()
+        target = self.root / "elsewhere"
+        target.mkdir()
+        (real_skills / "chef-orchestrator").symlink_to(
+            target, target_is_directory=True)
+        with self.assertRaises(skills.InstallError):
+            skills.inspect(
+                Path(__file__).resolve().parents[1] / "skills" / "chef-orchestrator",
+                root=real_skills)
+        self.assertEqual(list(target.iterdir()), [])
 
     def test_metadata_size_checked_before_read(self):
         source = self.root / 'demo'

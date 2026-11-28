@@ -7,14 +7,19 @@ existing suite: stdlib unittest only.
 import contextlib
 import io
 import json
+import shutil
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
 from aka_skills import __version__
+from aka_skills import repo as repo_mod
 from aka_skills.cli import main
 from tools.quick_install import SKILLS
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 EXPECTED_SKILLS = {
     # Native (7).
@@ -52,7 +57,28 @@ EXPECTED_SKILLS = {
     "test-driven-development",
     "using-agent-skills",
 }
-SUBCOMMANDS = ("install", "verify", "status", "list-skills", "validate", "serve")
+SUBCOMMANDS = ("install", "verify", "status", "list-skills", "validate", "serve", "update")
+
+
+def _make_git_repo(base: Path) -> Path:
+    """Minimal git checkout of the repo content (skills/templates/agents/vendor)."""
+    dest = base / "repo"
+    dest.mkdir()
+    for name in ("skills", "templates", "agents", "vendor"):
+        shutil.copytree(REPO_ROOT / name, dest / name)
+    shutil.copy2(REPO_ROOT / "pyproject.toml", dest / "pyproject.toml")
+
+    def git(*args):
+        cp = subprocess.run(["git", *args], cwd=str(dest), capture_output=True,
+                            text=True, timeout=120)
+        assert cp.returncode == 0, cp.stderr
+
+    git("init", "-b", "main")
+    git("config", "user.email", "test@example.com")
+    git("config", "user.name", "Test")
+    git("add", "-A")
+    git("commit", "-m", "seed")
+    return dest
 
 
 def run_cli(argv):
@@ -272,6 +298,94 @@ class CliTests(unittest.TestCase):
                 code = main(["serve"])
         self.assertNotEqual(code, 0)
         self.assertIn(".[mcp]", err.getvalue())
+
+    def test_update_preview_writes_nothing(self):
+        if shutil.which("git") is None:
+            self.skipTest("git unavailable")
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.addCleanup(lambda: repo_mod.bind_tools_to_root(REPO_ROOT))
+        base = Path(tmp.name).resolve()
+        repo = _make_git_repo(base)
+        home = base / "home"
+        home.mkdir()
+        with patch("pathlib.Path.home", return_value=home):
+            code, out = run_cli(["update", "--repo-root", str(repo), "--no-pull"])
+        self.assertEqual(code, 0)
+        result = json.loads(out)
+        self.assertEqual(result["status"], "PREVIEW_ONLY")
+        self.assertEqual(result["targets"]["codex:user"]["status"], "NOT_INSTALLED")
+        self.assertEqual(list(home.iterdir()), [])
+        cp = subprocess.run(["git", "status", "--porcelain"], cwd=str(repo),
+                            capture_output=True, text=True, timeout=60)
+        self.assertEqual(cp.stdout, "")
+
+    def test_update_interactive_yes_applies(self):
+        if shutil.which("git") is None:
+            self.skipTest("git unavailable")
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.addCleanup(lambda: repo_mod.bind_tools_to_root(REPO_ROOT))
+        base = Path(tmp.name).resolve()
+        repo = _make_git_repo(base)
+        home = base / "home"
+        home.mkdir()
+        with patch("pathlib.Path.home", return_value=home), \
+                patch("builtins.input", return_value="YES"):
+            code, out = run_cli(["update", "--interactive",
+                                 "--repo-root", str(repo), "--no-pull"])
+        self.assertEqual(code, 0)
+        self.assertIn("PREVIEW_ONLY", out)
+        self.assertIn("NO_CHANGE", out)
+
+    def test_update_apply_and_interactive_rejected(self):
+        with self.assertRaises(SystemExit) as ctx:
+            with contextlib.redirect_stdout(io.StringIO()), \
+                    contextlib.redirect_stderr(io.StringIO()):
+                main(["update", "--apply", "--interactive"])
+        self.assertEqual(ctx.exception.code, 2)
+
+    def test_update_invalid_host_rejected(self):
+        with self.assertRaises(SystemExit) as ctx:
+            with contextlib.redirect_stdout(io.StringIO()), \
+                    contextlib.redirect_stderr(io.StringIO()):
+                main(["update", "--host", "bogus"])
+        self.assertEqual(ctx.exception.code, 2)
+
+    def test_update_json_mode_parses(self):
+        if shutil.which("git") is None:
+            self.skipTest("git unavailable")
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.addCleanup(lambda: repo_mod.bind_tools_to_root(REPO_ROOT))
+        base = Path(tmp.name).resolve()
+        repo = _make_git_repo(base)
+        home = base / "home"
+        home.mkdir()
+        with patch("pathlib.Path.home", return_value=home):
+            code, out = run_cli(["update", "--json",
+                                 "--repo-root", str(repo), "--no-pull"])
+        self.assertEqual(code, 0)
+        json.loads(out)
+
+    def test_install_workbuddy_skills_root(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.addCleanup(lambda: repo_mod.bind_tools_to_root(REPO_ROOT))
+        base = Path(tmp.name).resolve()
+        home = base / "home"
+        home.mkdir()
+        skills = base / "wb-skills"
+        with patch("pathlib.Path.home", return_value=home):
+            code, out = run_cli(["install", "--host", "workbuddy",
+                                 "--scope", "user", "--workbuddy-skills-root",
+                                 str(skills), "--apply"])
+        self.assertEqual(code, 0)
+        self.assertEqual(json.loads(out)["core_install"], "FILES_VERIFIED")
+        for skill in SKILLS:
+            self.assertTrue((skills / skill / "SKILL.md").is_file())
+        self.assertTrue((home / ".workbuddy" / "rules" / "aka-chef.md").is_file())
+        self.assertFalse((home / ".codebuddy").exists())
 
 
 if __name__ == "__main__":
