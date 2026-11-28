@@ -17,8 +17,9 @@ from aka_skills.cli import main
 from tools.quick_install import SKILLS
 
 EXPECTED_SKILLS = {
-    # Native (6).
+    # Native (7).
     "chef-orchestrator",
+    "dual-engine-routing",
     "verified-change-loop",
     "feature-journey-map",
     "skill-evaluation-gate",
@@ -190,7 +191,7 @@ class CliTests(unittest.TestCase):
         self.assertEqual(result["preview"]["status"], "PREVIEW")
         self.assertEqual((tree(self.home), tree(self.skills)), before)
 
-    def test_list_skills_returns_all_thirty_one(self):
+    def test_list_skills_returns_all_thirty_two(self):
         code, out = run_cli(["list-skills", "--json"])
         self.assertEqual(code, 0)
         skills = json.loads(out)

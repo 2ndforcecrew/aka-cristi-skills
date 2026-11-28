@@ -57,6 +57,7 @@ the generator. The auditable decisions behind the table are in
 | Intent (user's words) | Skill | Combine with | Do NOT trigger when |
 |---|---|---|---|
 | "own the whole thing" — a task spans research, design, coding and review | `chef-orchestrator` | all skills below, in chain order | a single well-specified change |
+| "this needs both engineering and product judgment" / "route this through Factory and Studio" | `dual-engine-routing` (native) | `chef-orchestrator`, `verified-change-loop`, `feature-journey-map` | a single well-specified change in one lane only |
 | "I don't know what I want yet — ask me" / "grill me" | `interview-me` (native) | `spec-driven-development` | requirements are already clear |
 | "ideate" / "refine this idea" / "stress-test my plan" | `idea-refine` | `spec-driven-development` | requirements are already clear |
 | "no spec exists yet" / "draft the PRD" / "requirements are unclear" | `spec-driven-development` | `planning-and-task-breakdown` | a spec already exists and is current |

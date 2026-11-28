@@ -1,7 +1,7 @@
 {
   "counts": {
-    "installable": 31,
-    "native": 6,
+    "installable": 32,
+    "native": 7,
     "reference_only": 1,
     "vendor": 26
   },
@@ -19,9 +19,19 @@
       "name": "chef-orchestrator",
       "phase": "Orchestrate",
       "route_note": "",
-      "sha256": "7873c3ef8414d95494927056a69a38d9be18cc81c0bd47405ae63d1f583e7c81",
+      "sha256": "8c45bd12c42b0b4695073102642cff14b1c9d74573b7eac0fad9bc268e5d5227",
       "source": "native",
       "triggers": "Use when a task spans research, creative design, programming, automation, or multiple agents, or when the user asks CHEF to own the outcome rather than teach implementation."
+    },
+    {
+      "description": "Route CHEF tasks through Factory engineering and Studio experience gates with explicit evidence, permissions, and independent review.",
+      "installable": true,
+      "name": "dual-engine-routing",
+      "phase": "Orchestrate",
+      "route_note": "",
+      "sha256": "90e394ba414a1addde2fea3aff77a5e6960aa4e1e214c486623aa33cdb6f3cc6",
+      "source": "native",
+      "triggers": "Use when a change needs both engineering correctness and product judgment."
     },
     {
       "description": "Map a real product feature from entry and setup through actions, observable results and failure edges, then produce replayable test scenarios.",

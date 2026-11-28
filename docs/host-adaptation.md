@@ -81,7 +81,7 @@ vendor 内（git mode 120000），供把插件根直接指向 vendor 目录的�
   `../frontend-ui-engineering/SKILL.md`（兄弟 skill）与
   `../../agents/accessibility-auditor.md`（vendor 内 persona）。在 vendor
   内两者都解析通过；单装一个 skill 时会悬空。缓解：安装器默认一次装
-  31 个，兄弟 skill 一定在场。`agents/` persona 不由安装器安装，该引用
+  32 个，兄弟 skill 一定在场。`agents/` persona 不由安装器安装，该引用
   在宿主安装里仍悬空，原因有三：能让 `../../agents/...` 解析的唯一位置
   就是已安装 skills 根的同级 `agents/` 目录，但对 Claude / Gemini /
   OpenCode / WorkBuddy 来说那正是宿主的 **live subagent 发现目录**（放

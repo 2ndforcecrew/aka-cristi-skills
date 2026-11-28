@@ -514,9 +514,9 @@ class VendorEvalsFinalStateTests(unittest.TestCase):
         # PHASES coverage lock (WP4 issue 2): every collected skill
         # must carry a non-empty routing phase; a missing entry raises
         # in build_index (see test_missing_phase_raises), this gate
-        # pins the real repo at 32/32.
+        # pins the real repo at 33/33.
         index = build_index(REPO_ROOT)
-        self.assertEqual(len(index["skills"]), 32)
+        self.assertEqual(len(index["skills"]), 33)
         missing = [
             f"{e['source']}/{e['name']}"
             for e in index["skills"]

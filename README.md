@@ -19,7 +19,7 @@
 | SHARED TRAINING | GLOBAL RULES | SKILLS | AGENT ROLES |
 | :---: | :---: | :---: | :---: |
 | **22** | **12** | **32** | **04** |
-| 共享训练规则 | 全局工作规范 | 工作方法：6 原生 + 26 vendored，31 可安装 + 1 参考 | 专业角色配置 |
+| 共享训练规则 | 全局工作规范 | 工作方法：7 原生 + 26 vendored，32 可安装 + 1 参考 | 专业角色配置 |
 
 | CLI 命令 | MCP 工具 |
 | :---: | :---: |
@@ -85,7 +85,7 @@ aka-skills install --interactive  # 预览后输入 YES 才真正安装
 **第 4 步：看看装了什么**
 
 ~~~bash
-aka-skills list-skills             # 列出全部 31 个可安装 Skills
+aka-skills list-skills             # 列出全部 32 个可安装 Skills
 aka-skills validate visual-design  # 只读预检单个 Skill，不写文件
 aka-skills verify                  # 校验已安装的文件
 ~~~
@@ -371,7 +371,7 @@ Vendored skills（25 个）与原生 6 个走同一安装器，落盘路径与�
 | :--- | :--- |
 | 共享训练规则公开至 Skills 源码 | 已完成，PR #55 已合并 |
 | 训练 MD 随 CHEF Skill 分发 | 本次源码集成；安装回归见 PR #57 |
-| 核心安装器、31 个可安装 Skills（6 原生 + 25 vendored）、角色文件、CLI、MCP server | 已有本地实现；干净 venv 安装验证通过；wheel 1,122 KB |
+| 核心安装器、32 个可安装 Skills（7 原生 + 25 vendored）、角色文件、CLI、MCP server | 已有本地实现；干净 venv 安装验证通过；wheel 1,122 KB |
 | PR #63：借鉴 agent-skills 的 4 项机制 | 已合并（Rationalizations + Red Flags、interview-me、evals 框架、comparison.md） |
 | PR #64：Skill 格式统一 | 已合并（10 节固定顺序、字面标题、格式标准 docs/skill-format.md） |
 | PR #66：Addy Osmani agent-skills 全量引入 + Hybrid Agent System | 已合并（merge 97e4a25，2026-11-26）；vendor 273 文件 + 1 symlink（上游 e997ac5，280 项，排除 6 个）；全树扫描 235 项（180 误报、55 真问题为未 pin 版本 npx，低风险）；六道门禁仍 BLOCKED；真机加载 NOT_RUN |

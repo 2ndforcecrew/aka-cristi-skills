@@ -71,9 +71,9 @@ class QuickInstallTests(unittest.TestCase):
         index = json.loads((REPO_ROOT / "docs" / "skill-index.json").read_text(encoding="utf-8"))
         installable = {s["name"] for s in index["skills"] if s["installable"]}
         self.assertEqual(set(SKILLS), installable)
-        self.assertEqual(len(NATIVE_SKILLS), 6)
+        self.assertEqual(len(NATIVE_SKILLS), 7)
         self.assertEqual(len(VENDOR_SKILLS), 25)
-        self.assertEqual(len(SKILLS), 31)
+        self.assertEqual(len(SKILLS), 32)
         for skill in SKILLS:
             source = skill_source(skill)
             self.assertTrue((source / "SKILL.md").is_file(), skill)
@@ -91,7 +91,7 @@ class QuickInstallTests(unittest.TestCase):
             home, skills = Path(d).resolve() / "codex", Path(d).resolve() / "skills"
             result = execute(apply=True, codex_home=home, skills_root=skills)
             self.assertEqual(result["status"], "FILES_VERIFIED")
-            self.assertEqual(len(result["skills"]), 31)
+            self.assertEqual(len(result["skills"]), 32)
             links = [p for p in skills.rglob("*") if p.is_symlink()]
             self.assertEqual(links, [])
 

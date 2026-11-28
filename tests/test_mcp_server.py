@@ -24,8 +24,9 @@ sys.path.insert(0, str(REPO_ROOT))
 from aka_skills import mcp_server  # noqa: E402
 
 EXPECTED_SKILLS = {
-    # Native (6).
+    # Native (7).
     "chef-orchestrator",
+    "dual-engine-routing",
     "verified-change-loop",
     "feature-journey-map",
     "skill-evaluation-gate",
@@ -99,7 +100,7 @@ class ToolFunctionTests(unittest.TestCase):
         else:
             os.environ["AKA_SKILLS_REPO_ROOT"] = self._old_env
 
-    def test_list_skills_returns_thirty_one_skills(self):
+    def test_list_skills_returns_thirty_two_skills(self):
         result = mcp_server.list_skills()
         self.assertNotIn("status", result)
         names = {s["name"] for s in result["skills"]}
