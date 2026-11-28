@@ -66,6 +66,12 @@ EXPECTED_STYLES = {
     "experimental-posters",
     "colorful-commercial-posters",
     "giant-type-web-design",
+    "cinematic-commercial",
+    "liquid-futurism",
+    "dark-experimental-editorial",
+    "techwear",
+    "luxury-minimalism",
+    "digital-distortion-editorial",
 }
 EXPECTED_TOOLS = {
     "list_skills",
